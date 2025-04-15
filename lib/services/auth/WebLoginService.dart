@@ -1,7 +1,7 @@
 import 'dart:developer' as developer;
 import 'package:mascotas_citas/const_values/const_values.dart';
 import 'package:mascotas_citas/interfaces/auth/IAuthServices.dart';
-import 'package:uni_links5/uni_links.dart';
+import 'package:uni_links/uni_links.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class WebLoginService implements IAuthServices {
