@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGoogleUseCase.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/views/AuthScreen.dart';
+import 'package:mascotas_citas/Modules/CreateUserModule/views/CreateUserScreen.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:provider/provider.dart';
 
@@ -30,12 +31,17 @@ class MainApp extends StatelessWidget {
         minTextAdapt: true,
         splitScreenMode: true,
         builder: (_, child) {
-          return MaterialApp(
-            // Define routes for navigation
-            routes: {
-              '/authScreen': (context) => Authscreen(), // MyWidget screen
-            },
-            initialRoute: '/authScreen', // Start with the home screen
+          return SafeArea(
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              // Define routes for navigation
+              routes: {
+                '/authScreen': (context) => Authscreen(),
+                '/createUserScreen': (context) =>
+                    Createuserscreen() // MyWidget screen
+              },
+              initialRoute: '/authScreen', // Start with the home screen
+            ),
           );
         });
   }

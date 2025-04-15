@@ -1,10 +1,11 @@
 import 'dart:developer' as developer;
 import 'package:mascotas_citas/const_values/const_values.dart';
 import 'package:mascotas_citas/interfaces/auth/IAuthServices.dart';
-import 'package:uni_links5/uni_links.dart';
+import 'package:app_links/app_links.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class WebLoginService implements IAuthServices {
+  final appLinks = AppLinks();
   @override
   Future<Map<String, dynamic>?> login() async {
     try {
@@ -18,10 +19,9 @@ class WebLoginService implements IAuthServices {
 
   Future<Map<String, dynamic>?> _listenForRedirects() async {
     try {
-
       // Escucha el stream de URIs
-      final uriStream = await uriLinkStream.first;
-      return _extractAuthTokenFromUri(uriStream!);
+      final uriStream = await appLinks.stringLinkStream.first;
+      return _extractAuthTokenFromUri(Uri.parse(uriStream));
     } catch (e) {
       developer.log('Error al escuchar redirección: ${e.toString()}');
       return null;

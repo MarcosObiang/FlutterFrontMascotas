@@ -50,6 +50,9 @@ class _AuthscreenState extends State<Authscreen> {
                     : ElevatedButton(
                         onPressed: () async {
                           await logInWithGoogleUseCase.execute();
+                          if(this.mounted){
+                            Navigator.pushNamed(context, '/createUserScreen');  
+                          }
                         },
                         child: SizedBox(
                           width: 600.w,
