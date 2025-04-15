@@ -4,6 +4,7 @@ import 'package:mascotas_citas/Modules/Authentication/usecases/LogInWithGoogleUs
 import 'package:mascotas_citas/Modules/Authentication/views/AuthScreen.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:provider/provider.dart';
+import 'package:mascotas_citas/splash_screen.dart'; // Importamos el SplashScreen
 
 import 'Modules/Authentication/state/AuthState.dart';
 
@@ -31,11 +32,14 @@ class MainApp extends StatelessWidget {
         splitScreenMode: true,
         builder: (_, child) {
           return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'WildLove',
             // Define routes for navigation
             routes: {
-              '/authScreen': (context) => Authscreen(), // MyWidget screen
+              '/splash': (context) => const SplashScreen(), // SplashScreen
+              '/authScreen': (context) => Authscreen(), // AuthScreen
             },
-            initialRoute: '/authScreen', // Start with the home screen
+            initialRoute: '/splash', // Iniciar con el SplashScreen
           );
         });
   }

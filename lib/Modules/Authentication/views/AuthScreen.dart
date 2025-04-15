@@ -7,17 +7,6 @@ import 'package:mascotas_citas/Modules/Authentication/usecases/LogInWithGoogleUs
 import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:mascotas_citas/types/callbacks.dart';
 import 'package:provider/provider.dart';
-class MyWidget extends StatelessWidget {
-  const MyWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-}
-
-
-
 
 class Authscreen extends StatefulWidget {
   const Authscreen({super.key});
@@ -37,37 +26,76 @@ class _AuthscreenState extends State<Authscreen> {
     return ChangeNotifierProvider.value(
       value: logInWithGoogleUseCase.authState,
       child: Consumer<AuthState>(
-          builder: (BuildContext context, AuthState authState, Widget? child) {
-        authState.onError = ({required String title, required String message}) {
-          PresentationDialogs().showErrorDialog(
-              title: title, content: message, context: context);
-        };
-        return Container(
-            color: Colors.white,
-            child: Center(
-                child: authState.getAuthStatus == AuthStatus.loading
-                    ? CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: () async {
-                          await logInWithGoogleUseCase.execute();
-                        },
-                        child: SizedBox(
-                          width: 600.w,
-                          height: 100.h,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Text("Iniciar con google"),
-                              SvgPicture.asset(
-                                  width: 60.w,
-                                  height: 60.h,
-                                  fit: BoxFit.contain,
-                                  alignment: Alignment.center,
-                                  'assets/logos/google_logo.svg'),
-                            ],
-                          ),
-                        ))));
-      }),
+        builder: (BuildContext context, AuthState authState, Widget? child) {
+          authState.onError = ({required String title, required String message}) {
+            PresentationDialogs().showErrorDialog(
+                title: title, content: message, context: context);
+          };
+          
+          return Scaffold(
+            backgroundColor: const Color.fromRGBO(242, 217, 208, 1),
+            body: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.all(18.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: Image.asset(
+                          'assets/logos/logo_wildlove_nombre.png',
+                          width: 1000.w,
+                          height: 1000.h,
+                        ),
+                      ),
+                    ),
+                    authState.getAuthStatus == AuthStatus.loading
+                        ? Center(child: CircularProgressIndicator())
+                        : _buildGoogleButton(authState),
+                    SizedBox(height: 40.h),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildGoogleButton(AuthState authState) {
+    return ElevatedButton(
+      onPressed: () async {
+        await logInWithGoogleUseCase.execute();
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        padding: EdgeInsets.symmetric(vertical: 15.h),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: Colors.grey.shade300),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SvgPicture.asset(
+            'assets/logos/google_logo.svg',
+            width: 50.w,
+            height: 50.h,
+          ),
+          SizedBox(width: 12.w),
+          Text(
+            'Continuar con Google',
+            style: TextStyle(
+              fontSize: 50.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
