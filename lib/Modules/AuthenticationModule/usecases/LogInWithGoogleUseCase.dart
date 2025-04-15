@@ -1,7 +1,7 @@
 import 'package:mascotas_citas/Exceptions/ModuleException.dart';
-import 'package:mascotas_citas/Modules/Authentication/DTOs/LogInDTO.dart';
-import 'package:mascotas_citas/Modules/Authentication/repo/AuthenticationRepo.dart';
-import 'package:mascotas_citas/Modules/Authentication/state/AuthState.dart';
+import 'package:mascotas_citas/Modules/AuthenticationModule/DTOs/LogInDTO.dart';
+import 'package:mascotas_citas/Modules/AuthenticationModule/repo/AuthenticationRepo.dart';
+import 'package:mascotas_citas/Modules/AuthenticationModule/state/AuthState.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 
 class LogInWithGoogleUseCase {

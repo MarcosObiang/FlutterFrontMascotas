@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:mascotas_citas/Modules/Authentication/usecases/LogInWithGoogleUseCase.dart';
-import 'package:mascotas_citas/Modules/Authentication/views/AuthScreen.dart';
+import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGoogleUseCase.dart';
+import 'package:mascotas_citas/Modules/AuthenticationModule/views/AuthScreen.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:provider/provider.dart';
 
-import 'Modules/Authentication/state/AuthState.dart';
+import 'Modules/AuthenticationModule/state/AuthState.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

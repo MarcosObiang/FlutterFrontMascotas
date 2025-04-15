@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mascotas_citas/Exceptions/ModuleException.dart';
-import 'package:mascotas_citas/Modules/Authentication/DTOs/LogInDTO.dart';
+import 'package:mascotas_citas/Modules/AuthenticationModule/DTOs/LogInDTO.dart';
 import 'package:mascotas_citas/interfaces/state/IState.dart';
 import 'package:mascotas_citas/types/callbacks.dart';
 

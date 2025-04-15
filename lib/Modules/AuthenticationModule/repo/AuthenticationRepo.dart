@@ -1,4 +1,4 @@
-import 'package:mascotas_citas/Modules/Authentication/DTOs/LogInDTO.dart';
+import 'package:mascotas_citas/Modules/AuthenticationModule/DTOs/LogInDTO.dart';
 import 'package:mascotas_citas/interfaces/auth/IAuthServices.dart';
 import 'package:mascotas_citas/services/auth/WebLoginService.dart';
 

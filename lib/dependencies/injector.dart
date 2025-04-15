@@ -1,12 +1,12 @@
 import 'package:get_it/get_it.dart';
-import 'package:mascotas_citas/Modules/Authentication/repo/AuthenticationRepo.dart';
-import 'package:mascotas_citas/Modules/Authentication/usecases/LogInWithGoogleUseCase.dart';
+import 'package:mascotas_citas/Modules/AuthenticationModule/repo/AuthenticationRepo.dart';
+import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGoogleUseCase.dart';
 import 'package:mascotas_citas/interfaces/auth/IAuthServices.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 import 'package:mascotas_citas/services/auth/WebLoginService.dart';
 import 'package:mascotas_citas/services/platform/storage/SecureStorage.dart';
 
-import '../Modules/Authentication/state/AuthState.dart';
+import '../Modules/AuthenticationModule/state/AuthState.dart';
 
 final GetIt getIt = GetIt.instance;
 
