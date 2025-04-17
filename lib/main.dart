@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGoogleUseCase.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/views/AuthScreen.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/views/CreateUserScreen.dart';
+import 'package:mascotas_citas/Modules/HomeModule/Views/home_screen.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:provider/provider.dart';
 import 'package:mascotas_citas/splash_screen.dart'; // Importamos el SplashScreen
@@ -40,6 +41,7 @@ class MainApp extends StatelessWidget {
             routes: {
               '/splash': (context) => const SplashScreen(), // SplashScreen
               '/authScreen': (context) => Authscreen(), // AuthScreen
+              '/home': (context) => const HomeScreen(), // Pantalla principal después del splash
             },
             initialRoute: '/splash', // Iniciar con el SplashScreen
 

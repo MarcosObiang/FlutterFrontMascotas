@@ -70,6 +70,7 @@ class _AuthscreenState extends State<Authscreen> {
     return ElevatedButton(
       onPressed: () async {
         await logInWithGoogleUseCase.execute();
+        Navigator.pushNamed(context, '/home');
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
