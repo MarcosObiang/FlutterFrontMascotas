@@ -34,17 +34,20 @@ class AuthDataService {
   /// Throws an [ArgumentError] if the token is null or empty.
   /// Throws an [Exception] if an error occurs during storage.
   Future<void> setToken(String? token) async {
+  try {
     if (token == null || token.isEmpty) {
-      throw ArgumentError("Token cannot be null or empty");
-    }
-    try {
+      // En lugar de lanzar un error, simplemente asignamos null o cadena vacía
+      this.token = "";
+      await secureStorage.delete("token");
+    } else {
       this.token = token;
       await secureStorage.save("token", token);
-    } catch (e) {
-      debugPrint("Error saving token: $e");
-      throw Exception("Error saving token: $e");
     }
+  } catch (e) {
+    debugPrint("Error procesando token: $e");
+    throw Exception("Error procesando token: $e");
   }
+}
 
   /// Sets the refresh token.
   /// If the provided [refreshToken] is null or empty, it throws an [ArgumentError].
@@ -53,17 +56,20 @@ class AuthDataService {
   /// Throws an [ArgumentError] if the refresh token is null or empty.
   /// Throws an [Exception] if an error occurs during storage.
   Future<void> setRefreshToken(String? refreshToken) async {
+  try {
     if (refreshToken == null || refreshToken.isEmpty) {
-      throw ArgumentError("Refresh token cannot be null or empty");
-    }
-    try {
+      // En lugar de lanzar un error, simplemente asignamos cadena vacía
+      this.refreshToken = "";
+      await secureStorage.delete("refreshToken");
+    } else {
       this.refreshToken = refreshToken;
       await secureStorage.save("refreshToken", refreshToken);
-    } catch (e) {
-      debugPrint("Error saving refresh token: $e");
-      throw Exception("Error saving refresh token: $e");
     }
+  } catch (e) {
+    debugPrint("Error procesando refresh token: $e");
+    throw Exception("Error procesando refresh token: $e");
   }
+}
 
   /// Sets the user's unique identifier (UID).
   /// If the provided [userUID] is null or empty, it throws an [ArgumentError].
@@ -72,17 +78,20 @@ class AuthDataService {
   /// Throws an [ArgumentError] if the user UID is null or empty.
   /// Throws an [Exception] if an error occurs during storage.
   Future<void> setUserUID(String? userUID) async {
+  try {
     if (userUID == null || userUID.isEmpty) {
-      throw ArgumentError("User UID cannot be null or empty");
-    }
-    try {
+      // En lugar de lanzar un error, asignamos cadena vacía
+      this.userUID = "";
+      await secureStorage.delete("userUID");
+    } else {
       this.userUID = userUID;
       await secureStorage.save("userUID", userUID);
-    } catch (e) {
-      debugPrint("Error saving user UID: $e");
-      throw Exception("Error saving user UID: $e");
     }
+  } catch (e) {
+    debugPrint("Error procesando user UID: $e");
+    throw Exception("Error procesando user UID: $e");
   }
+}
 
   /// Clears all authentication data (token, refresh token, and user UID).
   /// It also handles potential errors during the clearing process.
@@ -103,13 +112,20 @@ class AuthDataService {
   }
 
   Future<void> setExpirationDate(DateTime? expirationDate) async {
+  try {
     if (expirationDate == null) {
-      throw ArgumentError("Expiration date cannot be null");
+      // En lugar de lanzar un error, limpiamos la fecha de expiración
+      this.expirationDate = null;
+      await secureStorage.delete("expirationDate");
     } else {
       this.expirationDate = expirationDate;
       await secureStorage.save("expirationDate", expirationDate.toString());
     }
+  } catch (e) {
+    debugPrint("Error procesando fecha de expiración: $e");
+    throw Exception("Error procesando fecha de expiración: $e");
   }
+}
 
   /// Retrieves the current authentication token.
   String? getToken() => token;

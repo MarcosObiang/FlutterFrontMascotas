@@ -21,7 +21,7 @@ class LoginDTO {
       token: json['token'],
       refreshToken: json['refreshToken'],
       userUID: json['userUID'],
-      expirationDate: DateTime.parse(json['expirationDate']),
+      expirationDate: json['expirationDate'] != null ? DateTime.parse(json['expirationDate']) : null,
     );
   }
 

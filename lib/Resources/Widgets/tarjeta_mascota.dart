@@ -83,9 +83,13 @@ class TarjetaMascota extends StatelessWidget {
                   Row(
                     children: [
                       CircleAvatar(
-                        radius: 15,
-                        backgroundImage: AssetImage(mascota.propietarioFoto),
-                      ),
+  radius: 15,
+  backgroundImage: AssetImage(mascota.propietarioFoto),
+  onBackgroundImageError: (exception, stackTrace) {
+    print("Error al cargar imagen del propietario: ${mascota.propietarioFoto}");
+  },
+  child: mascota.propietarioFoto.isEmpty ? Icon(Icons.person, size: 15) : null,
+),
                       SizedBox(width: 8),
                       Text(
                         'Dueño: ${mascota.propietarioNombre}',

@@ -7,6 +7,7 @@ import 'package:mascotas_citas/Modules/HomeModule/Views/home_screen.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:provider/provider.dart';
 import 'package:mascotas_citas/splash_screen.dart'; // Importamos el SplashScreen
+import 'package:mascotas_citas/Modules/HomeModule/State/mascota_provider.dart';
 
 import 'Modules/AuthenticationModule/state/AuthState.dart';
 
@@ -18,6 +19,7 @@ void main() {
   runApp(MultiProvider(
     providers: [
       Provider(create: (context) => AuthState),
+      ChangeNotifierProvider(create: (context) => MascotaProvider()),
     ],
     child: const MainApp(),
   ));

@@ -31,6 +31,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/logos/google_logo.svg
-    - assets/logos/logo_wildlove_nombre.png
+  - assets/logos/google_logo.svg
+  - assets/logos/logo_wildlove_nombre.png
+  - assets/propietarios/  # Carpeta con fotos de propietarios
+  - assets/mascotas/      # Carpeta con fotos de mascotas
     

@@ -33,11 +33,20 @@ class _FotoSliderState extends State<FotoSlider> {
             });
           },
           itemBuilder: (context, index) {
-            return Image.asset(
-              widget.fotos[index],
-              fit: BoxFit.cover,
-            );
-          },
+  return Image.asset(
+    widget.fotos[index],
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) {
+      print("Error al cargar imagen: ${widget.fotos[index]}");
+      return Container(
+        color: Colors.grey[300],
+        child: Center(
+          child: Icon(Icons.broken_image, size: 50, color: Colors.grey[600]),
+        ),
+      );
+    },
+  );
+},
         ),
         if (widget.fotos.length > 1)
           Positioned(

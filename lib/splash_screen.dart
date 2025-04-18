@@ -27,7 +27,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     
     _animationController.forward();
     
-    Timer(const Duration(seconds: 5), () {
+    Timer(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacementNamed('/authScreen'); // Usar la ruta definida
     });
   }
