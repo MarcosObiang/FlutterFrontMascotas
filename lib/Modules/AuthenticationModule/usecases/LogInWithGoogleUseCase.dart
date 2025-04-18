@@ -19,10 +19,10 @@ class LogInWithGoogleUseCase {
     authState.setAuthStateLoading();
     try {
       LoginDTO? token = await authenticationRepo.login();
-      // await authdataService.setToken(token?.token);
-      // await authdataService.setRefreshToken(token?.refreshToken);
-      // await authdataService.setUserUID(token?.userUID);
-      // await authdataService.setExpirationDate(token?.expirationDate);
+      await authdataService.setToken(token?.token);
+      await authdataService.setRefreshToken(token?.refreshToken);
+      await authdataService.setUserUID(token?.userUID);
+      await authdataService.setExpirationDate(token?.expirationDate);
       authState.setAuthStateUserLogged();
 
     } on Exception catch (e) {

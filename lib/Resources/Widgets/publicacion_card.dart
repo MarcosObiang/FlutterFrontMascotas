@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'dart:io';
-import '../models/publicacion.dart';
+import '../Models/publicacion.dart';
 import '../../Modules/SocialModule/State/social_provider.dart';
 import '../../Modules/HomeModule/State/mascota_provider.dart';
 import './comentario_bottom_sheet.dart';

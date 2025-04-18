@@ -1,5 +1,9 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_onboarding_slider/flutter_onboarding_slider.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
 
 class Createuserscreen extends StatefulWidget {
   const Createuserscreen({super.key});
@@ -10,9 +14,14 @@ class Createuserscreen extends StatefulWidget {
 
 class _CreateuserscreenState extends State<Createuserscreen> {
   TextEditingController nameTextEditingController = TextEditingController();
+  TextEditingController bioTextEditingController = TextEditingController();
   DateTime? _selectedDate;
-  FocusNode focusNode = FocusNode();
+  Uint8List? userImage;
+  FocusNode nameInputFocusNode = FocusNode();
+  FocusNode bioFocusNode = FocusNode();
   int age = 0;
+  String bio = "";
+  String userName = "";
 
   // Function to show the date picker
   Future<void> _presentDatePicker() async {
@@ -26,7 +35,7 @@ class _CreateuserscreenState extends State<Createuserscreen> {
       setState(() {
         _selectedDate = picked;
         age = calculateAge(_selectedDate!);
-         // Update the state with the selected date
+        // Update the state with the selected date
       });
     }
   }
@@ -50,49 +59,134 @@ class _CreateuserscreenState extends State<Createuserscreen> {
     return age < 0 ? 0 : age; // Retorna 0 si la fecha es futura
   }
 
+  Future<void> _pickImage() async {
+    List<XFile>? res = await ImagePicker().pickMultiImage();
+    if (res.isEmpty) return;
+
+    userImage = await res.first.readAsBytes();
+
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
+      body: OnBoardingSlider(
+        background: [Container(), Container()],
+        speed: 2,
+        headerBackgroundColor: Colors.white,
+        pageBackgroundColor: Colors.white,
+        finishButtonText: 'Register',
+        finishButtonStyle: FinishButtonStyle(
+          backgroundColor: Colors.black,
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Container(
-                height: 400.h,
+        skipTextButton: Text('Skip'),
+        totalPage: 2,
+        pageBodies: [page1(), page2()],
+      ),
+    );
+  }
+
+  Container page1() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            GestureDetector(
+              onTap: () async {
+                await _pickImage();
+              },
+              child: Container(
+                height: 600.h,
                 width: 600.w,
-                decoration: BoxDecoration(color: Colors.blue),
+                decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(10),
+                    image: userImage == null
+                        ? null
+                        : DecorationImage(image: MemoryImage(userImage!))),
                 child: Center(
-                  child: Icon(Icons.camera_alt_outlined),
+                  child: Icon(
+                    Icons.camera_alt_outlined,
+                    color:
+                        userImage == null ? Colors.transparent : Colors.black,
+                  ),
                 ),
               ),
-              SizedBox(
-                height: 20.h,
+            ),
+            SizedBox(
+              height: 200.h,
+            ),
+            SizedBox(
+              height: 200.h,
+            ),
+            TextFormField(
+              focusNode: nameInputFocusNode,
+              keyboardType: TextInputType.name,
+              decoration: InputDecoration(
+                label: Text("Nombre"),
               ),
-              TextField(
-                  focusNode: focusNode,
-                  keyboardType: TextInputType.name,
-                  decoration: InputDecoration(
-                    label: Text("Nombre"),
-                  ),
-                  controller: nameTextEditingController),
-              Row(
-                children: [
-                  Text(age.toString() + " Años"),
-                  OutlinedButton.icon(
-                      onPressed: () {
-                        focusNode.unfocus();
-                        _presentDatePicker();
-                      },
-                      label: Icon(Icons.calendar_month_outlined)),
-                ],
-              )
-            ],
-          ),
+              controller: nameTextEditingController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Por favor, introduce tu nombre';
+                }
+                if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+                  return 'El nombre solo debe contener letras y espacios';
+                }
+                return null;
+              },
+              onChanged: (value) {
+                userName = value;
+              },
+            ),
+            SizedBox(
+              height: 200.h,
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("$age Años"),
+                OutlinedButton.icon(
+                    onPressed: () {
+                      nameInputFocusNode.unfocus();
+                      _presentDatePicker();
+                    },
+                    label: Text("Introduce tu fecha de nacimiento")),
+              ],
+            )
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget page2() {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          Text("Cuentanos algo sobre ti"),
+          SizedBox(
+            height: 200.h,
+          ),
+          TextField(
+            focusNode: bioFocusNode,
+            maxLength: 300,
+            maxLines: 10,
+            controller: bioTextEditingController,
+            decoration: InputDecoration(
+              label: Text("Bio"),
+            ),
+            onChanged: (value) {
+              bio = value;
+            },
+          ),
+        ],
       ),
     );
   }

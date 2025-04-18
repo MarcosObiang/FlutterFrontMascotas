@@ -17,13 +17,13 @@ class AuthDataService {
   AuthDataService({required this.secureStorage});
 
   /// The authentication token.
-  String? token;
+  String? token="";
 
   /// The refresh token.
-  String? refreshToken;
+  String? refreshToken="";
 
   /// The user's unique identifier (UID).
-  String? userUID;
+  String? userUID="";
 
   DateTime? expirationDate;
 
