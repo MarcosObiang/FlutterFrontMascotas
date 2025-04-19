@@ -8,42 +8,53 @@ import 'package:app_links/app_links.dart';
 import 'package:mascotas_citas/services/ApiService.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+// Esta clase implementa el login con Google en aplicaciones Flutter Web.
 class WebLoginService implements IAuthServices {
+  // Instancias necesarias: una para los enlaces y otra para autenticación web.
   final appLinks = AppLinks();
   final FlutterWebAuth2 appAuth = FlutterWebAuth2();
   ApiService apiService;
 
+  // Constructor que recibe el servicio de API para hacer llamadas al backend.
   WebLoginService({required this.apiService});
 
+  // Método principal para iniciar sesión
   @override
   Future<Map<String, dynamic>?> login() async {
     try {
+      // URL base del endpoint de autorización de Google
       final authorizationEndpoint =
           Uri.parse('https://accounts.google.com/o/oauth2/v2/auth');
 
-      final scope = 'profile'; // Define los permisos que necesitas
+      // Scope que define los permisos que queremos (nombre, foto, correo)
+      final scope = 'profile email';
 
+      // Construimos la URL de autorización con parámetros necesarios
       final authorizationUrl = authorizationEndpoint.replace(queryParameters: {
         'client_id': ConstValues.googleClientId,
         'redirect_uri': ConstValues.redirectUrl,
         'response_type': 'code',
         'scope': scope,
-        // Puedes añadir un 'state' para seguridad
+        // Puedes añadir 'state' para mayor seguridad
       });
-      // Solicitar el código de autorización (solo abrirá la página en el navegador)
-      print(authorizationUrl.toString());
-      // Realizar la autorización
-      final result = await FlutterWebAuth2.authenticate(
-          url: authorizationUrl.toString(),
-          callbackUrlScheme: 'com.example.mascotascitas',
-          options: FlutterWebAuth2Options(useWebview: false));
 
-      // El flujo se detiene aquí, ya que solo abrimos el navegador y esperamos el código de autorización
-      // Después de la autorización, Google redirigirá al backend
+      // Imprime la URL que se abrirá en el navegador
+      print(authorizationUrl.toString());
+
+      // Abre el navegador para que el usuario se autentique con su cuenta de Google
+      final result = await FlutterWebAuth2.authenticate(
+        url: authorizationUrl.toString(),
+        callbackUrlScheme: 'com.example.mascotascitas', // Tu esquema de redirección personalizado
+        options: FlutterWebAuth2Options(useWebview: false),
+      );
+
+      // Si el usuario completó el login, extraemos el código de autorización
       if (result != null) {
         print('Código de autorización recibido: ${result}');
         String authCode = _getAuthCode(result);
-       return _getAccessToken(authCode);
+
+        // Se envía el código al backend para intercambiarlo por un token
+        return _getAccessToken(authCode);
       } else {
         print('Autorización fallida o cancelada');
       }
@@ -52,12 +63,14 @@ class WebLoginService implements IAuthServices {
     }
   }
 
+  // Método auxiliar para extraer el código de autorización desde la URL devuelta
   String _getAuthCode(String uriString) {
     Uri uri = Uri.parse(uriString);
     String code = uri.queryParameters['code']!;
     return code;
   }
 
+  // Método que llama a tu backend con el código para obtener el token y demás datos del usuario
   Future<Map<String, dynamic>> _getAccessToken(String authCode) async {
     try {
       final response =
@@ -65,61 +78,33 @@ class WebLoginService implements IAuthServices {
         "code": authCode,
       });
 
-      return {
-        'token': response.data['token'],
-        'refreshToken': response.data['refreshToken'],
-        'userUID': response.data['userUID'],
-        'expirationDate': response.data['expirationDate']
+      // Extraemos los datos importantes de la respuesta del backend
+      Map<String, dynamic> result = {
+        'token': response.data['data']['token'],
+        'refreshToken': response.data['data']['token'], // parece que se repite el token aquí  pero es para que cuando elijamos si queiremos logica de refresco mas adelante, por ahora vale para ir trando
+        'userUID': response.data['data']['userUID'],
+        'expirationDate': response.data['data']['expiresAt'],
       };
 
-      return response.data;
+      return result;
+
     } on Exception catch (e) {
       throw Exception(e);
     }
   }
 
-  Future<Map<String, dynamic>?> _listenForRedirects() async {
-    try {
-      final uriStream = await appLinks.stringLinkStream.first
-          .timeout(Duration(seconds: 30), onTimeout: () async {
-        throw TimeOutException(
-            message: "Tiempo de espera agotado", title: "Error", content: " ");
-      });
-      return _extractAuthTokenFromUri(Uri.parse(uriStream));
-    } catch (e) {
-      developer.log('Error al escuchar redirección: ${e.toString()}');
-      return null;
-    }
-  }
 
-  Map<String, dynamic>? _extractAuthTokenFromUri(Uri uri) {
-    final token = uri.queryParameters['token'];
-    final refreshToken = uri.queryParameters['refreshToken'] ?? "NOT_FOUND";
-    final userUID = uri.queryParameters['userUID'];
-    final expirationDate = uri.queryParameters['expiresAt'];
-    if (token == null ||
-        refreshToken == null ||
-        userUID == null ||
-        expirationDate == null) {
-      return null;
-    }
-    return {
-      'token': token,
-      'refreshToken': refreshToken,
-      'userUID': userUID,
-      'expirationDate': expirationDate,
-    };
-  }
 
+
+
+  // Métodos aún no implementados para logout y refresco del token
   @override
   Future<void> logout() {
-    // TODO: implement logout
     throw UnimplementedError();
   }
 
   @override
   Future<void> refreshToken({required String refreshToken}) {
-    // TODO: implement refreshToken
     throw UnimplementedError();
   }
 }

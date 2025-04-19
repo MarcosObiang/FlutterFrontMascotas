@@ -19,7 +19,7 @@ class LoginDTO {
   factory LoginDTO.fromJson(Map<String, dynamic> json) {
     return LoginDTO(
       token: json['token'],
-      refreshToken: json['refreshToken'],
+      refreshToken: (json['refreshToken']),
       userUID: json['userUID'],
       expirationDate: DateTime.parse(json['expirationDate']),
     );
