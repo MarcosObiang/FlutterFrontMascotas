@@ -1,70 +1,73 @@
 // datos/datos_mascotas.dart
-import 'mascota.dart';
+import 'package:intl/intl.dart';
+import 'mascota_api.dart';
 import 'match.dart';
 import 'mensaje.dart';
 
 // Datos de ejemplo para mascotas
 final List<Mascota> DATOS_MASCOTAS = [
-  Mascota(
+  // Mascota propia (no en adopción)
+  Mascota.particular(
     id: '1',
     nombre: 'Mi Mascota',
-    edad: '3',
+    edad: '3 años',
     raza: 'Labrador',
     descripcion: 'Mi adorable mascota',
     fotos: ['assets/images/mi_mascota.jpg'],
     especie: 'perro',
+    propietarioId: 'user1',
     propietarioNombre: 'Luis',
-    propietarioFoto: 
-    'assets/images/luis.jpg',
+    propietarioFoto: 'assets/images/luis.jpg',
     ubicacion: 'Madrid',
     intereses: ['Jugar', 'Comer', 'Dormir'],
-    enAdopcion: false,
-    
   ),
-  Mascota(
+  
+  // Mascota particular en adopción
+  Mascota.particularEnAdopcion(
     id: '2',
     nombre: 'Luna',
-    edad: '2',
+    edad: '2 años',
     raza: 'Beagle',
     descripcion: 'Juguetona y muy amigable',
     fotos: ['assets/images/luna.jpg'],
     especie: 'perro',
+    propietarioId: 'user2',
     propietarioNombre: 'Juan',
     propietarioFoto: 'assets/images/juan.jpg',
     ubicacion: 'Barcelona',
     intereses: ['Jugar', 'Caminar', 'Dormir'],
-    enAdopcion: true,
-    
   ),
-  Mascota(
+  
+  // Mascota de centro de adopción
+  Mascota.enAdopcion(
     id: '3',
     nombre: 'Max',
-    edad: '4',
+    edad: '4 años',
     raza: 'Golden Retriever',
     descripcion: 'Le encanta nadar y jugar a la pelota',
     fotos: ['assets/images/max.jpg'],
     especie: 'perro',
-    propietarioNombre: 'Ana',
-    propietarioFoto: 'assets/images/ana.jpg',
+    centroAdopcionId: 'centro1',
+    centroNombre: 'Centro de Adopción Canina',
+    centroFoto: 'assets/images/ana.jpg',
     ubicacion: 'Madrid',
     intereses: ['Jugar', 'Nadar', 'Correr'],
-    enAdopcion: true,
-    
   ),
-  Mascota(
+  
+  // Otra mascota de centro de adopción
+  Mascota.enAdopcion(
     id: '4',
     nombre: 'Coco',
-    edad: '1',
+    edad: '1 año',
     raza: 'French Bulldog',
-    descripcion: 'Muy cari oso y le encantan los mimos',
+    descripcion: 'Muy cariñoso y le encantan los mimos',
     fotos: ['assets/images/coco.jpg'],
     especie: 'perro',
-    propietarioNombre: 'Luisa',
-    propietarioFoto: 'assets/images/luisa.jpg',
+    centroAdopcionId: 'centro2',
+    centroNombre: 'Adopta un Amigo',
+    centroFoto: 'assets/images/luisa.jpg',
     ubicacion: 'Sevilla',
     intereses: ['Caminar', 'Dormir', 'Jugar'],
-    enAdopcion: true,
-    
   ),
 ];
 

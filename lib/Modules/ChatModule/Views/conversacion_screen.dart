@@ -1,6 +1,6 @@
 // screens/conversacion_screen.dart
 import 'package:flutter/material.dart';
-import 'package:mascotas_citas/Resources/Models/mascota.dart';
+import 'package:mascotas_citas/Resources/Models/mascota_api.dart';
 import 'package:mascotas_citas/Resources/Models/mensaje.dart';
 import 'package:mascotas_citas/Resources/widgets/burbuja_mensaje.dart';
 import 'package:mascotas_citas/Modules/MatchesModule/Views/detalle_match_screen.dart';

@@ -1,70 +1,86 @@
-// screens/matches_screen.dart
 import 'package:flutter/material.dart';
-import 'package:mascotas_citas/Resources/Models/mascota.dart';
+import 'package:mascotas_citas/Resources/Models/mascota_api.dart';
+import '../../../Resources/Services/api_service.dart';
 import 'detalle_match_screen.dart';
 
-class MatchesScreen extends StatelessWidget {
+class MatchesScreen extends StatefulWidget {
   const MatchesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Datos simulados de mascotas con match
-    final List<Mascota> mascotasMatch = [
-      Mascota(
-        id: 'm1',
-        nombre: 'Luna',
-        edad: '3',
-        especie: 'Perro',
-        raza: 'Labrador',
-        descripcion: 'Soy juguetona y me encanta nadar',
-        fotos: ['assets/images/mascotas/luna.jpg', 'assets/images/mascotas/luna2.jpg'],
-        propietarioNombre: 'Carlos Rodríguez',
-        propietarioFoto: 'assets/images/usuarios/carlos.jpg',
-        ubicacion: 'Madrid',
-        intereses: ['Jugar en el parque', 'Nadar', 'Pasear'],
-        enAdopcion: false,
-        propietarioId: 'u2',
-      ),
-      Mascota(
-        id: 'm2',
-        nombre: 'Max',
-        edad: '2',
-        especie: 'Gato',
-        raza: 'Siamés',
-        descripcion: 'Soy tranquilo y me gusta dormir al sol',
-        fotos: ['assets/images/mascotas/max.jpg', 'assets/images/mascotas/max2.jpg'],
-        propietarioNombre: 'Ana Martínez',
-        propietarioFoto: 'assets/images/usuarios/ana.jpg',
-        ubicacion: 'Barcelona',
-        intereses: ['Dormir', 'Jugar con lana', 'Cazar juguetes'],
-        enAdopcion: false,
-        propietarioId: 'u3',
-      ),
-      Mascota(
-        id: 'm3',
-        nombre: 'Rocky',
-        edad: '4',
-        especie: 'Perro',
-        raza: 'Bulldog',
-        descripcion: 'Soy cariñoso y me gusta jugar con otros perros',
-        fotos: ['assets/images/mascotas/rocky.jpg', 'assets/images/mascotas/rocky2.jpg'],
-        propietarioNombre: 'Laura González',
-        propietarioFoto: 'assets/images/usuarios/laura.jpg',
-        ubicacion: 'Valencia',
-        intereses: ['Correr', 'Jugar con pelotas', 'Pasear por la playa'],
-        enAdopcion: false,
-        propietarioId: 'u4',
-      ),
-    ];
+  State<MatchesScreen> createState() => _MatchesScreenState();
+}
 
+class _MatchesScreenState extends State<MatchesScreen> {
+  List<Mascota> matches = [];
+  bool isLoading = true;
+  String? error;
+  
+  // Usuario actual (esto debería venir de un servicio de autenticación)
+  final usuarioActual = {"id": "usuarioActualId"};
+  
+  // Instancia del servicio API
+  final apiService = ApiService();
+  
+  @override
+  void initState() {
+    super.initState();
+    cargarMatches();
+  }
+  
+  // Para obtener y mostrar mascotas con match
+  void cargarMatches() async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+    
+    try {
+      final mascotasConMatch = await apiService.getMatchesWithDetails(usuarioActual["id"]!);
+      setState(() {
+        matches = mascotasConMatch;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        error = 'Error al cargar matches: $e';
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color.fromRGBO(242, 217, 208, 1),
         title: Text('Mis Matches', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: cargarMatches,
+            tooltip: 'Recargar matches',
+          ),
+        ],
       ),
       backgroundColor: Color.fromRGBO(242, 217, 208, 1),
-      body: mascotasMatch.isEmpty
+      body: isLoading 
+        ? Center(child: CircularProgressIndicator())
+        : error != null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(error!, style: TextStyle(color: Colors.red)),
+                  SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: cargarMatches,
+                    child: Text('Reintentar'),
+                  ),
+                ],
+              ),
+            )
+        : matches.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -86,9 +102,9 @@ class MatchesScreen extends StatelessWidget {
             )
           : ListView.builder(
               padding: EdgeInsets.all(16),
-              itemCount: mascotasMatch.length,
+              itemCount: matches.length,
               itemBuilder: (context, index) {
-                final mascota = mascotasMatch[index];
+                final mascota = matches[index];
                 return _construirTarjetaMatch(context, mascota);
               },
             ),
@@ -114,7 +130,7 @@ class MatchesScreen extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 30,
-                backgroundImage: AssetImage(mascota.fotos.first),
+                backgroundImage: NetworkImage(mascota.fotos.first),
               ),
               SizedBox(width: 16),
               Expanded(

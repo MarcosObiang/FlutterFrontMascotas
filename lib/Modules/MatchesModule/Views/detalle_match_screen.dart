@@ -1,11 +1,11 @@
 // screens/detalle_match_screen.dart
 import 'package:flutter/material.dart';
-import '../../../Resources/Models/mascota.dart';
+// Cambiamos la importación de mascota.dart a mascota_api.dart
+import 'package:mascotas_citas/Resources/Models/mascota_api.dart';
 import '../../../Resources/Widgets/foto_slider.dart';
 import '../../../Resources/Widgets/interes_chip.dart';
-// Corregir la importación para ConversacionScreen
-import 'package:mascotas_citas/Resources/Models/mensaje.dart'; // Añadido para Mensaje
-import 'package:mascotas_citas/Modules/ChatModule/Views/conversacion_screen.dart'; // Ruta corregida
+import 'package:mascotas_citas/Resources/Models/mensaje.dart';
+import 'package:mascotas_citas/Modules/ChatModule/Views/conversacion_screen.dart';
 
 class DetalleMatchScreen extends StatelessWidget {
   final Mascota mascota;
@@ -64,7 +64,6 @@ class DetalleMatchScreen extends StatelessWidget {
                           // Buscar el matchId correspondiente (en un caso real esto vendría de un Provider)
                           String matchId = 'm1'; // Simulado para este ejemplo
                           
-                          // Corregido: Usamos el constructor correcto de ConversacionScreen
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -147,10 +146,11 @@ class DetalleMatchScreen extends StatelessWidget {
                   ListTile(
                     leading: CircleAvatar(
                       radius: 25,
-                      backgroundImage: AssetImage(mascota.propietarioFoto),
+                      // Cambiamos a NetworkImage para usar URLs de la API
+                      backgroundImage: NetworkImage(mascota.propietarioFoto ?? 'https://via.placeholder.com/150'),
                     ),
                     title: Text(
-                      mascota.propietarioNombre,
+                      mascota.propietarioNombre ?? 'Propietario',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,

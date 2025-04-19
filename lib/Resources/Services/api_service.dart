@@ -8,6 +8,7 @@ import '../Models/usuario.dart';
 class ApiService {
   static const String _baseUrlPets = 'http://localhost:8083';
   static const String _baseUrlUsers = 'http://localhost:8082';
+  static const String _baseUrlLikes = 'http://localhost:8084'; // Nuevo URL para servicio de likes
   
   // Método para obtener todas las mascotas
   Future<List<Mascota>> getAllPets() async {
@@ -71,5 +72,73 @@ class ApiService {
     } else {
       throw Exception('Error al cargar el usuario: ${response.statusCode}');
     }
+  }
+  
+  // NUEVOS MÉTODOS PARA EL SERVICIO DE LIKES
+  
+  // Método para crear un like
+  Future<Map<String, dynamic>> createLike(String userId, String petId) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrlLikes/likes/create'),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {
+        'userId': userId,
+        'petId': petId,
+      },
+    );
+    
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al crear like: ${response.statusCode}');
+    }
+  }
+  
+  // Método para obtener mascotas a las que un usuario ha dado like
+  Future<List<String>> getLikedPetsByUser(String userId) async {
+    final response = await http.get(Uri.parse('$_baseUrlLikes/likes/user/$userId'));
+    
+    if (response.statusCode == 200) {
+      final List<dynamic> petIds = jsonDecode(response.body);
+      return petIds.map<String>((id) => id.toString()).toList();
+    } else {
+      throw Exception('Error al obtener likes del usuario: ${response.statusCode}');
+    }
+  }
+  
+  // Método para obtener matches de un usuario
+  Future<List<String>> getUserMatches(String userId) async {
+    final response = await http.get(Uri.parse('$_baseUrlLikes/likes/matches/$userId'));
+    
+    if (response.statusCode == 200) {
+      final List<dynamic> petIds = jsonDecode(response.body);
+      return petIds.map<String>((id) => id.toString()).toList();
+    } else {
+      throw Exception('Error al obtener matches del usuario: ${response.statusCode}');
+    }
+  }
+  
+  // Método para obtener las mascotas completas a las que un usuario ha dado like
+  Future<List<Mascota>> getLikedPetsWithDetails(String userId) async {
+    // Primero obtenemos los IDs de las mascotas con like
+    final List<String> likedPetIds = await getLikedPetsByUser(userId);
+    
+    // Después obtenemos todas las mascotas
+    final List<Mascota> allPets = await getAllPets();
+    
+    // Filtramos las mascotas que tienen like
+    return allPets.where((pet) => likedPetIds.contains(pet.id)).toList();
+  }
+  
+  // Método para obtener mascotas con matches completos (detalles incluidos)
+  Future<List<Mascota>> getMatchesWithDetails(String userId) async {
+    // Primero obtenemos los IDs de los matches
+    final List<String> matchPetIds = await getUserMatches(userId);
+    
+    // Después obtenemos todas las mascotas
+    final List<Mascota> allPets = await getAllPets();
+    
+    // Filtramos las mascotas que tienen match
+    return allPets.where((pet) => matchPetIds.contains(pet.id)).toList();
   }
 }

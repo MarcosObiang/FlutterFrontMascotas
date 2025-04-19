@@ -68,10 +68,63 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   
   // Método para dar like
-  void darLike() {
-    setState(() {
-      _currentIndex++;
-    });
+  void darLike() async {
+    // Verificar que hay una mascota actual
+    if (mascotaActual == null) return;
+    
+    final String userId = "usuarioActual.id"; // Esto debería venir del usuario logueado
+    final String petId = mascotaActual!.id;
+    
+    try {
+      final resultado = await _apiService.createLike(userId, petId);
+      if (resultado['isMatch'] == true) {
+        // Mostrar notificación de match
+        _showMatchNotification(context, mascotaActual!);
+      }
+      // Avanzamos al siguiente perfil
+      setState(() {
+        _currentIndex++;
+      });
+      _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
+    } catch (e) {
+      // Manejar error
+      _showSnackBar(context, 'Error al registrar el like: $e', Colors.red);
+    }
+  }
+  
+  // Método para mostrar notificación de match
+  void _showMatchNotification(BuildContext context, Mascota mascota) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('¡Tienes un nuevo match!'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 50,
+              backgroundImage: NetworkImage(mascota.fotos.first),
+            ),
+            SizedBox(height: 16),
+            Text('Has hecho match con ${mascota.nombre}'),
+            Text('¡Ve a la sección de matches para chatear!'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cerrar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Aquí podrías navegar a la página de matches
+            },
+            child: Text('Ver match'),
+          ),
+        ],
+      ),
+    );
   }
   
   // Método para dar dislike
@@ -153,7 +206,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: Colors.pink,
                         onPressed: () {
                           darLike();
-                          _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
                         },
                       ),
                     ],
@@ -188,7 +240,6 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_dragPosition > 0) {
             // Swipe derecha (like)
             darLike();
-            _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
           } else {
             // Swipe izquierda (dislike)
             darDislike();
