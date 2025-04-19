@@ -1,4 +1,5 @@
-// widgets/foto_slider.dart
+// Modificación 1: foto_slider.dart
+// Añade manejo de errores para la carga de imágenes
 import 'package:flutter/material.dart';
 
 class FotoSlider extends StatefulWidget {
@@ -33,20 +34,21 @@ class _FotoSliderState extends State<FotoSlider> {
             });
           },
           itemBuilder: (context, index) {
-  return Image.asset(
-    widget.fotos[index],
-    fit: BoxFit.cover,
-    errorBuilder: (context, error, stackTrace) {
-      print("Error al cargar imagen: ${widget.fotos[index]}");
-      return Container(
-        color: Colors.grey[300],
-        child: Center(
-          child: Icon(Icons.broken_image, size: 50, color: Colors.grey[600]),
-        ),
-      );
-    },
-  );
-},
+            // Añadimos un errorBuilder para manejar errores de carga de imágenes
+            return Image.asset(
+              widget.fotos[index],
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                print("Error al cargar imagen: ${widget.fotos[index]}");
+                return Container(
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: Icon(Icons.broken_image, size: 60, color: Colors.white70),
+                  ),
+                );
+              },
+            );
+          },
         ),
         if (widget.fotos.length > 1)
           Positioned(

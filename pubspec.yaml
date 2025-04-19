@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   intl: ^0.18.0
-  timeago: ^3.3.0
+  timeago: ^3.4.0
   url_launcher: ^6.3.1
   app_links: ^6.4.0
   get_it: ^8.0.3
@@ -31,8 +31,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-  - assets/logos/google_logo.svg
-  - assets/logos/logo_wildlove_nombre.png
-  - assets/propietarios/  # Carpeta con fotos de propietarios
-  - assets/mascotas/      # Carpeta con fotos de mascotas
+    - assets/logos/
+    - assets/logos/google_logo.svg
+    - assets/logos/logo_wildlove_nombre.png
+    - assets/mascotas/      # Carpeta con fotos de mascotas
+    - assets/propietarios/  # Carpeta con fotos de propietarios
+  
     

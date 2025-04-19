@@ -1,13 +1,9 @@
-// navigation_controller.dart
 import 'package:flutter/material.dart';
-
 import 'modules/ChatModule/Views/chat_screen.dart';
 import 'modules/HomeModule/Views/home_screen.dart';
 import 'modules/MatchesModule/Views/matches_screen.dart';
 import 'modules/SocialModule/Views/social_screen.dart';
 import 'modules/ProfileModule/Views/perfil_screen.dart';
-
-
 
 class NavigationController extends StatefulWidget {
   const NavigationController({super.key});
@@ -19,7 +15,8 @@ class NavigationController extends StatefulWidget {
 class _NavigationControllerState extends State<NavigationController> {
   int _selectedIndex = 0;
   
-  final List<Widget> _screens = [
+  // Método para obtener las pantallas, asegurando que tengan acceso a los providers
+  List<Widget> _getScreens(BuildContext context) => [
     HomeScreen(),
     MatchesScreen(),
     SocialScreen(),
@@ -29,8 +26,11 @@ class _NavigationControllerState extends State<NavigationController> {
 
   @override
   Widget build(BuildContext context) {
+    // Obtenemos las pantallas en el momento de construir el widget
+    final screens = _getScreens(context);
+    
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
@@ -41,7 +41,7 @@ class _NavigationControllerState extends State<NavigationController> {
             _selectedIndex = index;
           });
         },
-        items: [
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.pets),
             label: 'Descubrir',

@@ -7,7 +7,8 @@ class BurbujaMensaje extends StatelessWidget {
   final bool esMio;
   final DateTime fecha;
   
-  const BurbujaMensaje({super.key, 
+  const BurbujaMensaje({
+    super.key,
     required this.mensaje,
     required this.esMio,
     required this.fecha,
@@ -19,15 +20,21 @@ class BurbujaMensaje extends StatelessWidget {
       alignment: esMio ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: EdgeInsets.only(
-          top: 8,
-          bottom: 8,
-          left: esMio ? 80 : 0,
-          right: esMio ? 0 : 80,
+          bottom: 16,
+          left: esMio ? 50 : 0,
+          right: esMio ? 0 : 50,
         ),
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: esMio ? Colors.pink : Colors.grey[200],
+          color: esMio ? Colors.pink[100] : Colors.white,
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 3,
+              offset: Offset(0, 1),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,21 +42,38 @@ class BurbujaMensaje extends StatelessWidget {
             Text(
               mensaje,
               style: TextStyle(
-                color: esMio ? Colors.white : Colors.black,
                 fontSize: 16,
+                color: Colors.black87,
               ),
             ),
             SizedBox(height: 4),
             Text(
-              DateFormat('HH:mm').format(fecha),
+              _formatearFecha(fecha),
               style: TextStyle(
-                color: esMio ? Colors.white.withOpacity(0.7) : Colors.grey,
                 fontSize: 12,
+                color: Colors.grey,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+  
+  String _formatearFecha(DateTime fecha) {
+    final ahora = DateTime.now();
+    final diferencia = ahora.difference(fecha);
+    
+    if (diferencia.inMinutes < 1) {
+      return 'Ahora';
+    } else if (diferencia.inHours < 1) {
+      return 'Hace ${diferencia.inMinutes} min';
+    } else if (diferencia.inDays < 1 && ahora.day == fecha.day) {
+      return DateFormat('HH:mm').format(fecha);
+    } else if (diferencia.inDays < 7) {
+      return DateFormat('E HH:mm').format(fecha);
+    } else {
+      return DateFormat('dd/MM/yyyy').format(fecha);
+    }
   }
 }

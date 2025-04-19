@@ -1,12 +1,51 @@
 // screens/chat_screen.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../State/mascota_provider.dart';
-import '../../../Resources/Models/mascota.dart';
+import 'package:mascotas_citas/Resources/Models/mascota.dart';
+import 'package:mascotas_citas/Resources/Models/match.dart';
+import 'package:mascotas_citas/Resources/Models/mensaje.dart';
+import 'package:mascotas_citas/Resources/Models/datos_mascotas.dart';
 import 'conversacion_screen.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  // Obtenemos datos de mascotas y matches directamente
+  late List<Mascota> mascotasMatch;
+  late List<Match> matches;
+  late Map<String, List<Mensaje>> mensajesPorMatch;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializamos los datos
+    cargarDatos();
+  }
+
+  void cargarDatos() {
+    // Obtenemos mascotas que tienen match con nuestra mascota (ID 1)
+    mascotasMatch = obtenerMascotasConMatch();
+    matches = DATOS_MATCHES;
+    mensajesPorMatch = DATOS_MENSAJES_POR_MATCH;
+  }
+
+  List<Mascota> obtenerMascotasConMatch() {
+    // Filtrar mascotas que tienen match con nuestra mascota (ID 1)
+    final matchesIds = DATOS_MATCHES
+        .where((match) => match.mascotaId1 == '1' || match.mascotaId2 == '1')
+        .map((match) => match.mascotaId1 == '1' ? match.mascotaId2 : match.mascotaId1)
+        .toList();
+    
+    return DATOS_MASCOTAS.where((mascota) => matchesIds.contains(mascota.id)).toList();
+  }
+
+  List<Mensaje> obtenerMensajesDeMatch(String matchId) {
+    return mensajesPorMatch[matchId] ?? [];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,53 +56,53 @@ class ChatScreen extends StatelessWidget {
         centerTitle: true,
       ),
       backgroundColor: Color.fromRGBO(242, 217, 208, 1),      
-      body: Consumer<MascotaProvider>(
-        builder: (context, mascotaProvider, child) {
-          final mascotasMatch = mascotaProvider.obtenerMascotasConMatch();
-          
-          if (mascotasMatch.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.chat_bubble_outline, size: 80, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No tienes conversaciones',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Haz match con mascotas para comenzar a chatear',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            );
-          }
-          
-          return ListView.builder(
-            padding: EdgeInsets.all(16),
-            itemCount: mascotasMatch.length,
-            itemBuilder: (context, index) {
-              final mascota = mascotasMatch[index];
-              
-              // Encontrar match
-              final match = mascotaProvider.matches.firstWhere(
-                (m) => (m.mascotaId1 == '1' && m.mascotaId2 == mascota.id) || 
-                       (m.mascotaId1 == mascota.id && m.mascotaId2 == '1')
-              );
-              
-              // Obtener último mensaje
-              final mensajes = mascotaProvider.obtenerMensajesDeMatch(match.id);
-              final ultimoMensaje = mensajes.isNotEmpty ? mensajes.last : null;
-              
-              return _construirTarjetaChat(context, mascota, ultimoMensaje?.contenido, match.id);
-            },
-          );
-        },
+      body: mascotasMatch.isEmpty
+          ? _construirPantallaVacia()
+          : _construirListaChats(),
+    );
+  }
+  
+  Widget _construirPantallaVacia() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.chat_bubble_outline, size: 80, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'No tienes conversaciones',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Haz match con mascotas para comenzar a chatear',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
       ),
+    );
+  }
+  
+  Widget _construirListaChats() {
+    return ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: mascotasMatch.length,
+      itemBuilder: (context, index) {
+        final mascota = mascotasMatch[index];
+        
+        // Encontrar match
+        final match = matches.firstWhere(
+          (m) => (m.mascotaId1 == '1' && m.mascotaId2 == mascota.id) || 
+                 (m.mascotaId1 == mascota.id && m.mascotaId2 == '1')
+        );
+        
+        // Obtener último mensaje
+        final mensajes = obtenerMensajesDeMatch(match.id);
+        final ultimoMensaje = mensajes.isNotEmpty ? mensajes.last : null;
+        
+        return _construirTarjetaChat(context, mascota, ultimoMensaje?.contenido, match.id);
+      },
     );
   }
   
@@ -76,7 +115,21 @@ class ChatScreen extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ConversacionScreen(mascota: mascota, matchId: matchId),
+              builder: (context) => ConversacionScreen(
+                mascota: mascota, 
+                matchId: matchId,
+                mensajes: obtenerMensajesDeMatch(matchId),
+                onMensajeEnviado: (mensaje) {
+                  setState(() {
+                    // Añadir el nuevo mensaje a la lista de mensajes
+                    if (mensajesPorMatch.containsKey(matchId)) {
+                      mensajesPorMatch[matchId]!.add(mensaje);
+                    } else {
+                      mensajesPorMatch[matchId] = [mensaje];
+                    }
+                  });
+                },
+              ),
             ),
           );
         },

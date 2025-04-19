@@ -1,19 +1,35 @@
 // screens/conversacion_screen.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../Resources/Models/mascota.dart';
-import '../../../Resources/Models/mensaje.dart';
-import '../State/mascota_provider.dart';
-import '../../../Resources/Widgets/burbuja_mensaje.dart';
-import '../../MatchesModule/Views/detalle_match_screen.dart';
+import 'package:mascotas_citas/Resources/Models/mascota.dart';
+import 'package:mascotas_citas/Resources/Models/mensaje.dart';
+import 'package:mascotas_citas/Resources/widgets/burbuja_mensaje.dart';
+import 'package:mascotas_citas/Modules/MatchesModule/Views/detalle_match_screen.dart';
+// Remove the uuid import: import 'package:uuid/uuid.dart';
+
+// Simple UUID generator class to replace the uuid package
+class SimpleUuidGenerator {
+  int _counter = 0;
+  final String _deviceId = DateTime.now().millisecondsSinceEpoch.toString();
+  
+  String v4() {
+    _counter++;
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return '${_deviceId}_${timestamp}_$_counter';
+  }
+}
 
 class ConversacionScreen extends StatefulWidget {
   final Mascota mascota;
   final String matchId;
+  final List<Mensaje> mensajes;
+  final Function(Mensaje) onMensajeEnviado;
   
-  const ConversacionScreen({super.key, 
+  const ConversacionScreen({
+    super.key, 
     required this.mascota,
     required this.matchId,
+    required this.mensajes,
+    required this.onMensajeEnviado,
   });
   
   @override
@@ -23,6 +39,29 @@ class ConversacionScreen extends StatefulWidget {
 class _ConversacionScreenState extends State<ConversacionScreen> {
   final TextEditingController _mensajeController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  // Replace uuid with our simple generator
+  final SimpleUuidGenerator _uuidGenerator = SimpleUuidGenerator();
+  
+  // Lista local de mensajes
+  late List<Mensaje> _mensajes;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Copiamos los mensajes recibidos por parámetro
+    _mensajes = List.from(widget.mensajes);
+    
+    // Hacemos scroll hacia abajo cuando se carga la pantalla
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients && _mensajes.isNotEmpty) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
   
   @override
   void dispose() {
@@ -31,11 +70,27 @@ class _ConversacionScreenState extends State<ConversacionScreen> {
     super.dispose();
   }
   
-  void _enviarMensaje(MascotaProvider provider) {
+  void _enviarMensaje() {
     if (_mensajeController.text.trim().isEmpty) return;
     
-    provider.enviarMensaje(widget.matchId, _mensajeController.text);
-    _mensajeController.clear();
+    // Crear un nuevo mensaje
+    final nuevoMensaje = Mensaje(
+      id: _uuidGenerator.v4(), // Use our custom UUID generator
+      matchId: widget.matchId,
+      emisorId: '1', // ID de nuestra mascota
+      contenido: _mensajeController.text,
+      fechaEnvio: DateTime.now(),
+      leido: false,
+    );
+    
+    // Actualizar la lista local
+    setState(() {
+      _mensajes.add(nuevoMensaje);
+      _mensajeController.clear();
+    });
+    
+    // Notificar al padre
+    widget.onMensajeEnviado(nuevoMensaje);
     
     // Scroll hacia abajo después de enviar un mensaje
     Future.delayed(Duration(milliseconds: 100), () {
@@ -83,21 +138,15 @@ class _ConversacionScreenState extends State<ConversacionScreen> {
         ],
       ),
       backgroundColor: Color.fromRGBO(242, 217, 208, 1),      
-      body: Consumer<MascotaProvider>(
-        builder: (context, mascotaProvider, child) {
-          final mensajes = mascotaProvider.obtenerMensajesDeMatch(widget.matchId);
-          
-          return Column(
-            children: [
-              Expanded(
-                child: mensajes.isEmpty
-                    ? _construirMensajeInicial()
-                    : _construirListaMensajes(mensajes),
-              ),
-              _construirInputMensaje(mascotaProvider),
-            ],
-          );
-        },
+      body: Column(
+        children: [
+          Expanded(
+            child: _mensajes.isEmpty
+                ? _construirMensajeInicial()
+                : _construirListaMensajes(),
+          ),
+          _construirInputMensaje(),
+        ],
       ),
     );
   }
@@ -130,16 +179,16 @@ class _ConversacionScreenState extends State<ConversacionScreen> {
     );
   }
   
-  Widget _construirListaMensajes(List<Mensaje> mensajes) {
-    // ID de nuestra mascota (simulado)
+  Widget _construirListaMensajes() {
+    // ID de nuestra mascota
     const String miMascotaId = '1';
     
     return ListView.builder(
       controller: _scrollController,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      itemCount: mensajes.length,
+      itemCount: _mensajes.length,
       itemBuilder: (context, index) {
-        final mensaje = mensajes[index];
+        final mensaje = _mensajes[index];
         final esMio = mensaje.emisorId == miMascotaId;
         
         return BurbujaMensaje(
@@ -151,7 +200,7 @@ class _ConversacionScreenState extends State<ConversacionScreen> {
     );
   }
   
-  Widget _construirInputMensaje(MascotaProvider provider) {
+  Widget _construirInputMensaje() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -193,7 +242,7 @@ class _ConversacionScreenState extends State<ConversacionScreen> {
             backgroundColor: Colors.pink,
             child: IconButton(
               icon: Icon(Icons.send, color: Colors.white, size: 18),
-              onPressed: () => _enviarMensaje(provider),
+              onPressed: _enviarMensaje,
             ),
           ),
         ],

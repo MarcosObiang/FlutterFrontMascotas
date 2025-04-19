@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../Resources/Models/mascota.dart';
 import '../../../Resources/Widgets/foto_slider.dart';
 import '../../../Resources/Widgets/interes_chip.dart';
-import '../../ChatModule/views/conversacion_screen.dart';
+// Corregir la importación para ConversacionScreen
+import 'package:mascotas_citas/Resources/Models/mensaje.dart'; // Añadido para Mensaje
+import 'package:mascotas_citas/Modules/ChatModule/Views/conversacion_screen.dart'; // Ruta corregida
 
 class DetalleMatchScreen extends StatelessWidget {
   final Mascota mascota;
@@ -61,12 +63,19 @@ class DetalleMatchScreen extends StatelessWidget {
                         onPressed: () {
                           // Buscar el matchId correspondiente (en un caso real esto vendría de un Provider)
                           String matchId = 'm1'; // Simulado para este ejemplo
+                          
+                          // Corregido: Usamos el constructor correcto de ConversacionScreen
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => ConversacionScreen(
                                 mascota: mascota,
                                 matchId: matchId,
+                                mensajes: [], // Lista vacía de mensajes
+                                onMensajeEnviado: (mensaje) {
+                                  // Manejar el mensaje enviado
+                                  print('Mensaje enviado: ${mensaje.contenido}');
+                                },
                               ),
                             ),
                           );

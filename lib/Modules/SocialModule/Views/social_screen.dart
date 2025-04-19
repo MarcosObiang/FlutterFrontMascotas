@@ -1,12 +1,35 @@
 // screens/social_screen.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../State/social_provider.dart';
-import '../../../Resources/Widgets/publicacion_card.dart';
-import '../../HomeModule/State/mascota_provider.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
+// Modelo de Publicación actualizado según tu requisito
+class Publicacion {
+  final String id;
+  final String usuarioId;
+  final String nombreUsuario;
+  final String avatarUrl;
+  final String contenido;
+  final String? imagenUrl;
+  final DateTime fechaPublicacion;
+  final List comentarios;
+  final int likes;
+  bool usuarioDioLike;
+
+  Publicacion({
+    required this.id,
+    required this.usuarioId,
+    required this.nombreUsuario,
+    required this.avatarUrl,
+    required this.contenido,
+    this.imagenUrl,
+    required this.fechaPublicacion,
+    List? comentarios,
+    this.likes = 0,
+    this.usuarioDioLike = false,
+  }) : this.comentarios = comentarios ?? [];
+}
 
 class SocialScreen extends StatefulWidget {
   @override
@@ -19,7 +42,64 @@ class _SocialScreenState extends State<SocialScreen> {
   File? _selectedImage;
   bool _isUploading = false;
 
+  // Datos simulados del usuario actual
+  final String miUsuarioId = 'miUsuario';
+  final String nombreUsuario = 'Luna';
+  final String avatarUrl = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1';
+  
+  // Lista de publicaciones simuladas con la nueva estructura
+  List<Publicacion> _publicaciones = [
+    Publicacion(
+      id: 'p1',
+      usuarioId: 'user1',
+      nombreUsuario: 'Max',
+      avatarUrl: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e',
+      contenido: 'Hoy es un día perfecto para jugar en el parque',
+      imagenUrl: 'https://images.unsplash.com/photo-1534361960057-19889db9621e',
+      fechaPublicacion: DateTime.now().subtract(Duration(hours: 2)),
+      likes: 8,
+      comentarios: [
+        {'usuario': 'Carlos', 'texto': '¡Qué lindo!'},
+        {'usuario': 'Ana', 'texto': 'Me encanta verlo jugar'},
+      ],
+    ),
+    Publicacion(
+      id: 'p2',
+      usuarioId: 'user2',
+      nombreUsuario: 'Rocky',
+      avatarUrl: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb',
+      contenido: 'Mi primera vez en la playa, ¡increíble!',
+      imagenUrl: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1',
+      fechaPublicacion: DateTime.now().subtract(Duration(days: 1)),
+      likes: 15,
+      comentarios: [
+        {'usuario': 'María', 'texto': '¡Qué divertido!'},
+        {'usuario': 'Juan', 'texto': 'La playa es genial para los perros'},
+      ],
+    ),
+    Publicacion(
+      id: 'p3',
+      usuarioId: 'user3',
+      nombreUsuario: 'Bella',
+      avatarUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba',
+      contenido: 'Aprendiendo nuevos trucos',
+      imagenUrl: null,
+      fechaPublicacion: DateTime.now().subtract(Duration(days: 2)),
+      likes: 12,
+      comentarios: [
+        {'usuario': 'Pedro', 'texto': '¡Impresionante!'},
+      ],
+    ),
+  ];
+
   final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    // Configurar timeago para español
+    timeago.setLocaleMessages('es', timeago.EsMessages());
+  }
 
   @override
   void dispose() {
@@ -40,6 +120,7 @@ class _SocialScreenState extends State<SocialScreen> {
       if (pickedFile != null) {
         setState(() {
           _selectedImage = File(pickedFile.path);
+          _isComposing = true; // Activamos el botón de publicar
         });
       }
     } catch (e) {
@@ -80,8 +161,148 @@ class _SocialScreenState extends State<SocialScreen> {
     );
   }
 
-  // Método para publicar con o sin imagen
-  Future<void> _publicar(SocialProvider socialProvider, MascotaProvider mascotaProvider) async {
+  // Método para dar like a una publicación
+  void _darLike(String publicacionId) {
+    setState(() {
+      final index = _publicaciones.indexWhere((p) => p.id == publicacionId);
+      if (index != -1) {
+        final publicacion = _publicaciones[index];
+        // Toggle del like
+        if (publicacion.usuarioDioLike) {
+          _publicaciones[index] = Publicacion(
+            id: publicacion.id,
+            usuarioId: publicacion.usuarioId,
+            nombreUsuario: publicacion.nombreUsuario,
+            avatarUrl: publicacion.avatarUrl,
+            contenido: publicacion.contenido,
+            imagenUrl: publicacion.imagenUrl,
+            fechaPublicacion: publicacion.fechaPublicacion,
+            comentarios: publicacion.comentarios,
+            likes: publicacion.likes - 1,
+            usuarioDioLike: false,
+          );
+        } else {
+          _publicaciones[index] = Publicacion(
+            id: publicacion.id,
+            usuarioId: publicacion.usuarioId,
+            nombreUsuario: publicacion.nombreUsuario,
+            avatarUrl: publicacion.avatarUrl,
+            contenido: publicacion.contenido,
+            imagenUrl: publicacion.imagenUrl,
+            fechaPublicacion: publicacion.fechaPublicacion,
+            comentarios: publicacion.comentarios,
+            likes: publicacion.likes + 1,
+            usuarioDioLike: true,
+          );
+        }
+      }
+    });
+  }
+
+  // Método para mostrar comentarios
+  void _mostrarComentarios(Publicacion publicacion) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Comentarios (${publicacion.comentarios.length})',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Divider(),
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                itemCount: publicacion.comentarios.length,
+                itemBuilder: (context, index) {
+                  final comentario = publicacion.comentarios[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: Colors.grey[300],
+                          child: Icon(Icons.person, color: Colors.white),
+                          radius: 16,
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                comentario['usuario'],
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(comentario['texto']),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            Divider(),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 
+                  16 + MediaQuery.of(context).viewInsets.bottom),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Añadir un comentario...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.send, color: Colors.pink),
+                    onPressed: () {
+                      // Aquí iría la lógica para añadir un comentario
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Método para publicar
+  Future<void> _publicar() async {
     if (_postController.text.isEmpty && _selectedImage == null) return;
     
     setState(() {
@@ -89,40 +310,38 @@ class _SocialScreenState extends State<SocialScreen> {
     });
     
     try {
-      // En una implementación real, aquí subirías la imagen a un servidor
-      // y obtendrías una URL para almacenar en la publicación
-      String? imageUrl;
+      // Simulamos la subida con un pequeño retraso
+      await Future.delayed(Duration(seconds: 1));
       
+      String? imageUrl;
       if (_selectedImage != null) {
-        // Simulamos la subida con un pequeño retraso
-        await Future.delayed(Duration(seconds: 1));
-        
-        // En un entorno real, aquí tendrías la URL de la imagen subida
+        // En un entorno real, aquí subirías la imagen y obtendrías la URL
         // Para este ejemplo, simplemente usamos la ruta local
         imageUrl = _selectedImage!.path;
-        
-        // En una app real, podrías usar Firebase Storage u otro servicio:
-        // final ref = FirebaseStorage.instance.ref().child('publicaciones/${DateTime.now().millisecondsSinceEpoch}.jpg');
-        // await ref.putFile(_selectedImage!);
-        // imageUrl = await ref.getDownloadURL();
       }
       
-      socialProvider.agregarPublicacion(
-        'miUsuario',
-        mascotaProvider.miMascota?.nombre ?? 'Mi Mascota',
-        mascotaProvider.miMascota?.fotoPerfil ?? 'https://via.placeholder.com/150',
-        _postController.text,
-        imageUrl,
+      // Crear nueva publicación con la estructura actualizada
+      final nuevaPublicacion = Publicacion(
+        id: 'p${_publicaciones.length + 1}',
+        usuarioId: miUsuarioId,
+        nombreUsuario: nombreUsuario,
+        avatarUrl: avatarUrl,
+        contenido: _postController.text,
+        imagenUrl: imageUrl,
+        fechaPublicacion: DateTime.now(),
+        likes: 0,
+        usuarioDioLike: false,
       );
       
-      // Limpiamos el formulario
-      _postController.clear();
+      // Agregar a la lista de publicaciones
       setState(() {
+        _publicaciones.insert(0, nuevaPublicacion);
         _selectedImage = null;
         _isComposing = false;
         _isUploading = false;
       });
       
+      _postController.clear();
       FocusScope.of(context).unfocus();
     } catch (e) {
       setState(() {
@@ -136,10 +355,6 @@ class _SocialScreenState extends State<SocialScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final socialProvider = Provider.of<SocialProvider>(context);
-    final mascotaProvider = Provider.of<MascotaProvider>(context);
-    final publicaciones = socialProvider.publicaciones;
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color.fromRGBO(242, 217, 208, 1),
@@ -158,7 +373,7 @@ class _SocialScreenState extends State<SocialScreen> {
           Container(
             padding: EdgeInsets.all(8.0),
             decoration: BoxDecoration(
-              color: Color.fromRGBO(242, 217, 208, 1),
+              color: Colors.white,
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.withOpacity(0.2),
@@ -173,9 +388,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 Row(
                   children: [
                     CircleAvatar(
-                      backgroundImage: NetworkImage(
-                        mascotaProvider.miMascota?.fotoPerfil ?? 'https://via.placeholder.com/150',
-                      ),
+                      backgroundImage: NetworkImage(avatarUrl),
                       radius: 20,
                     ),
                     SizedBox(width: 10),
@@ -206,9 +419,7 @@ class _SocialScreenState extends State<SocialScreen> {
                         : IconButton(
                             icon: Icon(Icons.send),
                             color: _isComposing ? Colors.pink : Colors.grey,
-                            onPressed: _isComposing
-                                ? () => _publicar(socialProvider, mascotaProvider)
-                                : null,
+                            onPressed: _isComposing ? _publicar : null,
                           ),
                   ],
                 ),
@@ -266,7 +477,7 @@ class _SocialScreenState extends State<SocialScreen> {
           
           // Lista de publicaciones
           Expanded(
-            child: publicaciones.isEmpty
+            child: _publicaciones.isEmpty
                 ? Center(child: Text('¡Aún no hay publicaciones! Sé el primero en compartir.'))
                 : RefreshIndicator(
                     onRefresh: () async {
@@ -275,9 +486,9 @@ class _SocialScreenState extends State<SocialScreen> {
                     },
                     child: ListView.builder(
                       padding: EdgeInsets.all(8.0),
-                      itemCount: publicaciones.length,
+                      itemCount: _publicaciones.length,
                       itemBuilder: (context, index) {
-                        return PublicacionCard(publicacion: publicaciones[index]);
+                        return _buildPublicacionCard(_publicaciones[index]);
                       },
                     ),
                   ),
@@ -290,5 +501,224 @@ class _SocialScreenState extends State<SocialScreen> {
         child: Icon(Icons.camera_alt),
       ),
     );
+  }
+
+  // Widget para mostrar una publicación (basado en PublicacionCard)
+  Widget _buildPublicacionCard(Publicacion publicacion) {
+    final fechaRelativa = timeago.format(publicacion.fechaPublicacion, locale: 'es');
+
+    return Card(
+      margin: EdgeInsets.only(bottom: 12),
+      elevation: 0.5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Encabezado de la publicación
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundImage: NetworkImage(publicacion.avatarUrl),
+                  radius: 22,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        publicacion.nombreUsuario,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        fechaRelativa,
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            
+            // Contenido de la publicación
+            if (publicacion.contenido.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  publicacion.contenido,
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            
+            // Imagen de la publicación (si existe)
+            if (publicacion.imagenUrl != null)
+              Padding(
+                padding: EdgeInsets.only(top: publicacion.contenido.isEmpty ? 12 : 0, bottom: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: _buildImageWidget(publicacion.imagenUrl!),
+                ),
+              ),
+            
+            // Contadores y acciones
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Contador de likes
+                Row(
+                  children: [
+                    Icon(
+                      Icons.favorite,
+                      size: 18,
+                      color: Colors.pink,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      '${publicacion.likes}',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                // Contador de comentarios
+                InkWell(
+                  onTap: () => _mostrarComentarios(publicacion),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.chat_bubble_outline,
+                        size: 18,
+                        color: Colors.grey.shade700,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        '${publicacion.comentarios.length}',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            
+            Divider(height: 24),
+            
+            // Botones de acciones
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                // Botón de Like
+                InkWell(
+                  onTap: () => _darLike(publicacion.id),
+                  child: Row(
+                    children: [
+                      Icon(
+                        publicacion.usuarioDioLike ? Icons.favorite : Icons.favorite_border,
+                        color: publicacion.usuarioDioLike ? Colors.pink : Colors.grey.shade700,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Me gusta',
+                        style: TextStyle(
+                          color: publicacion.usuarioDioLike ? Colors.pink : Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Botón de Comentar
+                InkWell(
+                  onTap: () => _mostrarComentarios(publicacion),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.chat_bubble_outline,
+                        color: Colors.grey.shade700,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Comentar',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Método para determinar si mostrar una imagen local o de red
+  Widget _buildImageWidget(String imagePath) {
+    if (imagePath.startsWith('http')) {
+      // Es una URL de imagen en línea
+      return Image.network(
+        imagePath,
+        height: 250,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            height: 250,
+            width: double.infinity,
+            color: Colors.grey.shade200,
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 250,
+            width: double.infinity,
+            color: Colors.grey.shade200,
+            child: Center(
+              child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+            ),
+          );
+        },
+      );
+    } else {
+      // Es una ruta de archivo local
+      return Image.file(
+        File(imagePath),
+        height: 250,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 250,
+            width: double.infinity,
+            color: Colors.grey.shade200,
+            child: Center(
+              child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+            ),
+          );
+        },
+      );
+    }
   }
 }

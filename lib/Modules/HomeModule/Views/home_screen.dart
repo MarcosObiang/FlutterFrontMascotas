@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../State/mascota_provider.dart';
+import '../../../Resources/Models/mascota.dart';
 import '../../../Resources/Widgets/boton_accion.dart';
 import '../../../Resources/Widgets/tarjeta_mascota.dart';
 
@@ -21,13 +20,90 @@ class _HomeScreenState extends State<HomeScreen> {
   final double _maxRotation = 0.1; // Radianes
   final double _maxScale = 1.05;
   final double _minOpacity = 0.8;
+  
+  // Lista de mascotas de ejemplo
+  late List<Mascota> _mascotas;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar la lista de mascotas con datos de ejemplo
+    _mascotas = [
+      Mascota.particular(
+        id: '1',
+        nombre: 'Rocky',
+        edad: '3',
+        especie: 'Perro',
+        raza: 'Labrador',
+        descripcion: 'Un perro cariñoso y juguetón que adora los paseos',
+        fotos: ['assets/images/mascota1.jpg'],
+        propietarioId: 'user1',
+        propietarioNombre: 'Juan Pérez',
+        propietarioFoto: 'assets/images/user1.jpg',
+        ubicacion: 'Madrid',
+        intereses: ['Paseos', 'Jugar a la pelota', 'Nadar'],
+      ),
+      Mascota.particularEnAdopcion(
+        id: '2',
+        nombre: 'Luna',
+        edad: '2',
+        especie: 'Gato',
+        raza: 'Siamés',
+        descripcion: 'Gata tranquila que le encanta dormir en el sofá',
+        fotos: ['assets/images/mascota2.jpg'],
+        propietarioId: 'user2',
+        propietarioNombre: 'María López',
+        propietarioFoto: 'assets/images/user2.jpg',
+        ubicacion: 'Barcelona',
+        intereses: ['Dormir', 'Jugar con láser', 'Cajas'],
+      ),
+      Mascota.enAdopcion(
+        id: '3',
+        nombre: 'Max',
+        edad: '5',
+        especie: 'Perro',
+        raza: 'Pastor Alemán',
+        descripcion: 'Perro entrenado y obediente, ideal para familias',
+        fotos: ['assets/images/mascota3.jpg'],
+        centroAdopcionId: 'centro1',
+        centroNombre: 'Centro de Adopción Patitas',
+        centroFoto: 'assets/images/centro1.jpg',
+        ubicacion: 'Valencia',
+        intereses: ['Entrenamiento', 'Correr', 'Niños'],
+      ),
+    ];
+  }
+  
+  int _currentIndex = 0;
+  
+  // Método para obtener la mascota actual
+  Mascota? get mascotaActual {
+    if (_currentIndex < _mascotas.length) {
+      return _mascotas[_currentIndex];
+    }
+    return null;
+  }
+  
+  // Método para dar like
+  void darLike() {
+    setState(() {
+      _currentIndex++;
+    });
+  }
+  
+  // Método para dar dislike
+  void darDislike() {
+    setState(() {
+      _currentIndex++;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromRGBO(242, 217, 208, 1),
-        title: Row(
+        backgroundColor: const Color.fromRGBO(242, 217, 208, 1),
+        title: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.pets, color: Colors.pink),
@@ -37,51 +113,52 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         centerTitle: true,
       ),
-      backgroundColor: Color.fromRGBO(242, 217, 208, 1),
-      body: Consumer<MascotaProvider>(
-        builder: (context, mascotaProvider, child) {
-          final mascotaActual = mascotaProvider.mascotaActual;
-          
-          if (mascotaActual == null) {
-            return Center(
-              child: Text('No hay más mascotas disponibles por el momento'),
-            );
-          }
-          
-          return Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: _buildSwipeableCard(context, mascotaActual, mascotaProvider),
-                ),
+      backgroundColor: const Color.fromRGBO(242, 217, 208, 1),
+      body: Column(
+        children: [
+          if (mascotaActual == null)
+            const Expanded(
+              child: Center(
+                child: Text('No hay más mascotas disponibles por el momento'),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    BotonAccion(
-                      icon: Icons.close,
-                      color: Colors.red,
-                      onPressed: () => mascotaProvider.darDislike(),
-                    ),
-                    BotonAccion(
-                      icon: Icons.favorite,
-                      color: Colors.pink,
-                      onPressed: () => mascotaProvider.darLike(),
-                    ),
-                  ],
-                ),
+            )
+          else
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: _buildSwipeableCard(context, mascotaActual!),
               ),
-            ],
-          );
-        },
+            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                BotonAccion(
+                  icon: Icons.close,
+                  color: Colors.red,
+                  onPressed: () {
+                    darDislike();
+                    _showSnackBar(context, 'Descartaste esta mascota', Colors.red);
+                  },
+                ),
+                BotonAccion(
+                  icon: Icons.favorite,
+                  color: Colors.pink,
+                  onPressed: () {
+                    darLike();
+                    _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSwipeableCard(BuildContext context, dynamic mascota, MascotaProvider provider) {
+  Widget _buildSwipeableCard(BuildContext context, Mascota mascota) {
     final screenWidth = MediaQuery.of(context).size.width;
     final threshold = screenWidth * 0.4; // Umbral para decidir si es swipe
     
@@ -104,11 +181,11 @@ class _HomeScreenState extends State<HomeScreen> {
           // Si supera el umbral, consideramos que es un swipe completo
           if (_dragPosition > 0) {
             // Swipe derecha (like)
-            provider.darLike();
+            darLike();
             _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
           } else {
             // Swipe izquierda (dislike)
-            provider.darDislike();
+            darDislike();
             _showSnackBar(context, 'Descartaste esta mascota', Colors.red);
           }
         }
@@ -142,12 +219,12 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Transform.rotate(
                 angle: -0.5,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.pink, width: 4),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
+                  child: const Text(
                     'LIKE',
                     style: TextStyle(
                       color: Colors.pink,
@@ -167,12 +244,12 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Transform.rotate(
                 angle: 0.5,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.red, width: 4),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
+                  child: const Text(
                     'NOPE',
                     style: TextStyle(
                       color: Colors.red,
@@ -213,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
       SnackBar(
         content: Text(message),
         backgroundColor: color,
-        duration: Duration(milliseconds: 800),
+        duration: const Duration(milliseconds: 800),
       ),
     );
   }

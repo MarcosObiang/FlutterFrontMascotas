@@ -1,6 +1,4 @@
-
-import 'comentario.dart';
-
+// Modelo de Publicación actualizado según tu requisito
 class Publicacion {
   final String id;
   final String usuarioId;
@@ -9,9 +7,9 @@ class Publicacion {
   final String contenido;
   final String? imagenUrl;
   final DateTime fechaPublicacion;
-  final List<Comentario> comentarios;
+  final List comentarios;
   final int likes;
-  final bool usuarioDioLike;
+  bool usuarioDioLike;
 
   Publicacion({
     required this.id,
@@ -21,7 +19,7 @@ class Publicacion {
     required this.contenido,
     this.imagenUrl,
     required this.fechaPublicacion,
-    List<Comentario>? comentarios,
+    List? comentarios,
     this.likes = 0,
     this.usuarioDioLike = false,
   }) : this.comentarios = comentarios ?? [];

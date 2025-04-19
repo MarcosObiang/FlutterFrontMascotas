@@ -1,4 +1,5 @@
-// widgets/tarjeta_mascota.dart
+// Modificación 2: tarjeta_mascota.dart
+// Añade manejo de errores para la foto del propietario
 import 'package:flutter/material.dart';
 import '../../../Resources/Models/mascota.dart';
 import 'foto_slider.dart';
@@ -82,14 +83,16 @@ class TarjetaMascota extends StatelessWidget {
                   SizedBox(height: 12),
                   Row(
                     children: [
+                      // Modificamos el CircleAvatar para manejar errores de imagen
                       CircleAvatar(
-  radius: 15,
-  backgroundImage: AssetImage(mascota.propietarioFoto),
-  onBackgroundImageError: (exception, stackTrace) {
-    print("Error al cargar imagen del propietario: ${mascota.propietarioFoto}");
-  },
-  child: mascota.propietarioFoto.isEmpty ? Icon(Icons.person, size: 15) : null,
-),
+                        radius: 15,
+                        backgroundImage: AssetImage(mascota.propietarioFoto),
+                        onBackgroundImageError: (exception, stackTrace) {
+                          print("Error al cargar foto del propietario: ${mascota.propietarioFoto}");
+                        },
+                        backgroundColor: Colors.grey[300],
+                        child: mascota.propietarioFoto.isEmpty ? Icon(Icons.person, size: 15) : null,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Dueño: ${mascota.propietarioNombre}',

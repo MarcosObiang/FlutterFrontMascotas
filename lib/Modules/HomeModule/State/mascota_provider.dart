@@ -34,7 +34,7 @@ class MascotaProvider extends ChangeNotifier {
   }
   
   void _cargarDatosIniciales() {
-    // Mascotas de ejemplo con imágenes de Unsplash
+    // Mascotas de ejemplo con imágenes locales
     _mascotas = [
       Mascota(
         id: '1',
@@ -44,11 +44,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Labrador',
         descripcion: 'Me encanta jugar a buscar la pelota y nadar en el lago. Soy muy amigable con otros perros y niños.',
         fotos: [
-          'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=500',
-          'https://images.unsplash.com/photo-1587300003388-59208cc962cb?q=80&w=500'
+          'assets/mascotas/luna_1.jpg',
+          'assets/mascotas/luna_2.jpg'
         ],
         propietarioNombre: 'Carlos',
-        propietarioFoto: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200',
+        propietarioFoto: 'assets/propietarios/carlos.jpg',
         ubicacion: 'Madrid',
         intereses: ['Paseos', 'Jugar con pelotas', 'Nadar'],
         enAdopcion: false,
@@ -62,11 +62,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Siamés',
         descripcion: 'Soy muy curioso y me encanta dormir al sol. Busco amigos tranquilos para compartir momentos de relax.',
         fotos: [
-          'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=500',
-          'https://images.unsplash.com/photo-1573865526739-10659fec78a5?q=80&w=500'
+          'assets/mascotas/michi_1.jpg',
+          'assets/mascotas/michi_2.jpg'
         ],
         propietarioNombre: 'Ana',
-        propietarioFoto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200',
+        propietarioFoto: 'assets/propietarios/ana.jpg',
         ubicacion: 'Barcelona',
         intereses: ['Dormir', 'Observar pájaros', 'Juguetes interactivos'],
         enAdopcion: false,
@@ -80,11 +80,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Bulldog Francés',
         descripcion: 'Soy muy juguetón y activo. Me encanta conocer nuevos amigos para jugar en el parque cada día.',
         fotos: [
-          'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=500',
-          'https://images.unsplash.com/photo-1575859431774-2e57ed632664?q=80&w=500'
+          'assets/mascotas/rocky_1.jpg',
+          'assets/mascotas/rocky_2.jpg'
         ],
         propietarioNombre: 'Miguel',
-        propietarioFoto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200',
+        propietarioFoto: 'assets/propietarios/miguel.jpg',
         ubicacion: 'Valencia',
         intereses: ['Correr', 'Socializar', 'Juguetes masticables'],
         enAdopcion: false,
@@ -98,11 +98,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Golden Retriever',
         descripcion: 'Soy un compañero leal y cariñoso. Me encanta hacer nuevos amigos peludos y jugar sin parar.',
         fotos: [
-          'https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?q=80&w=500',
-          'https://images.unsplash.com/photo-1633722715903-c330a2ae823d?q=80&w=500'
+          'assets/mascotas/max_1.jpg',
+          'assets/mascotas/max_2.jpg'
         ],
         propietarioNombre: 'Elena',
-        propietarioFoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200',
+        propietarioFoto: 'assets/propietarios/elena.jpg',
         ubicacion: 'Sevilla',
         intereses: ['Natación', 'Buscar la pelota', 'Paseos en la playa'],
         enAdopcion: false,
@@ -116,11 +116,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Maine Coon',
         descripcion: 'Soy juguetona pero también disfruto de la tranquilidad. Busco amigos para jugar de vez en cuando.',
         fotos: [
-          'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?q=80&w=500',
-          'https://images.unsplash.com/photo-1519052537078-e6302a4968d4?q=80&w=500'
+          'assets/mascotas/nina_1.jpg',
+          'assets/mascotas/nina_2.jpg'
         ],
         propietarioNombre: 'Martín',
-        propietarioFoto: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200',
+        propietarioFoto: 'assets/propietarios/martin.jpg',
         ubicacion: 'Bilbao',
         intereses: ['Juguetes con plumas', 'Trepar', 'Descansar al sol'],
         enAdopcion: false,
@@ -134,11 +134,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Pomerania',
         descripcion: 'Soy pequeño pero con gran personalidad. Me encanta la aventura y conocer nuevos amigos.',
         fotos: [
-          'https://images.unsplash.com/photo-1557973557-ddfa9ee8c9bf?q=80&w=500',
-          'https://images.unsplash.com/photo-1558556249-fac65b6aae9c?q=80&w=500'
+          'assets/mascotas/coco_1.jpg',
+          'assets/mascotas/coco_2.jpg'
         ],
         propietarioNombre: 'Sofía',
-        propietarioFoto: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200',
+        propietarioFoto: 'assets/propietarios/sofia.jpg',
         ubicacion: 'Málaga',
         intereses: ['Juegos de interior', 'Paseos cortos', 'Socializar'],
         enAdopcion: false,
@@ -152,11 +152,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Pastor Alemán',
         descripcion: 'Soy inteligente y activo. Necesito amigos que puedan seguir mi ritmo en largas caminatas.',
         fotos: [
-          'https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?q=80&w=500',
-          'https://images.unsplash.com/photo-1555991415-1b04a71f18c5?q=80&w=500'
+          'assets/mascotas/zeus_1.jpg',
+          'assets/mascotas/zeus_2.jpg'
         ],
         propietarioNombre: 'Alberto',
-        propietarioFoto: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200',
+        propietarioFoto: 'assets/propietarios/alberto.jpg',
         ubicacion: 'Zaragoza',
         intereses: ['Entrenamiento', 'Correr', 'Juegos de inteligencia'],
         enAdopcion: false,
@@ -170,11 +170,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Bengalí',
         descripcion: 'Soy muy activo y juguetón. Me encantan los juegos de caza y correr por toda la casa.',
         fotos: [
-          'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?q=80&w=500',
-          'https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?q=80&w=500'
+          'assets/mascotas/simba_1.jpg',
+          'assets/mascotas/simba_2.jpg'
         ],
         propietarioNombre: 'Laura',
-        propietarioFoto: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=200',
+        propietarioFoto: 'assets/propietarios/laura.jpg',
         ubicacion: 'Alicante',
         intereses: ['Juegos interactivos', 'Trepar', 'Perseguir juguetes'],
         enAdopcion: false,
@@ -188,11 +188,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Beagle',
         descripcion: 'Soy muy sociable y me encanta oler todo lo que encuentro. Busco amigos para pasear juntos.',
         fotos: [
-          'https://images.unsplash.com/photo-1505628346881-b72b27e84530?q=80&w=500',
-          'https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?q=80&w=500'
+          'assets/mascotas/toby_1.jpg',
+          'assets/mascotas/toby_2.jpg'
         ],
         propietarioNombre: 'Javier',
-        propietarioFoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200',
+        propietarioFoto: 'assets/propietarios/javier.jpg',
         ubicacion: 'Murcia',
         intereses: ['Rastreo', 'Paseos largos', 'Jugar con otros perros'],
         enAdopcion: false,
@@ -206,11 +206,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Border Collie',
         descripcion: 'Soy muy inteligente y enérgica. Necesito amigos que me ayuden a gastar toda mi energía.',
         fotos: [
-          'https://images.unsplash.com/photo-1503256207526-0d5d80fa2f47?q=80&w=500',
-          'https://images.unsplash.com/photo-1555897209-208b67f652c5?q=80&w=500'
+          'assets/mascotas/bella_1.jpg',
+          'assets/mascotas/bella_2.jpg'
         ],
         propietarioNombre: 'Carmen',
-        propietarioFoto: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200',
+        propietarioFoto: 'assets/propietarios/carmen.jpg',
         ubicacion: 'Granada',
         intereses: ['Frisbee', 'Agility', 'Entrenamientos de obediencia'],
         enAdopcion: false,
@@ -225,11 +225,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Mestizo',
         descripcion: 'Soy una perrita muy cariñosa y necesito un hogar lleno de amor.',
         fotos: [
-          'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=500'
+          'assets/mascotas/nube_1.jpg'
         ],
         centroAdopcionId: 'c1',
         centroNombre: 'Protectora Amigos Peludos',
-        centroFoto: 'https://images.unsplash.com/photo-1618077360395-f3068be8e001?q=80&w=200',
+        centroFoto: 'assets/centros/protectora_amigos.jpg',
         ubicacion: 'Madrid',
         intereses: ['Paseos tranquilos', 'Juguetes', 'Dormir'],
       ),
@@ -241,11 +241,11 @@ class MascotaProvider extends ChangeNotifier {
         raza: 'Atigrado',
         descripcion: 'He pasado mucho tiempo en la calle y ahora busco un hogar tranquilo.',
         fotos: [
-          'https://images.unsplash.com/photo-1478098711619-5ab0b478d6e6?q=80&w=500'
+          'assets/mascotas/tigre_1.jpg'
         ],
         centroAdopcionId: 'c2',
         centroNombre: 'Refugio Felino',
-        centroFoto: 'https://images.unsplash.com/photo-1606836576983-8b458e75221d?q=80&w=200',
+        centroFoto: 'assets/centros/refugio_felino.jpg',
         ubicacion: 'Barcelona',
         intereses: ['Descansar', 'Mimos', 'Espacios tranquilos'],
       ),
