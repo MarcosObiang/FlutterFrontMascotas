@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../Resources/Models/mascota.dart';
+import '../../../Resources/Models/mascota_api.dart';
 import '../../../Resources/Widgets/boton_accion.dart';
 import '../../../Resources/Widgets/tarjeta_mascota.dart';
+import '../../../Resources/Services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,67 +22,49 @@ class _HomeScreenState extends State<HomeScreen> {
   final double _maxScale = 1.05;
   final double _minOpacity = 0.8;
   
-  // Lista de mascotas de ejemplo
-  late List<Mascota> _mascotas;
+  // Lista de mascotas
+  List<Mascota>? _mascotas;
+  bool _isLoading = true;
+  String? _error;
+  
+  // Servicio API
+  final ApiService _apiService = ApiService();
   
   @override
   void initState() {
     super.initState();
-    // Inicializar la lista de mascotas con datos de ejemplo
-    _mascotas = [
-      Mascota.particular(
-        id: '1',
-        nombre: 'Rocky',
-        edad: '3',
-        especie: 'Perro',
-        raza: 'Labrador',
-        descripcion: 'Un perro cariñoso y juguetón que adora los paseos',
-        fotos: ['assets/images/mascota1.jpg'],
-        propietarioId: 'user1',
-        propietarioNombre: 'Juan Pérez',
-        propietarioFoto: 'assets/images/user1.jpg',
-        ubicacion: 'Madrid',
-        intereses: ['Paseos', 'Jugar a la pelota', 'Nadar'],
-      ),
-      Mascota.particularEnAdopcion(
-        id: '2',
-        nombre: 'Luna',
-        edad: '2',
-        especie: 'Gato',
-        raza: 'Siamés',
-        descripcion: 'Gata tranquila que le encanta dormir en el sofá',
-        fotos: ['assets/images/mascota2.jpg'],
-        propietarioId: 'user2',
-        propietarioNombre: 'María López',
-        propietarioFoto: 'assets/images/user2.jpg',
-        ubicacion: 'Barcelona',
-        intereses: ['Dormir', 'Jugar con láser', 'Cajas'],
-      ),
-      Mascota.enAdopcion(
-        id: '3',
-        nombre: 'Max',
-        edad: '5',
-        especie: 'Perro',
-        raza: 'Pastor Alemán',
-        descripcion: 'Perro entrenado y obediente, ideal para familias',
-        fotos: ['assets/images/mascota3.jpg'],
-        centroAdopcionId: 'centro1',
-        centroNombre: 'Centro de Adopción Patitas',
-        centroFoto: 'assets/images/centro1.jpg',
-        ubicacion: 'Valencia',
-        intereses: ['Entrenamiento', 'Correr', 'Niños'],
-      ),
-    ];
+    _cargarMascotas();
+  }
+  
+  // Método para cargar las mascotas desde la API
+  Future<void> _cargarMascotas() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    
+    try {
+      final mascotas = await _apiService.getAllPets();
+      setState(() {
+        _mascotas = mascotas;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Error al cargar las mascotas: $e';
+        _isLoading = false;
+      });
+    }
   }
   
   int _currentIndex = 0;
   
   // Método para obtener la mascota actual
   Mascota? get mascotaActual {
-    if (_currentIndex < _mascotas.length) {
-      return _mascotas[_currentIndex];
+    if (_mascotas == null || _currentIndex >= _mascotas!.length) {
+      return null;
     }
-    return null;
+    return _mascotas![_currentIndex];
   }
   
   // Método para dar like
@@ -112,49 +95,72 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         centerTitle: true,
-      ),
-      backgroundColor: const Color.fromRGBO(242, 217, 208, 1),
-      body: Column(
-        children: [
-          if (mascotaActual == null)
-            const Expanded(
-              child: Center(
-                child: Text('No hay más mascotas disponibles por el momento'),
-              ),
-            )
-          else
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _buildSwipeableCard(context, mascotaActual!),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                BotonAccion(
-                  icon: Icons.close,
-                  color: Colors.red,
-                  onPressed: () {
-                    darDislike();
-                    _showSnackBar(context, 'Descartaste esta mascota', Colors.red);
-                  },
-                ),
-                BotonAccion(
-                  icon: Icons.favorite,
-                  color: Colors.pink,
-                  onPressed: () {
-                    darLike();
-                    _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
-                  },
-                ),
-              ],
-            ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _cargarMascotas,
+            tooltip: 'Recargar mascotas',
           ),
         ],
       ),
+      backgroundColor: const Color.fromRGBO(242, 217, 208, 1),
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : _error != null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _cargarMascotas,
+                    child: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            )
+          : Column(
+              children: [
+                if (mascotaActual == null)
+                  const Expanded(
+                    child: Center(
+                      child: Text('No hay más mascotas disponibles por el momento'),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: _buildSwipeableCard(context, mascotaActual!),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      BotonAccion(
+                        icon: Icons.close,
+                        color: Colors.red,
+                        onPressed: () {
+                          darDislike();
+                          _showSnackBar(context, 'Descartaste esta mascota', Colors.red);
+                        },
+                      ),
+                      BotonAccion(
+                        icon: Icons.favorite,
+                        color: Colors.pink,
+                        onPressed: () {
+                          darLike();
+                          _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
     );
   }
 

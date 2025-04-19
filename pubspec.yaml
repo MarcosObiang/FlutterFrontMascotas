@@ -1,5 +1,5 @@
 name: mascotas_citas
-description: "A new Flutter project."
+description: "Aplicacion de citas para mascotas"
 publish_to: 'none'
 version: 0.1.0
 
@@ -21,7 +21,9 @@ dependencies:
   image_picker: 1.1.2
   flutter_onboarding_slider: ^1.0.11
   flutter_web_auth_2: ^4.1.0
-  dio: ^5.8.0+1
+  dio: ^5.8.0+1   
+  cupertino_icons: ^1.0.2 # Iconos predeterminados  
+  http: ^1.1.0 # HTTP para llamadas a la API
 
 dev_dependencies:
   flutter_test:
@@ -34,6 +36,8 @@ flutter:
     - assets/logos/
     - assets/logos/google_logo.svg
     - assets/logos/logo_wildlove_nombre.png
+    - assets/images/placeholder_pet.jpg
+    - assets/images/placeholder_user.png
     - assets/mascotas/      # Carpeta con fotos de mascotas
     - assets/propietarios/  # Carpeta con fotos de propietarios
   
