@@ -1,13 +1,12 @@
 class ModuleException implements Exception {
   String message;
   String title;
-  String content;
 
   ModuleException(
-      {required this.message, required this.title, required this.content});
+      {required this.message, required this.title,});
 
   @override
   String toString() {
-    return 'ModuleException{message: $message, title: $title, content: $content}';
+    return 'ModuleException{message: $message, title: $title}';
   }
 }

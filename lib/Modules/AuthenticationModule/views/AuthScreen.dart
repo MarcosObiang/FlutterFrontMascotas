@@ -37,7 +37,11 @@ class _AuthscreenState extends State<Authscreen> {
     return ChangeNotifierProvider.value(
       value: logInWithGoogleUseCase.authState,
       child: Consumer<AuthState>(
+
+
           builder: (BuildContext context, AuthState authState, Widget? child) {
+
+    
         authState.onError = ({required String title, required String message}) {
           PresentationDialogs().showErrorDialog(
               title: title, content: message, context: context);

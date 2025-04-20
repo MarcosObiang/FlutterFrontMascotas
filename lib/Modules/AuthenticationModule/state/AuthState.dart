@@ -55,6 +55,6 @@ class AuthState extends ChangeNotifier implements ModuleState<LoginDTO> {
   void setError(ModuleException e) {
     errorMessage = e.message;
     setAuthStateErrorLogin();
-    onError?.call(title:e.title, message: e.content);
+    onError?.call(title:e.title, message: e.message);
   }
 }

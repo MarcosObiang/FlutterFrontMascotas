@@ -11,7 +11,6 @@ import 'package:url_launcher/url_launcher_string.dart';
 // Esta clase implementa el login con Google en aplicaciones Flutter Web.
 class WebLoginService implements IAuthServices {
   // Instancias necesarias: una para los enlaces y otra para autenticación web.
-  final appLinks = AppLinks();
   final FlutterWebAuth2 appAuth = FlutterWebAuth2();
   ApiService apiService;
 

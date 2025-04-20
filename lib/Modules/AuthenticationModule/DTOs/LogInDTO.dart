@@ -1,5 +1,5 @@
 /// Data Transfer Object (DTO) for login information.
-class LoginDTO {
+class LoginDTO{
   /// The authentication token.
   String? token;
 

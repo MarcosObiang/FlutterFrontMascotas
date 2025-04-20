@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:mascotas_citas/const_values/const_values.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
@@ -45,17 +48,58 @@ class ApiService {
     }
   }
 
-  /// Realiza una petición POST a [path] con el cuerpo [data].
-  Future<Response> post({
-    required String path,
-    required dynamic data,
-  }) async {
-    try {
+/// Realiza una petición POST a [path] con el cuerpo [data] y opcionalmente archivos en un mapa [files].
+Future<Response> post({
+  required String path,
+  required dynamic data,
+  Map<String, dynamic>? files,  // Parámetro para archivos en un mapa
+}) async {
+  try {
+    if (files != null && files.isNotEmpty) {
+      // Si hay archivos, usamos FormData para incluirlos junto con los datos
+      return await _uploadFiles(path, data, files);
+    } else {
+      // Si no hay archivos, solo enviamos los datos
       return await _dio.post(path, data: data);
-    } on DioException catch (e) {
-      throw Exception(_handleError(e));
     }
+  } on DioException catch (e) {
+    throw Exception(_handleError(e));
   }
+}
+
+/// Método privado para manejar la subida de archivos junto con otros datos (FormData).
+Future<Response> _uploadFiles(String path, dynamic data, Map<String, dynamic> files) async {
+  try {
+    // Crear FormData para enviar tanto los archivos como los datos
+    final formData = FormData.fromMap({
+      ...files.map((key, value) {
+        // Asegurarnos de que el valor sea un File o Uint8List
+        if (value is File) {
+          return MapEntry(key, MultipartFile.fromFile(value.path, filename: key));
+        } else if (value is Uint8List) {
+          return MapEntry(key, MultipartFile.fromBytes(value, filename: key));
+        } else {
+          throw Exception('Archivo no soportado. Aceptamos solo File o Uint8List.');
+        }
+      }),
+      // Añadir otros datos a la solicitud
+      if (data != null) ...data,
+    });
+
+    // Realizar la solicitud POST con FormData
+    return await _dio.post(
+      path,
+      data: formData,
+      options: Options(
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      ),
+    );
+  } on DioException catch (e) {
+    throw Exception(_handleError(e));
+  }
+}
 
   /// Realiza una petición PUT a [path] con el cuerpo [data].
   Future<Response> put({

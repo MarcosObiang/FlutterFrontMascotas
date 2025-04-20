@@ -1,24 +1,30 @@
 import 'dart:typed_data';
 
+import 'package:mascotas_citas/models/PetModel.dart';
 
-class CreateUserModel {
-  final String name;
-  final Uint8List image1;
-  final Uint8List image2;
-  final Uint8List image3;
-  final String sex;
-  final String userBio;
-  final String datingSexPreference;
-  final String birthDateISO;
+class CreateSignUpModel {
+  final UserModel user;
+  final PetModel pet;
+  Map<String, dynamic>? files;
 
-  CreateUserModel({
-    required this.name,
-    required this.image1,
-    required this.image2,
-    required this.image3,
-    required this.sex,
-    required this.userBio,
-    required this.datingSexPreference,
-    required this.birthDateISO,
+  CreateSignUpModel({
+    required this.user,
+    required this.pet,
   });
+
+  factory CreateSignUpModel.fromJson(Map<String, dynamic> json) {
+    return CreateSignUpModel(
+      user: UserModel.fromJson(json['user']),
+      pet: PetModel.fromJson(json['pet']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user': user.toJson(),
+      'pet': pet.toJson(),
+    };
+  }
+
+  
 }
