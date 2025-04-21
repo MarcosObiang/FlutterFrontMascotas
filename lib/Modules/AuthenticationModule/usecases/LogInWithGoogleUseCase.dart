@@ -29,7 +29,7 @@ class LogInWithGoogleUseCase {
       ModuleException moduleException = ModuleException(
           message: "Error al iniciar sesión",
           title: "Error",
-          content: "Ha ocurrido un error al iniciar sesión");
+         );
       authState.setError(moduleException);
     }
   }

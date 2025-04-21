@@ -1,5 +1,5 @@
 /// Data Transfer Object (DTO) for login information.
-class LoginDTO {
+class LoginDTO{
   /// The authentication token.
   String? token;
 
@@ -19,7 +19,7 @@ class LoginDTO {
   factory LoginDTO.fromJson(Map<String, dynamic> json) {
     return LoginDTO(
       token: json['token'],
-      refreshToken: json['refreshToken'],
+      refreshToken: (json['refreshToken']),
       userUID: json['userUID'],
       expirationDate: json['expirationDate'] != null ? DateTime.parse(json['expirationDate']) : null,
     );
