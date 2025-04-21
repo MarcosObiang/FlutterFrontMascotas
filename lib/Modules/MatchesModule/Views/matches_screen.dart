@@ -52,7 +52,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromRGBO(242, 217, 208, 1),
+        // backgroundColor: Color.fromRGBO(242, 217, 208, 1),
         title: Text('Mis Matches', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
@@ -63,7 +63,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           ),
         ],
       ),
-      backgroundColor: Color.fromRGBO(242, 217, 208, 1),
+      // backgroundColor: Color.fromRGBO(242, 217, 208, 1),
       body: isLoading 
         ? Center(child: CircularProgressIndicator())
         : error != null

@@ -24,6 +24,7 @@ dependencies:
   dio: ^5.8.0+1   
   cupertino_icons: ^1.0.2 # Iconos predeterminados  
   http: ^1.1.0 # HTTP para llamadas a la API
+  shared_preferences: ^2.2.0 # Para guardar las preferencias del tema
 
 dev_dependencies:
   flutter_test:

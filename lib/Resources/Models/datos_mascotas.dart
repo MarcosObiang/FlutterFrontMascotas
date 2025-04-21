@@ -10,7 +10,7 @@ final List<Mascota> DATOS_MASCOTAS = [
   Mascota.particular(
     id: '1',
     nombre: 'Mi Mascota',
-    edad: '3 años',
+    sexo: 'Macho',  // Parámetro requerido añadido
     raza: 'Labrador',
     descripcion: 'Mi adorable mascota',
     fotos: ['assets/images/mi_mascota.jpg'],
@@ -26,7 +26,7 @@ final List<Mascota> DATOS_MASCOTAS = [
   Mascota.particularEnAdopcion(
     id: '2',
     nombre: 'Luna',
-    edad: '2 años',
+    sexo: 'Hembra',  // Parámetro requerido añadido
     raza: 'Beagle',
     descripcion: 'Juguetona y muy amigable',
     fotos: ['assets/images/luna.jpg'],
@@ -42,7 +42,7 @@ final List<Mascota> DATOS_MASCOTAS = [
   Mascota.enAdopcion(
     id: '3',
     nombre: 'Max',
-    edad: '4 años',
+    sexo: 'Macho',  // Parámetro requerido añadido
     raza: 'Golden Retriever',
     descripcion: 'Le encanta nadar y jugar a la pelota',
     fotos: ['assets/images/max.jpg'],
@@ -58,7 +58,7 @@ final List<Mascota> DATOS_MASCOTAS = [
   Mascota.enAdopcion(
     id: '4',
     nombre: 'Coco',
-    edad: '1 año',
+    sexo: 'Macho',  // Parámetro requerido añadido
     raza: 'French Bulldog',
     descripcion: 'Muy cariñoso y le encantan los mimos',
     fotos: ['assets/images/coco.jpg'],

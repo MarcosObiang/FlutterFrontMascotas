@@ -15,7 +15,7 @@ class DetalleMatchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromRGBO(242, 217, 208, 1),
+      // backgroundColor: Color.fromRGBO(242, 217, 208, 1),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(

@@ -51,11 +51,11 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromRGBO(242, 217, 208, 1),
+        // backgroundColor: Color.fromRGBO(242, 217, 208, 1),
         title: Text('Mis Chats', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
-      backgroundColor: Color.fromRGBO(242, 217, 208, 1),      
+      // backgroundColor: Color.fromRGBO(242, 217, 208, 1),      
       body: mascotasMatch.isEmpty
           ? _construirPantallaVacia()
           : _construirListaChats(),

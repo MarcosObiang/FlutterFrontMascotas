@@ -138,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromRGBO(242, 217, 208, 1),
+        // backgroundColor: const Color.fromRGBO(242, 217, 208, 1),
         title: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -156,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      backgroundColor: const Color.fromRGBO(242, 217, 208, 1),
+      // backgroundColor: const Color.fromRGBO(242, 217, 208, 1),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
         : _error != null

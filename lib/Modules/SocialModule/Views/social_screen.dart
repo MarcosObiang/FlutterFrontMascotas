@@ -208,7 +208,7 @@ class _SocialScreenState extends State<SocialScreen> {
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.75,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
@@ -283,7 +283,7 @@ class _SocialScreenState extends State<SocialScreen> {
                     borderSide: BorderSide.none,
                   ),
                   filled: true,
-                  fillColor: Colors.grey[200],
+                  fillColor: Theme.of(context).colorScheme.surface,
                   contentPadding: EdgeInsets.symmetric(horizontal: 16),
                   suffixIcon: IconButton(
                     icon: Icon(Icons.send, color: Colors.pink),
@@ -357,7 +357,7 @@ class _SocialScreenState extends State<SocialScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromRGBO(242, 217, 208, 1),
+        // backgroundColor: Color.fromRGBO(242, 217, 208, 1),
         title: Text('Feed Social', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
@@ -366,14 +366,14 @@ class _SocialScreenState extends State<SocialScreen> {
           ),
         ],
       ),
-      backgroundColor: Color.fromRGBO(242, 217, 208, 1),
+      // backgroundColor: Color.fromRGBO(242, 217, 208, 1),
       body: Column(
         children: [
           // Área de composición
           Container(
             padding: EdgeInsets.all(8.0),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.withOpacity(0.2),
@@ -402,7 +402,7 @@ class _SocialScreenState extends State<SocialScreen> {
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
-                          fillColor: Colors.grey.shade100,
+                          fillColor: Theme.of(context).colorScheme.surface,
                           contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                         ),
                         onChanged: (text) {
@@ -456,7 +456,7 @@ class _SocialScreenState extends State<SocialScreen> {
                             },
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.6),
+                                color: Theme.of(context).colorScheme.surface,
                                 shape: BoxShape.circle,
                               ),
                               padding: EdgeInsets.all(5),
@@ -680,7 +680,7 @@ class _SocialScreenState extends State<SocialScreen> {
           return Container(
             height: 250,
             width: double.infinity,
-            color: Colors.grey.shade200,
+            color: Theme.of(context).colorScheme.surface,
             child: Center(
               child: CircularProgressIndicator(
                 value: loadingProgress.expectedTotalBytes != null
@@ -694,9 +694,9 @@ class _SocialScreenState extends State<SocialScreen> {
           return Container(
             height: 250,
             width: double.infinity,
-            color: Colors.grey.shade200,
+            color: Theme.of(context).colorScheme.surface,
             child: Center(
-              child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+              child: Icon(Icons.broken_image, size: 40),
             ),
           );
         },
@@ -712,9 +712,9 @@ class _SocialScreenState extends State<SocialScreen> {
           return Container(
             height: 250,
             width: double.infinity,
-            color: Colors.grey.shade200,
+            color: Theme.of(context).colorScheme.surface,
             child: Center(
-              child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+              child: Icon(Icons.broken_image, size: 40),
             ),
           );
         },

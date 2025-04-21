@@ -6,8 +6,7 @@ class ConstValues {
 
     ///
     ///
-    ///
-  static const String loginUrl = "$baseUrl/auth/login";
+    ///  
   static const String redirectUrl = "com.example.mascotascitas:/oauth2redirect";
   static const String googleClientId =
       "151798284057-dm71g2a9rbre2fdns23bo4s705ujk7r2.apps.googleusercontent.com";

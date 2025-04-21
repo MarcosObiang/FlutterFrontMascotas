@@ -40,7 +40,7 @@ class _AuthscreenState extends State<Authscreen> {
   // Esta función se ejecutará cada vez que cambie el estado de autenticación
   void _onAuthStateChanged() {
     // Si el usuario está autenticado (estado success), navegamos a la pantalla home
-    if (logInWithGoogleUseCase.authState.getAuthStatus == AuthStatus.success) {
+    if (logInWithGoogleUseCase.authState.getAuthStatus == AuthStatus.success || logInWithGoogleUseCase.authState.getAuthStatus == AuthStatus.error) {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const NavigationController()),
