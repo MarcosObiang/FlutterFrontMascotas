@@ -13,7 +13,7 @@ class CreateUserRepoImpl implements CreateUserRepo {
   @override
   Future<bool> createUser(CreateSignUpModel model) async {
     final result = await apiService.post(
-        path: "api/register", data: model.toJson(), files: model.files);
+        path: "/orquestador/api/register", data: model.toJson(), files: model.files);
     return true;
   }
 }

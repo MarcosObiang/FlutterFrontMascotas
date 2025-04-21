@@ -1,0 +1,2 @@
+/home/marcos/Documentos/deasrrollo_software/proyecto_final_flutter/mascotas_citas/android/app/.cxx/Debug/24w4f5p4/x86/CMakeFiles/edit_cache.dir
+/home/marcos/Documentos/deasrrollo_software/proyecto_final_flutter/mascotas_citas/android/app/.cxx/Debug/24w4f5p4/x86/CMakeFiles/rebuild_cache.dir

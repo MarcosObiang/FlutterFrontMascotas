@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:mascotas_citas/models/PetModel.dart';
@@ -21,8 +22,8 @@ class CreateSignUpModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'user': user.toJson(),
-      'pet': pet.toJson(),
+      'userJson': jsonEncode(user.toJson()),
+      'petJson': jsonEncode(pet.toJson()),
     };
   }
 

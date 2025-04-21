@@ -2,7 +2,7 @@ class ConstValues {
 
     /// Cambiar a vuestra url de ngrok la variable [baseUrl]
   static const String baseUrl =
-      "https://2ea6-2a0c-5a81-3408-bd00-eff0-1b38-2f63-b931.ngrok-free.app";
+      "https://5d72-2a0c-5a81-3408-bd00-44f7-e279-7577-fce9.ngrok-free.app";
 
     ///
     ///

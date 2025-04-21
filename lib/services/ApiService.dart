@@ -9,6 +9,7 @@ import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 class ApiService {
   late final Dio _dio;
   final AuthDataService authDataService;
+  String requestToken = '';
 
   /// Inicializa el servicio con el [authDataService] y la [baseUrl] de la API.
   ApiService({
@@ -25,14 +26,20 @@ class ApiService {
       ),
     );
 
-    final token = authDataService.token;
-    if (token != null) {
-      setAuthToken(token);
+    if (requestToken.isEmpty) {
+      setAuthToken();
     }
   }
 
   /// Establece el token de autenticación.
-  void setAuthToken(String token) {
+  void setAuthToken() {
+    if (authDataService.token == null) {
+      return;
+    }
+
+
+    final token = authDataService.token;
+
     _dio.options.headers['Authorization'] = 'Bearer $token';
   }
 
@@ -41,6 +48,8 @@ class ApiService {
     required String path,
     required Map<String, dynamic> queryParams,
   }) async {
+      setAuthToken();
+
     try {
       return await _dio.get(path, queryParameters: queryParams);
     } on DioException catch (e) {
@@ -54,6 +63,7 @@ Future<Response> post({
   required dynamic data,
   Map<String, dynamic>? files,  // Parámetro para archivos en un mapa
 }) async {
+  setAuthToken();
   try {
     if (files != null && files.isNotEmpty) {
       // Si hay archivos, usamos FormData para incluirlos junto con los datos
@@ -83,9 +93,15 @@ Future<Response> _uploadFiles(String path, dynamic data, Map<String, dynamic> fi
         }
       }),
       // Añadir otros datos a la solicitud
-      if (data != null) ...data,
+     
+    });
+    
+    Map<dynamic,dynamic> mappedData=data;
+    mappedData.forEach((key, value) {
+      formData.fields.add(MapEntry(key, value.toString()));
     });
 
+    print(formData.fields.toSet());
     // Realizar la solicitud POST con FormData
     return await _dio.post(
       path,
@@ -106,6 +122,8 @@ Future<Response> _uploadFiles(String path, dynamic data, Map<String, dynamic> fi
     required String path,
     required dynamic data,
   }) async {
+      setAuthToken();
+
     try {
       return await _dio.put(path, data: data);
     } on DioException catch (e) {
@@ -118,6 +136,8 @@ Future<Response> _uploadFiles(String path, dynamic data, Map<String, dynamic> fi
     required String path,
     required dynamic data,
   }) async {
+      setAuthToken();
+
     try {
       return await _dio.delete(path, data: data);
     } on DioException catch (e) {

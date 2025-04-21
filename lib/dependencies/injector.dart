@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/repo/AuthenticationRepo.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGoogleUseCase.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/repo/CreateUserRepo.dart';
+import 'package:mascotas_citas/Modules/CreateUserModule/state/CreateUserState.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/usecases/CreateUserUseCase.dart';
 import 'package:mascotas_citas/interfaces/auth/IAuthServices.dart';
 import 'package:mascotas_citas/services/ApiService.dart';
@@ -27,6 +28,7 @@ void setUpServices() {
 
 void setUpStates() {
   getIt.registerSingleton<AuthState>(AuthState());
+  getIt.registerSingleton<CreateUserState>(CreateUserState());
 }
 
 void setUpDependencies() {
@@ -39,7 +41,10 @@ void setUpDependencies() {
       authenticationRepo: getIt<AuthenticationRepo>(),
       authdataService: getIt<AuthDataService>(),
       authState: getIt<AuthState>()));
-  getIt.registerSingleton<SignUpUseCase>(SignUpUseCase(
-      createUserRepo: getIt<CreateUserRepo>(),
-      locationManager: getIt<LocationManager>()));
+  getIt.registerSingleton<SignUpUseCase>(
+    SignUpUseCase(
+        createUserRepo: getIt<CreateUserRepo>(),
+        locationManager: getIt<LocationManager>(),
+        createUserState: getIt<CreateUserState>()),
+  );
 }
