@@ -37,7 +37,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     try {
       final mascotasConMatch = await apiService.getMatchesWithDetails(usuarioActual["id"]!);
       setState(() {
-        matches = mascotasConMatch;
+        matches = mascotasConMatch.cast<Mascota>();
         isLoading = false;
       });
     } catch (e) {

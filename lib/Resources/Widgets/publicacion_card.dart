@@ -11,7 +11,7 @@ import './comentario_bottom_sheet.dart';
 class PublicacionCard extends StatelessWidget {
   final Publicacion publicacion;
 
-  const PublicacionCard({Key? key, required this.publicacion}) : super(key: key);
+  const PublicacionCard({super.key, required this.publicacion});
 
   @override
   Widget build(BuildContext context) {

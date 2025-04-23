@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGoogleUseCase.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/views/AuthScreen.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/views/CreateUserScreen.dart';
 import 'package:mascotas_citas/navigation_controller.dart';
@@ -11,6 +10,7 @@ import 'package:mascotas_citas/Modules/HomeModule/State/mascota_provider.dart';
 import 'package:mascotas_citas/Modules/SocialModule/State/social_provider.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/state/AuthState.dart';
 import 'package:mascotas_citas/Resources/providers/theme_provider.dart'; // Importa el ThemeProvider
+import 'package:mascotas_citas/Modules/CreateUserModule/state/CreateUserState.dart'; 
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +29,7 @@ class MainApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => AuthState()),
         ChangeNotifierProvider(create: (context) => MascotaProvider()),
+        ChangeNotifierProvider(create: (context) => CreateUserState()), 
         ChangeNotifierProvider(create: (context) => SocialProvider()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()), // Agregar ThemeProvider
       ],
@@ -45,22 +46,30 @@ class MainApp extends StatelessWidget {
                 theme: themeProvider.isDarkMode 
                   ? themeProvider.themeData // Tema oscuro del provider
                   : ThemeData(
-                      primarySwatch: Colors.pink,
+                      primarySwatch: 
+Colors.pink
+,
                       visualDensity: VisualDensity.adaptivePlatformDensity,
                       scaffoldBackgroundColor: Color.fromRGBO(242, 217, 208, 1),
                       appBarTheme: AppBarTheme(
                         backgroundColor: Color.fromRGBO(242, 217, 208, 1),
-                        foregroundColor: Colors.black,
+                        foregroundColor: 
+Colors.black
+,
                       ),
                     ),
                 // Modificar cómo se definen las rutas para mantener el contexto de los providers
                 home: const SplashScreen(),
                 onGenerateRoute: (settings) {
-                  switch (settings.name) {
+                  switch (
+settings.name
+) {
                     case '/splash':
                       return MaterialPageRoute(builder: (_) => const SplashScreen());
                     case '/authScreen':
                       return MaterialPageRoute(builder: (_) => Authscreen());
+                    case '/createUserScreen':
+                      return MaterialPageRoute(builder: (_) => const Createuserscreen());                                          
                     case '/navigation':
                       return MaterialPageRoute(builder: (_) => const NavigationController());
                     default:
@@ -74,4 +83,4 @@ class MainApp extends StatelessWidget {
       ),
     );
   }
-}
+} 

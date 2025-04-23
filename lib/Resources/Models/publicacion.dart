@@ -22,5 +22,5 @@ class Publicacion {
     List? comentarios,
     this.likes = 0,
     this.usuarioDioLike = false,
-  }) : this.comentarios = comentarios ?? [];
+  }) : comentarios = comentarios ?? [];
 }

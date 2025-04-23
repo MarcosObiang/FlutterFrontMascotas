@@ -33,7 +33,8 @@ void setUpStates() {
 
 void setUpDependencies() {
   getIt.registerSingleton<AuthenticationRepo>(
-      AuthenticationRepoImpl(webLoginService: getIt<IAuthServices>()));
+      AuthenticationRepoImpl(webLoginService: getIt<IAuthServices>(),
+          apiService: getIt<ApiService>()));
   getIt.registerSingleton<CreateUserRepo>(
       CreateUserRepoImpl(apiService: getIt<ApiService>()));
 

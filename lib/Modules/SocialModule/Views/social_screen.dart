@@ -28,10 +28,12 @@ class Publicacion {
     List? comentarios,
     this.likes = 0,
     this.usuarioDioLike = false,
-  }) : this.comentarios = comentarios ?? [];
+  }) : comentarios = comentarios ?? [];
 }
 
 class SocialScreen extends StatefulWidget {
+  const SocialScreen({super.key});
+
   @override
   _SocialScreenState createState() => _SocialScreenState();
 }
@@ -48,7 +50,7 @@ class _SocialScreenState extends State<SocialScreen> {
   final String avatarUrl = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1';
   
   // Lista de publicaciones simuladas con la nueva estructura
-  List<Publicacion> _publicaciones = [
+  final List<Publicacion> _publicaciones = [
     Publicacion(
       id: 'p1',
       usuarioId: 'user1',
@@ -249,8 +251,8 @@ class _SocialScreenState extends State<SocialScreen> {
                       children: [
                         CircleAvatar(
                           backgroundColor: Colors.grey[300],
-                          child: Icon(Icons.person, color: Colors.white),
                           radius: 16,
+                          child: Icon(Icons.person, color: Colors.white),
                         ),
                         SizedBox(width: 12),
                         Expanded(

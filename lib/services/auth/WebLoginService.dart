@@ -48,18 +48,15 @@ class WebLoginService implements IAuthServices {
       );
 
       // Si el usuario completó el login, extraemos el código de autorización
-      if (result != null) {
-        print('Código de autorización recibido: ${result}');
-        String authCode = _getAuthCode(result);
+      print('Código de autorización recibido: ${result}');
+      String authCode = _getAuthCode(result);
 
-        // Se envía el código al backend para intercambiarlo por un token
-        return _getAccessToken(authCode);
-      } else {
-        print('Autorización fallida o cancelada');
-      }
-    } catch (e) {
+      // Se envía el código al backend para intercambiarlo por un token
+      return _getAccessToken(authCode);
+        } catch (e) {
       print('Error al iniciar sesión: $e');
     }
+    return null;
   }
 
   // Método auxiliar para extraer el código de autorización desde la URL devuelta

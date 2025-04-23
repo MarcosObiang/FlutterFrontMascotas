@@ -4,7 +4,6 @@ import 'package:mascotas_citas/Modules/AuthenticationModule/DTOs/LogInDTO.dart';
 import 'package:mascotas_citas/interfaces/state/IState.dart';
 import 'package:mascotas_citas/types/callbacks.dart';
 
-import '../../../interfaces/state/UpdateableModuleState.dart';
 
 enum AuthStatus {
   loading,

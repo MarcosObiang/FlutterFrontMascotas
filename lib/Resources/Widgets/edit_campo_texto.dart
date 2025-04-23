@@ -9,13 +9,13 @@ class EditCampoTexto extends StatelessWidget {
   final TextInputType keyboardType;
 
   const EditCampoTexto({
-    Key? key,
+    super.key,
     required this.label,
     required this.controller,
     required this.icon,
     this.maxLines = 1,
     this.keyboardType = TextInputType.text,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

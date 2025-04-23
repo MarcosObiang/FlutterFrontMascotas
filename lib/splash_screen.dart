@@ -1,7 +1,7 @@
 // splash_screen.dart
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:mascotas_citas/Modules/AuthenticationModule/views/AuthScreen.dart'; // Importar AuthScreen en lugar de LoginScreen
+// Importar AuthScreen en lugar de LoginScreen
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

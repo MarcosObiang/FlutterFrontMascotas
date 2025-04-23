@@ -1,10 +1,11 @@
+// lib/Resources/Models/pet_model.dart
+
 class PetModel {
   final String id;
   final String petUID;
   final String onwerUID;
   final String name;
   final String petImage1;
-
   final String sex;
   final String petBio;
   final DateTime birthDate;
@@ -16,7 +17,6 @@ class PetModel {
     required this.onwerUID,
     required this.name,
     required this.petImage1,
-
     required this.sex,
     required this.petBio,
     required this.birthDate,
@@ -30,7 +30,6 @@ class PetModel {
       onwerUID: json['onwerUID'],
       name: json['name'],
       petImage1: json['petImage1'],
-
       sex: json['sex'],
       petBio: json['petBio'],
       birthDate: DateTime.parse(json['birthDate']),
@@ -45,7 +44,6 @@ class PetModel {
       'onwerUID': onwerUID,
       'name': name,
       'petImage1': petImage1,
-
       'sex': sex,
       'petBio': petBio,
       'birthDate': birthDate.toIso8601String(),
@@ -77,7 +75,6 @@ class Location {
     };
   }
 }
-
 
 class UserModel {
   final String id;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Resources/Models/mascota_api.dart';
+import 'package:mascotas_citas/models/PetModel.dart'; // Usamos el modelo PetModel
 import '../../../Resources/Widgets/boton_accion.dart';
 import '../../../Resources/Widgets/tarjeta_mascota.dart';
 import '../../../Resources/Services/api_service.dart';
@@ -22,8 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final double _maxScale = 1.05;
   final double _minOpacity = 0.8;
   
-  // Lista de mascotas
-  List<Mascota>? _mascotas;
+  // Lista de mascotas con el modelo PetModel
+  List<PetModel>? _mascotas;
   bool _isLoading = true;
   String? _error;
   
@@ -60,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   
   // Método para obtener la mascota actual
-  Mascota? get mascotaActual {
+  PetModel? get mascotaActual {
     if (_mascotas == null || _currentIndex >= _mascotas!.length) {
       return null;
     }
@@ -76,6 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final String petId = mascotaActual!.id;
     
     try {
+      // Llamar al API Service para registrar el like
       final resultado = await _apiService.createLike(userId, petId);
       if (resultado['isMatch'] == true) {
         // Mostrar notificación de match
@@ -93,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   
   // Método para mostrar notificación de match
-  void _showMatchNotification(BuildContext context, Mascota mascota) {
+  void _showMatchNotification(BuildContext context, PetModel mascota) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -103,10 +104,10 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             CircleAvatar(
               radius: 50,
-              backgroundImage: NetworkImage(mascota.fotos.first),
+              backgroundImage: NetworkImage(mascota.petImage1),
             ),
             SizedBox(height: 16),
-            Text('Has hecho match con ${mascota.nombre}'),
+            Text('Has hecho match con ${mascota.name}'),
             Text('¡Ve a la sección de matches para chatear!'),
           ],
         ),
@@ -138,7 +139,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // backgroundColor: const Color.fromRGBO(242, 217, 208, 1),
         title: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -156,7 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      // backgroundColor: const Color.fromRGBO(242, 217, 208, 1),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
         : _error != null
@@ -216,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSwipeableCard(BuildContext context, Mascota mascota) {
+  Widget _buildSwipeableCard(BuildContext context, PetModel mascota) {
     final screenWidth = MediaQuery.of(context).size.width;
     final threshold = screenWidth * 0.4; // Umbral para decidir si es swipe
     

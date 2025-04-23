@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:mascotas_citas/Resources/Models/mascota_api.dart';
 import '../../../Resources/Widgets/foto_slider.dart';
 import '../../../Resources/Widgets/interes_chip.dart';
-import 'package:mascotas_citas/Resources/Models/mensaje.dart';
 import 'package:mascotas_citas/Modules/ChatModule/Views/conversacion_screen.dart';
 
 class DetalleMatchScreen extends StatelessWidget {

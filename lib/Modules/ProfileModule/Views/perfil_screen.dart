@@ -2,10 +2,9 @@
 import 'package:flutter/material.dart';
 import '../../../Resources/Widgets/edit_campo_texto.dart';
 import '../../../Resources/Widgets/selector_fotos.dart';
-import '../../../Resources/Models/mascota_api.dart';
+import 'package:mascotas_citas/models/PetModel.dart'; // Importar el nuevo modelo
 import '../../../Resources/Services/api_service.dart';
-import '../../AuthenticationModule/views/AuthScreen.dart';
-import 'ajustes_screen.dart'; // Importamos la nueva pantalla de ajustes
+import 'ajustes_screen.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -22,206 +21,223 @@ class _PerfilScreenState extends State<PerfilScreen> {
   final ApiService _apiService = ApiService();
   
   // Datos del usuario
-  final TextEditingController _userNombreController = TextEditingController();
-  final TextEditingController _userEdadController = TextEditingController();
-  final TextEditingController _userSexoController = TextEditingController();
-  final TextEditingController _userUbicacionController = TextEditingController();
+  final TextEditingController _userNameController = TextEditingController();
+  final TextEditingController _userAgeController = TextEditingController();
+  final TextEditingController _userSexController = TextEditingController();
+  final TextEditingController _userLocationController = TextEditingController();
   final TextEditingController _userBioController = TextEditingController();
-  String fotoUsuario = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000';
+  String userImage = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000';
   
   // Lista de mascotas
-  List<Mascota> mascotas = [];
-  List<String> mascotasOriginalesIds = []; // Para mantener un registro de las mascotas originales
+  List<PetModel> pets = [];
+  List<String> originalPetIds = []; // Para mantener un registro de las mascotas originales
   
-  int mascotaSeleccionadaIndex = 0;
+  int selectedPetIndex = 0;
   bool isLoading = true;
   bool isSaving = false; // Flag para indicar cuando se están guardando los datos
   
   // Controllers para la mascota actual
-  late TextEditingController _nombreController;
-  late TextEditingController _edadController;
-  late TextEditingController _especieController;
-  late TextEditingController _sexoController;
-  late TextEditingController _descripcionController;
-  late List<String> fotos;
+  late TextEditingController _nameController;
+  late TextEditingController _ageController;
+  late TextEditingController _speciesController;
+  late TextEditingController _sexController;
+  late TextEditingController _bioController;
+  late List<String> petImages;
   
   @override
   void initState() {
     super.initState();
     
     // Inicializar controladores con valores vacíos
-    _nombreController = TextEditingController();
-    _edadController = TextEditingController();
-    _especieController = TextEditingController();
-    _sexoController = TextEditingController();
-    _descripcionController = TextEditingController();
-    fotos = [];
+    _nameController = TextEditingController();
+    _ageController = TextEditingController();
+    _speciesController = TextEditingController();
+    _sexController = TextEditingController();
+    _bioController = TextEditingController();
+    petImages = [];
     
     // Cargar datos del usuario y sus mascotas
-    _cargarDatosUsuarioYMascotas();
+    _loadUserAndPetsData();
   }
   
   // Método para cargar datos del usuario y sus mascotas desde la API
-  Future<void> _cargarDatosUsuarioYMascotas() async {
+  Future<void> _loadUserAndPetsData() async {
     setState(() {
       isLoading = true;
     });
     
     try {
       // Cargar datos del usuario
-      final usuario = await _apiService.getUserById(userId);
+      final user = await _apiService.getUserById(userId);
       
       // Actualizar controladores con datos del usuario
       setState(() {
-        _userNombreController.text = usuario.nombre;
-        _userEdadController.text = usuario.edad;
-        _userSexoController.text = usuario.sexo;
-        _userUbicacionController.text = usuario.ubicacion;
-        _userBioController.text = usuario.bio;
-        if (usuario.fotoPerfil.isNotEmpty) {
-          fotoUsuario = usuario.fotoPerfil;
+        _userNameController.text = user.name;
+        _userAgeController.text = "${DateTime.now().difference(user.birthDate).inDays ~/ 365}";
+        _userSexController.text = user.sex;
+        _userLocationController.text = "${user.location.coordinates[1]}, ${user.location.coordinates[0]}";
+        _userBioController.text = user.userBio;
+        if (user.userImage1.isNotEmpty) {
+          userImage = user.userImage1;
         }
       });
       
       // Cargar todas las mascotas y filtrar las del usuario actual
-      final todasLasMascotas = await _apiService.getAllPets();
-      final mascotasUsuario = todasLasMascotas.where((mascota) => 
-        mascota.propietarioId == userId).toList();
+      final allPets = await _apiService.getAllPets();
+      final userPets = allPets.where((pet) => 
+        pet.onwerUID == userId).toList();
       
       setState(() {
-        mascotas = mascotasUsuario;
+        pets = userPets;
         // Guardar los IDs de las mascotas originales para comparar después
-        mascotasOriginalesIds = mascotas.map((m) => m.id).toList();
+        originalPetIds = pets.map((p) => p.id).toList();
         isLoading = false;
         
-        if (mascotas.isNotEmpty) {
-          _cargarDatosMascota(0);
+        if (pets.isNotEmpty) {
+          _loadPetData(0);
         }
       });
     } catch (e) {
-      print('Error al cargar datos: $e');
+      print('Error loading data: $e');
       setState(() {
         isLoading = false;
       });
       
       // Mostrar mensaje de error
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar datos: $e'))
+        SnackBar(content: Text('Error loading data: $e'))
       );
     }
   }
   
-  void _cargarDatosMascota(int index) {
-    if (mascotas.isEmpty) return;
+  void _loadPetData(int index) {
+    if (pets.isEmpty) return;
     
-    Mascota mascota = mascotas[index];
-    _nombreController.text = mascota.nombre;
-    _edadController.text = mascota.edad;
-    _especieController.text = mascota.especie;
-    _sexoController.text = mascota.sexo ?? '';
-    _descripcionController.text = mascota.descripcion;
-    fotos = List.from(mascota.fotos);
+    PetModel pet = pets[index];
+    _nameController.text = pet.name;
+    _ageController.text = "${DateTime.now().difference(pet.birthDate).inDays ~/ 365}";
+    _speciesController.text = pet.spicies;
+    _sexController.text = pet.sex;
+    _bioController.text = pet.petBio;
+    
+    // Convertir imágenes en lista
+    petImages = [];
+    if (pet.petImage1.isNotEmpty) {
+      petImages.add(pet.petImage1);
+    }
+    
+    // Nota: Aquí deberías agregar más imágenes si tu modelo las tiene
+    // Por ahora solo usamos petImage1 del modelo
   }
   
-  void _guardarDatosMascotaActual() {
-    if (mascotas.isEmpty) return;
+  void _saveCurrentPetData() {
+    if (pets.isEmpty) return;
+    
+    // Convertir edad a fecha de nacimiento aproximada
+    int years = int.tryParse(_ageController.text) ?? 0;
+    DateTime approximateBirthDate = DateTime.now().subtract(Duration(days: years * 365));
+    
+    // Obtener ID existente o crear uno nuevo
+    String currentId = pets[selectedPetIndex].id;
+    String currentPetUID = pets[selectedPetIndex].petUID.isNotEmpty ? 
+                          pets[selectedPetIndex].petUID : 
+                          'pet_${DateTime.now().millisecondsSinceEpoch}';
     
     // Crear la mascota actualizada
-    Mascota mascotaActualizada = Mascota(
-      id: mascotas[mascotaSeleccionadaIndex].id,
-      ownerUID: userId,
-      name: _nombreController.text,
-      petImage1: fotos.isNotEmpty ? fotos[0] : '',
-      petImage2: fotos.length > 1 ? fotos[1] : '',
-      petImage3: fotos.length > 2 ? fotos[2] : '',
-      sex: _sexoController.text,
-      petBio: _descripcionController.text,
-      species: _especieController.text,
-      birthDate: mascotas[mascotaSeleccionadaIndex].birthDate, // Mantenemos la fecha original
-      enAdopcion: mascotas[mascotaSeleccionadaIndex].enAdopcion,
-      intereses: [], // Eliminamos los intereses
-      propietarioNombre: _userNombreController.text,
-      propietarioFoto: fotoUsuario,
-      ubicacion: _userUbicacionController.text,
+    PetModel updatedPet = PetModel(
+      id: currentId,
+      petUID: currentPetUID,
+      onwerUID: userId,
+      name: _nameController.text,
+      petImage1: petImages.isNotEmpty ? petImages[0] : '',
+      sex: _sexController.text,
+      petBio: _bioController.text,
+      birthDate: approximateBirthDate,
+      spicies: _speciesController.text,
     );
     
     setState(() {
       // Actualizar la mascota actual
-      mascotas[mascotaSeleccionadaIndex] = mascotaActualizada;
+      pets[selectedPetIndex] = updatedPet;
     });
   }
   
-  void _cambiarMascota(int index) {
+  void _changePet(int index) {
     // Guardar datos de la mascota actual antes de cambiar
-    _guardarDatosMascotaActual();
+    _saveCurrentPetData();
     
     setState(() {
-      mascotaSeleccionadaIndex = index;
-      _cargarDatosMascota(index);
+      selectedPetIndex = index;
+      _loadPetData(index);
     });
   }
   
-  void _agregarNuevaMascota() {
+  void _addNewPet() {
     // Guardar datos de la mascota actual si existe
-    if (mascotas.isNotEmpty) {
-      _guardarDatosMascotaActual();
+    if (pets.isNotEmpty) {
+      _saveCurrentPetData();
     }
     
     // Crear nueva mascota
-    Mascota nuevaMascota = Mascota.empty(
-      propietarioId: userId,
-      propietarioNombre: _userNombreController.text,
-      propietarioFoto: fotoUsuario,
-      ubicacion: _userUbicacionController.text,
+    PetModel newPet = PetModel(
+      id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      petUID: '',
+      onwerUID: userId,
+      name: '',
+      petImage1: '',
+      sex: '',
+      petBio: '',
+      birthDate: DateTime.now(),
+      spicies: '',
     );
     
     setState(() {
-      mascotas.add(nuevaMascota);
-      mascotaSeleccionadaIndex = mascotas.length - 1;
-      _cargarDatosMascota(mascotaSeleccionadaIndex);
+      pets.add(newPet);
+      selectedPetIndex = pets.length - 1;
+      _loadPetData(selectedPetIndex);
     });
   }
   
-  void _eliminarMascotaActual() {
-    if (mascotas.length <= 1) {
+  void _deleteCurrentPet() {
+    if (pets.length <= 1) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Debes tener al menos una mascota')),
+        SnackBar(content: Text('You must have at least one pet')),
       );
       return;
     }
     
-    final mascotaAEliminar = mascotas[mascotaSeleccionadaIndex];
+    final petToDelete = pets[selectedPetIndex];
     
     setState(() {
-      mascotas.removeAt(mascotaSeleccionadaIndex);
-      mascotaSeleccionadaIndex = 0;
-      _cargarDatosMascota(mascotaSeleccionadaIndex);
+      pets.removeAt(selectedPetIndex);
+      selectedPetIndex = 0;
+      _loadPetData(selectedPetIndex);
     });
     
     // Si la mascota ya existía en la base de datos, la eliminamos
-    if (mascotasOriginalesIds.contains(mascotaAEliminar.id)) {
-      _apiService.deletePet(mascotaAEliminar.id).then((_) {
+    if (originalPetIds.contains(petToDelete.id)) {
+      _apiService.deletePet(petToDelete.id).then((_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Mascota eliminada correctamente')),
+          SnackBar(content: Text('Pet deleted successfully')),
         );
       }).catchError((error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al eliminar mascota: $error')),
+          SnackBar(content: Text('Error deleting pet: $error')),
         );
       });
     }
   }
   
-  void _actualizarFotoUsuario() {
+  void _updateUserPhoto() {
     // Aquí iría la lógica para seleccionar una nueva foto
     // Por simplicidad, solo cambiamos a una foto predefinida
     setState(() {
-      fotoUsuario = 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1000';
+      userImage = 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1000';
     });
   }
   
   // Método para guardar todos los datos (usuario y mascotas)
-  Future<void> _guardarTodosLosDatos() async {
+  Future<void> _saveAllData() async {
     if (isSaving) return; // Evitar múltiples guardados simultáneos
     
     setState(() {
@@ -230,50 +246,49 @@ class _PerfilScreenState extends State<PerfilScreen> {
     
     try {
       // Guardar la mascota actual antes de enviar todo
-      if (mascotas.isNotEmpty) {
-        _guardarDatosMascotaActual();
+      if (pets.isNotEmpty) {
+        _saveCurrentPetData();
       }
       
       // 1. Actualizar datos del usuario
       await _apiService.updateUserProfile(
         userId,
         {
-          'bio': _userBioController.text,
-          'userImage1': fotoUsuario,
+          'userBio': _userBioController.text,
+          'userImage1': userImage,
           // Solo enviamos los campos editables
-          // Los demás campos los mantiene la API como están
         }
       );
       
-      // 2. Procesar mascostas: actualizar existentes, crear nuevas
-      for (Mascota mascota in mascotas) {
-        if (mascotasOriginalesIds.contains(mascota.id)) {
+      // 2. Procesar mascotas: actualizar existentes, crear nuevas
+      for (PetModel pet in pets) {
+        if (originalPetIds.contains(pet.id)) {
           // Es una mascota existente, actualizar
-          await _apiService.updatePet(mascota.id as Map<String, dynamic>);
+          await _apiService.updatePet(pet.toJson());
         } else {
           // Es una mascota nueva, crear
-          await _apiService.createPet(mascota as Map<String, dynamic>);
+          await _apiService.createPet(pet.toJson());
         }
       }
       
-      // 3. Buscar mascotas eliminadas (las que estaban en la lista original pero ya no están)
-      for (String id in mascotasOriginalesIds) {
-        if (!mascotas.any((m) => m.id == id)) {
+      // 3. Buscar mascotas eliminadas
+      for (String id in originalPetIds) {
+        if (!pets.any((p) => p.id == id)) {
           // Esta mascota fue eliminada, eliminarla en el servidor
           await _apiService.deletePet(id);
         }
       }
       
       // Actualizar la lista de IDs originales
-      mascotasOriginalesIds = mascotas.map((m) => m.id).toList();
+      originalPetIds = pets.map((p) => p.id).toList();
       
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Perfil actualizado correctamente')),
+        SnackBar(content: Text('Profile updated successfully')),
       );
     } catch (e) {
-      print('Error al guardar datos: $e');
+      print('Error saving data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar datos: $e')),
+        SnackBar(content: Text('Error saving data: $e')),
       );
     } finally {
       setState(() {
@@ -283,13 +298,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
   }
   
   // Método para mostrar la pantalla de ajustes
-  void _mostrarAjustes() {
+  void _showSettings() {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AjustesScreen(
           userId: userId,
-          // Podemos pasar más datos si es necesario
         ),
       ),
     );
@@ -298,12 +312,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
   @override
   Widget build(BuildContext context) {
     // Determinar si hay mascotas registradas
-    final bool tieneMascota = mascotas.isNotEmpty;
+    final bool hasPets = pets.isNotEmpty;
     
     return Scaffold(      
       appBar: AppBar(
-        // backgroundColor: Color.fromRGBO(242, 217, 208, 1),
-        title: Text('Mi Perfil', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('My Profile', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
           isSaving 
@@ -319,12 +332,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ),
               )
             : TextButton(
-                onPressed: _guardarTodosLosDatos,
-                child: Text('Guardar', style: TextStyle(color: Colors.pink)),
+                onPressed: _saveAllData,
+                child: Text('Save', style: TextStyle(color: Colors.pink)),
               ),
         ],
       ),
-      // backgroundColor: Color.fromRGBO(242, 217, 208, 1),
       body: isLoading 
         ? Center(child: CircularProgressIndicator(color: Colors.pink))
         : SingleChildScrollView(
@@ -337,7 +349,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Datos del Usuario',
+                    'User Data',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -345,8 +357,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   ),
                   IconButton(
                     icon: Icon(Icons.more_vert, color: Colors.pink),
-                    onPressed: _mostrarAjustes,
-                    tooltip: 'Ajustes',
+                    onPressed: _showSettings,
+                    tooltip: 'Settings',
                   ),
                 ],
               ),
@@ -356,12 +368,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 children: [
                   // Foto del usuario
                   GestureDetector(
-                    onTap: _actualizarFotoUsuario,
+                    onTap: _updateUserPhoto,
                     child: Stack(
                       children: [
                         CircleAvatar(
                           radius: 50,
-                          backgroundImage: NetworkImage(fotoUsuario),
+                          backgroundImage: NetworkImage(userImage),
                         ),
                         Positioned(
                           right: 0,
@@ -389,16 +401,16 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Mostrar nombre (no editable)
-                        _mostrarCampoNoEditable('Nombre', _userNombreController.text, Icons.person),
+                        _showNonEditableField('Name', _userNameController.text, Icons.person),
                         
                         // Mostrar sexo (no editable)
-                        _mostrarCampoNoEditable('Sexo', _userSexoController.text, Icons.person_outline),
+                        _showNonEditableField('Sex', _userSexController.text, Icons.person_outline),
                         
                         // Mostrar edad (no editable)
-                        _mostrarCampoNoEditable('Edad', _userEdadController.text, Icons.cake),
+                        _showNonEditableField('Age', _userAgeController.text, Icons.cake),
                         
                         // Mostrar ubicación (no editable)
-                        _mostrarCampoNoEditable('Ubicación', _userUbicacionController.text, Icons.location_on),
+                        _showNonEditableField('Location', _userLocationController.text, Icons.location_on),
                         
                         // Bio (editable)
                         EditCampoTexto(
@@ -415,7 +427,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
               SizedBox(height: 32),
 
               // Mensaje para usuarios sin mascota
-              if (!tieneMascota)
+              if (!hasPets)
                 Container(
                   margin: EdgeInsets.symmetric(vertical: 20),
                   padding: EdgeInsets.all(16),
@@ -429,7 +441,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       Icon(Icons.pets, size: 40, color: Colors.pink),
                       SizedBox(height: 10),
                       Text(
-                        '¡Agrega tu primera mascota!',
+                        'Add your first pet!',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -438,15 +450,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'Una vez que registres tu mascota, podrás acceder a todas las funcionalidades como encontrar amigos para tu mascota.',
+                        'Once you register your pet, you can access all features like finding friends for your pet.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.pink.shade700),
                       ),
                       SizedBox(height: 16),
                       ElevatedButton.icon(
-                        onPressed: _agregarNuevaMascota,
+                        onPressed: _addNewPet,
                         icon: Icon(Icons.add, color: Colors.white),
-                        label: Text('Agregar mascota', style: TextStyle(color: Colors.white)),
+                        label: Text('Add pet', style: TextStyle(color: Colors.white)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.pink,
                           shape: RoundedRectangleBorder(
@@ -459,22 +471,22 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ),
                 
               // Contenido relacionado con mascotas (solo visible si tiene mascotas)
-              if (tieneMascota) ...[
+              if (hasPets) ...[
                 // Selector de mascotas
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Mis Mascotas',
+                      'My Pets',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     ElevatedButton.icon(
-                      onPressed: _agregarNuevaMascota,
+                      onPressed: _addNewPet,
                       icon: Icon(Icons.add, color: Colors.white),
-                      label: Text('Nueva mascota', style: TextStyle(color: Colors.white)),
+                      label: Text('New pet', style: TextStyle(color: Colors.white)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.pink,
                         shape: RoundedRectangleBorder(
@@ -487,19 +499,19 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 SizedBox(height: 16),
                 // Ajuste de tamaño para la lista de mascotas
                 SizedBox(
-                  height: 80, // Reducido de 100 a 80
+                  height: 80,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: mascotas.length,
+                    itemCount: pets.length,
                     itemBuilder: (context, index) {
                       return GestureDetector(
-                        onTap: () => _cambiarMascota(index),
+                        onTap: () => _changePet(index),
                         child: Container(
-                          margin: EdgeInsets.only(right: 12), // Reducido de 16 a 12
+                          margin: EdgeInsets.only(right: 12),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: index == mascotaSeleccionadaIndex ? Colors.pink : Colors.transparent,
-                              width: 2, // Reducido de 3 a 2
+                              color: index == selectedPetIndex ? Colors.pink : Colors.transparent,
+                              width: 2,
                             ),
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -507,26 +519,26 @@ class _PerfilScreenState extends State<PerfilScreen> {
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: mascotas[index].fotos.isNotEmpty
+                                child: pets[index].petImage1.isNotEmpty
                                   ? Image.network(
-                                      mascotas[index].fotos[0],
-                                      height: 50, // Reducido de 70 a 50
-                                      width: 50,  // Reducido de 70 a 50
+                                      pets[index].petImage1,
+                                      height: 50,
+                                      width: 50,
                                       fit: BoxFit.cover,
                                     )
                                   : Container(
-                                      height: 50, // Reducido de 70 a 50
-                                      width: 50,  // Reducido de 70 a 50
+                                      height: 50,
+                                      width: 50,
                                       color: Colors.grey[300],
-                                      child: Icon(Icons.pets, color: Colors.grey[600], size: 24), // Reducido el tamaño del icono
+                                      child: Icon(Icons.pets, color: Colors.grey[600], size: 24),
                                     ),
                               ),
-                              SizedBox(height: 2), // Reducido de 4 a 2
+                              SizedBox(height: 2),
                               Text(
-                                mascotas[index].nombre.isEmpty ? 'Nueva' : mascotas[index].nombre,
+                                pets[index].name.isEmpty ? 'New' : pets[index].name,
                                 style: TextStyle(
-                                  fontSize: 12, // Agregado un tamaño más pequeño
-                                  fontWeight: index == mascotaSeleccionadaIndex ? FontWeight.bold : FontWeight.normal,
+                                  fontSize: 12,
+                                  fontWeight: index == selectedPetIndex ? FontWeight.bold : FontWeight.normal,
                                 ),
                               ),
                             ],
@@ -543,22 +555,22 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Detalles de ${_nombreController.text.isEmpty ? "Nueva Mascota" : _nombreController.text}',
+                      'Details of ${_nameController.text.isEmpty ? "New Pet" : _nameController.text}',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     IconButton(
-                      onPressed: _eliminarMascotaActual,
+                      onPressed: _deleteCurrentPet,
                       icon: Icon(Icons.delete, color: Colors.red),
-                      tooltip: 'Eliminar mascota',
+                      tooltip: 'Delete pet',
                     ),
                   ],
                 ),
                 SizedBox(height: 16),
                 Text(
-                  'Fotos de tu mascota (máximo 3)',
+                  'Photos of your pet (maximum 3)',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -566,14 +578,14 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ),
                 SizedBox(height: 16),
                 SelectorFotos(
-                  fotos: fotos,
+                  fotos: petImages,
                   maxFotos: 3,
-                  onFotoPrincipalChanged: (nuevaPrincipal) {
-                    if (fotos.isNotEmpty && fotos.contains(nuevaPrincipal)) {
+                  onFotoPrincipalChanged: (newMainPhoto) {
+                    if (petImages.isNotEmpty && petImages.contains(newMainPhoto)) {
                       setState(() {
                         // Mover la foto principal al inicio de la lista
-                        fotos.remove(nuevaPrincipal);
-                        fotos.insert(0, nuevaPrincipal);
+                        petImages.remove(newMainPhoto);
+                        petImages.insert(0, newMainPhoto);
                       });
                     }
                   },
@@ -581,7 +593,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 SizedBox(height: 24),
                 
                 Text(
-                  'Información básica',
+                  'Basic information',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -589,30 +601,30 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ),
                 SizedBox(height: 16),
                 EditCampoTexto(
-                  label: 'Nombre',
-                  controller: _nombreController,
+                  label: 'Name',
+                  controller: _nameController,
                   icon: Icons.pets,
                 ),
                 EditCampoTexto(
-                  label: 'Sexo',
-                  controller: _sexoController,
+                  label: 'Sex',
+                  controller: _sexController,
                   icon: Icons.person_outline,
                 ),
                 EditCampoTexto(
-                  label: 'Edad',
-                  controller: _edadController,
+                  label: 'Age',
+                  controller: _ageController,
                   icon: Icons.cake,
                   keyboardType: TextInputType.number,
                 ),
                 EditCampoTexto(
-                  label: 'Especie',
-                  controller: _especieController,
+                  label: 'Species',
+                  controller: _speciesController,
                   icon: Icons.category,
                 ),
                 SizedBox(height: 24),
                 
                 Text(
-                  'Sobre tu mascota',
+                  'About your pet',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -620,10 +632,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ),
                 SizedBox(height: 16),
                 TextField(
-                  controller: _descripcionController,
+                  controller: _bioController,
                   maxLines: 5,
                   decoration: InputDecoration(
-                    hintText: 'Describe a tu mascota...',
+                    hintText: 'Describe your pet...',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -642,12 +654,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
   
-  Widget _mostrarCampoNoEditable(String label, String valor, IconData icono) {
+  Widget _showNonEditableField(String label, String value, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(icono, size: 20, color: Colors.pink),
+          Icon(icon, size: 20, color: Colors.pink),
           SizedBox(width: 8),
           Text(
             '$label: ',
@@ -657,7 +669,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
           ),
           Expanded(
             child: Text(
-              valor,
+              value,
               overflow: TextOverflow.ellipsis,
             ),
           ),

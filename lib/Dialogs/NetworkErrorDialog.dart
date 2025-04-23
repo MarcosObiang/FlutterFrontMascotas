@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class NetworKErrorWidget extends StatelessWidget {
-  const NetworKErrorWidget();
+  const NetworKErrorWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

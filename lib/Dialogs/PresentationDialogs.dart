@@ -74,8 +74,8 @@ class PresentationDialogs {
     for (var element in dialogOptionsList) {
       buttons.add(
         TextButton(
-          child: Text(element.text),
           onPressed: element.function,
+          child: Text(element.text),
         ),
       );
     }

@@ -7,15 +7,15 @@ class SelectorFotos extends StatelessWidget {
   final Function(String) onFotoPrincipalChanged;
 
   const SelectorFotos({
-    Key? key,
+    super.key,
     required this.fotos,
     required this.maxFotos,
     required this.onFotoPrincipalChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 120,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
