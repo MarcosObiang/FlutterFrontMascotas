@@ -140,47 +140,7 @@ class ApiService {
       throw Exception(_handleError(e));
     }
   }
-
-  /// Método para obtener todas las mascotas
-  Future<List<PetModel>> getAllPets() async {
-  try {
-    final response = await get(
-      path: '/pets',
-      queryParams: {},
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> petsJson = response.data;
-      return petsJson.map((json) => PetModel.fromJson(json)).toList();
-    } else {
-      throw Exception('Error al obtener mascotas: ${response.statusCode}');
-    }
-  } catch (e) {
-    throw Exception('Error al obtener mascotas: $e');
-  }
-}
-
-  /// Método para crear un like
-  Future<Map<String, dynamic>> createLike(String userId, String petId) async {
-    try {
-      final response = await post(
-        path: '/likes',
-        data: {
-          'userId': userId,
-          'petId': petId,
-        },
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return response.data;
-      } else {
-        throw Exception('Error al crear like: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error al crear like: $e');
-    }
-  }
-
+  
   /// Devuelve un mensaje legible en caso de error.
   String _handleError(DioException error) {
     if (error.response != null) {

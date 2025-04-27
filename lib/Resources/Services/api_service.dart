@@ -1,13 +1,15 @@
 // lib/Resources/Services/api_service.dart
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:mascotas_citas/models/PetModel.dart';
-import '../Models/usuario.dart'; // Si aún necesitas este modelo
 
 class ApiService {
   static const String _baseUrlPets = 'http://localhost:8083';
   static const String _baseUrlUsers = 'http://localhost:8082';
   static const String _baseUrlLikes = 'http://localhost:8084';
+  static const String _baseUrlMedia = 'http://localhost:8091';
   
   // MÉTODOS PARA MASCOTAS
   
@@ -17,8 +19,6 @@ class ApiService {
     
     if (response.statusCode == 200) {
       final List<dynamic> petsJson = jsonDecode(response.body);
-      
-      // Convertir a lista de PetModel
       return petsJson.map((petJson) => PetModel.fromJson(petJson)).toList();
     } else {
       throw Exception('Error al cargar las mascotas: ${response.statusCode}');
@@ -277,7 +277,54 @@ class ApiService {
     return allPets.where((pet) => matchPetIds.contains(pet.id)).toList();
   }
   
-  // Actualizar foto de usuario
+  // MÉTODOS PARA EL SERVICIO DE MEDIA
+  
+  // Método para subir una imagen
+  Future<String> uploadImage(String userId, int index, String type, List<int> imageBytes, String filename) async {
+    var uri = Uri.parse('$_baseUrlMedia/media/upload');
+    var request = http.MultipartRequest('POST', uri);
+    
+    // Añadir parámetros
+    request.fields['userUID'] = userId;
+    request.fields['index'] = index.toString();
+    request.fields['type'] = type; // 'pet' o 'user'
+    
+    // Añadir archivo
+    request.files.add(http.MultipartFile.fromBytes(
+      'file',
+      imageBytes,
+      filename: filename,
+      contentType: MediaType('image', filename.split('.').last),
+    ));
+    
+    var response = await request.send();
+    final respStr = await response.stream.bytesToString();
+    
+    if (response.statusCode == 200) {
+      return respStr; // URL de la imagen almacenada
+    } else {
+      throw Exception('Error al subir la imagen: ${response.statusCode}, $respStr');
+    }
+  }
+  
+  // Método para obtener una imagen
+  Future<Uint8List> getImage(String fileName) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrlMedia/media/get-media'),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {
+        'fileName': fileName,
+      },
+    );
+    
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    } else {
+      throw Exception('Error al obtener la imagen: ${response.statusCode}');
+    }
+  }
+  
+  // Método para actualizar foto de usuario
   Future<void> updateUserPhoto(String userId, String photoUrl) async {
     final response = await http.post(
       Uri.parse('$_baseUrlUsers/users/update'),
@@ -293,7 +340,7 @@ class ApiService {
     }
   }
   
-  // Actualizar perfil de usuario
+  // Método para actualizar perfil de usuario
   Future<void> updateUserProfile(String userId, Map<String, dynamic> userData) async {
     // Asegurarse de que el userUID esté incluido en los datos
     userData['userUID'] = userId;
@@ -306,6 +353,26 @@ class ApiService {
     
     if (response.statusCode != 200) {
       throw Exception('Error al actualizar el perfil del usuario: ${response.statusCode}');
+    }
+  }
+  
+  // Método para actualizar foto de mascota
+  Future<void> updatePetPhoto(String petId, String photoUrl, int photoIndex) async {
+    final Map<String, dynamic> updateData = {
+      'petUID': petId,
+    };
+    
+    // Asignar la URL a la propiedad correcta según el índice
+    updateData['petImage${photoIndex}'] = photoUrl;
+    
+    final response = await http.post(
+      Uri.parse('$_baseUrlPets/pets/update'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(updateData),
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Error al actualizar la foto de la mascota: ${response.statusCode}');
     }
   }
 }

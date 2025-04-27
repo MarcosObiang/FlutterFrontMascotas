@@ -106,9 +106,19 @@
     <key>NSSiriUsageDescription</key>
     <string>The example app would like access to Siri Kit to demonstrate requesting authorization.</string>
 
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Esta aplicación necesita acceso a la red local para depuración y funcionalidades de desarrollo.</string>
+    
+    <!-- Bonjour services for Flutter debugging -->
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_dartVmService._tcp</string>
+    </array>
+    
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
+    
 </dict>
 </plist>

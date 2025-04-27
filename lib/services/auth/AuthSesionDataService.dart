@@ -137,4 +137,26 @@ class AuthDataService {
   String? getUserUID() => userUID;
 
   DateTime? getExpirationDate() => expirationDate;
+
+  // Añade este método a AuthDataService
+Future<void> loadStoredData() async {
+  try {
+    token = await secureStorage.read("token");
+    refreshToken = await secureStorage.read("refreshToken");
+    userUID = await secureStorage.read("userUID");
+    
+    String? expDateStr = await secureStorage.read("expirationDate");
+    if (expDateStr != null && expDateStr.isNotEmpty) {
+      expirationDate = DateTime.parse(expDateStr);
+    }
+    
+    print('Datos cargados del almacenamiento seguro:');
+    print('- Token: ${token?.isNotEmpty == true ? "presente" : "vacío"}');
+    print('- RefreshToken: ${refreshToken?.isNotEmpty == true ? "presente" : "vacío"}');
+    print('- UserUID: ${userUID?.isNotEmpty == true ? "presente" : "vacío"}');
+    print('- ExpDate: $expirationDate');
+  } catch (e) {
+    debugPrint("Error cargando datos del almacenamiento: $e");
+  }
+}
 }
