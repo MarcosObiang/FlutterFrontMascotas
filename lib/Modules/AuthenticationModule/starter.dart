@@ -18,7 +18,10 @@ class AuthStarter implements IStarterInterface {
         useCase.init();
       }
     } catch (e) {
-      print("Error initializing AuthStarter: $e");
+      print("Error initializing use cases: $e");
+      // Handle the error as needed
+      // For example, you might want to log it or show a message to the user
+      // throw e; // Rethrow the error if you want to propagate it
     }
     return Future.value();
   }
