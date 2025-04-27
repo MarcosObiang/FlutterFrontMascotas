@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:mascotas_citas/Modules/ChatModule/Views/chat_screen.dart';
 import 'package:mascotas_citas/Modules/HomeModule/Views/home_screen.dart';
 import 'package:mascotas_citas/Modules/MatchesModule/Views/matches_screen.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/Views/perfil_screen.dart';
 import 'package:mascotas_citas/Modules/SocialModule/Views/social_screen.dart';
+=======
+>>>>>>> dev-rodrigo
 
 
 class NavigationController extends StatefulWidget {
@@ -17,18 +20,14 @@ class _NavigationControllerState extends State<NavigationController> {
   int _selectedIndex = 0;
   
   // Método para obtener las pantallas, asegurando que tengan acceso a los providers
-  List<Widget> _getScreens(BuildContext context) => [
-    HomeScreen(),
-    MatchesScreen(),
-    SocialScreen(),
-    ChatScreen(),
-    PerfilScreen(),
+  List<Widget> _getScreens() => [
+   
   ];
 
   @override
   Widget build(BuildContext context) {
     // Obtenemos las pantallas en el momento de construir el widget
-    final screens = _getScreens(context);
+    final screens = _getScreens();
     
     return Scaffold(
       body: screens[_selectedIndex],
