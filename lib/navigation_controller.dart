@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'modules/ChatModule/Views/chat_screen.dart';
-import 'modules/HomeModule/Views/home_screen.dart';
-import 'modules/MatchesModule/Views/matches_screen.dart';
-import 'modules/SocialModule/Views/social_screen.dart';
-import 'modules/ProfileModule/Views/perfil_screen.dart';
+import 'package:mascotas_citas/Modules/ChatModule/Views/chat_screen.dart';
+import 'package:mascotas_citas/Modules/HomeModule/Views/home_screen.dart';
+import 'package:mascotas_citas/Modules/MatchesModule/Views/matches_screen.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/Views/perfil_screen.dart';
+import 'package:mascotas_citas/Modules/SocialModule/Views/social_screen.dart';
+
 
 class NavigationController extends StatefulWidget {
   const NavigationController({super.key});

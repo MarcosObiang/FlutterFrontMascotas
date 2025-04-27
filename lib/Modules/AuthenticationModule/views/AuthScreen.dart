@@ -7,7 +7,17 @@ import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGo
 import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:mascotas_citas/types/callbacks.dart';
 import 'package:provider/provider.dart';
-import 'package:mascotas_citas/navigation_controller.dart';
+class MyWidget extends StatelessWidget {
+  const MyWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
+  }
+}
+
+
+
 
 class Authscreen extends StatefulWidget {
   const Authscreen({super.key});
@@ -21,33 +31,6 @@ class Authscreen extends StatefulWidget {
 class _AuthscreenState extends State<Authscreen> {
   LogInWithGoogleUseCase logInWithGoogleUseCase =
       getIt<LogInWithGoogleUseCase>();
-      
-  @override
-  void initState() {
-    super.initState();
-    
-    // Agregamos un listener para detectar cambios en el estado de autenticación
-    logInWithGoogleUseCase.authState.addListener(_onAuthStateChanged);
-  }
-
-  @override
-  void dispose() {
-    // Removemos el listener cuando se destruye el widget
-    logInWithGoogleUseCase.authState.removeListener(_onAuthStateChanged);
-    super.dispose();
-  }
-
-  // Esta función se ejecutará cada vez que cambie el estado de autenticación
-  void _onAuthStateChanged() {
-    // Si el usuario está autenticado (estado success), navegamos a la pantalla home
-    if (logInWithGoogleUseCase.authState.getAuthStatus == AuthStatus.success || logInWithGoogleUseCase.authState.getAuthStatus == AuthStatus.error) {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const NavigationController()),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,45 +39,47 @@ class _AuthscreenState extends State<Authscreen> {
       child: Consumer<AuthState>(
 
 
-
           builder: (BuildContext context, AuthState authState, Widget? child) {
 
     
         authState.onError = ({required String title, required String message}) {
           PresentationDialogs().showErrorDialog(
-            title: "Error de autenticación", 
-            content: e.toString(), 
-            context: context
-          );
-        }
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        padding: EdgeInsets.symmetric(vertical: 15.h),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: Colors.grey.shade300),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SvgPicture.asset(
-            'assets/logos/google_logo.svg',
-            width: 50.w,
-            height: 50.h,
-          ),
-          SizedBox(width: 12.w),
-          Text(
-            'Continuar con Google',
-            style: TextStyle(
-              fontSize: 50.sp,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+              title: title, content: message, context: context);
+        };
+        return Container(
+            color: Colors.white,
+            child: Center(
+                child: authState.getAuthStatus == AuthStatus.loading
+                    ? CircularProgressIndicator()
+                    : ElevatedButton(
+                        onPressed: () async {
+                          await logInWithGoogleUseCase.execute().then((value){
+                            if(value){
+                            }
+                            else{
+                              Navigator.pushNamed(context, "/createUserScreen");
+
+                            }
+                          });
+                      
+                        },
+                        child: SizedBox(
+                          width: 600.w,
+                          height: 100.h,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Text("Iniciar con google"),
+                              SvgPicture.asset(
+                                  width: 60.w,
+                                  height: 60.h,
+                                  fit: BoxFit.contain,
+                                  alignment: Alignment.center,
+                                  'assets/logos/google_logo.svg'),
+                            ],
+                          ),
+                        ))));
+      }),
     );
   }
 }

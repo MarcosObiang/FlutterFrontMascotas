@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGoogleUseCase.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/views/AuthScreen.dart';
+import 'package:mascotas_citas/Modules/CreateUserModule/state/CreateUserState.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/views/CreateUserScreen.dart';
 import 'package:mascotas_citas/navigation_controller.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
@@ -29,6 +30,7 @@ class MainApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => AuthState()),
         ChangeNotifierProvider(create: (context) => MascotaProvider()),
+        ChangeNotifierProvider(create: (context) => CreateUserState()),
         ChangeNotifierProvider(create: (context) => SocialProvider()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()), // Agregar ThemeProvider
       ],
@@ -59,6 +61,8 @@ class MainApp extends StatelessWidget {
                   switch (settings.name) {
                     case '/splash':
                       return MaterialPageRoute(builder: (_) => const SplashScreen());
+                    case '/createUserScreen':
+                      return MaterialPageRoute(builder: (_) => const Createuserscreen());
                     case '/authScreen':
                       return MaterialPageRoute(builder: (_) => Authscreen());
                     case '/navigation':

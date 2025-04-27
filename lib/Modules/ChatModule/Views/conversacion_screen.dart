@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:mascotas_citas/Resources/Models/mascota_api.dart';
 import 'package:mascotas_citas/Resources/Models/mensaje.dart';
-import 'package:mascotas_citas/Resources/widgets/burbuja_mensaje.dart';
 import 'package:mascotas_citas/Modules/MatchesModule/Views/detalle_match_screen.dart';
 // Remove the uuid import: import 'package:uuid/uuid.dart';
 
@@ -191,11 +190,11 @@ class _ConversacionScreenState extends State<ConversacionScreen> {
         final mensaje = _mensajes[index];
         final esMio = mensaje.emisorId == miMascotaId;
         
-        return BurbujaMensaje(
-          mensaje: mensaje.contenido,
-          esMio: esMio,
-          fecha: mensaje.fechaEnvio,
-        );
+        // return BurbujaMensaje(
+        //   mensaje: mensaje.contenido,
+        //   esMio: esMio,
+        //   fecha: mensaje.fechaEnvio,
+        // );
       },
     );
   }
