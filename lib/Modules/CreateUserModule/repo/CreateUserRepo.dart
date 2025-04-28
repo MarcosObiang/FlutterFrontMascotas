@@ -6,7 +6,7 @@ abstract class CreateUserRepo {
 }
 
 class CreateUserRepoImpl implements CreateUserRepo {
-  final ApiService apiService;
+  final DioApiService apiService;
 
   CreateUserRepoImpl({required this.apiService});
 

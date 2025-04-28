@@ -7,6 +7,7 @@ import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGo
 import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:mascotas_citas/types/callbacks.dart';
 import 'package:provider/provider.dart';
+
 class MyWidget extends StatelessWidget {
   const MyWidget({super.key});
 
@@ -15,9 +16,6 @@ class MyWidget extends StatelessWidget {
     return const Placeholder();
   }
 }
-
-
-
 
 class Authscreen extends StatefulWidget {
   const Authscreen({super.key});
@@ -37,11 +35,7 @@ class _AuthscreenState extends State<Authscreen> {
     return ChangeNotifierProvider.value(
       value: logInWithGoogleUseCase.authState,
       child: Consumer<AuthState>(
-
-
           builder: (BuildContext context, AuthState authState, Widget? child) {
-
-    
         authState.onError = ({required String title, required String message}) {
           PresentationDialogs().showErrorDialog(
               title: title, content: message, context: context);
@@ -53,15 +47,18 @@ class _AuthscreenState extends State<Authscreen> {
                     ? CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: () async {
-                          await logInWithGoogleUseCase.execute().then((value){
-                            if(value){
-                            }
-                            else{
+                          await logInWithGoogleUseCase.execute().then((value) {
+                            if (value) {
+                              Navigator.pushNamed(context, "/navigation");
+                            } else if (value == false) {
+                              PresentationDialogs().showErrorDialog(
+                                  title: "Error",
+                                  content: "No se pudo iniciar sesión",
+                                  context: context);
+                            } else {
                               Navigator.pushNamed(context, "/createUserScreen");
-
                             }
                           });
-                      
                         },
                         child: SizedBox(
                           width: 600.w,

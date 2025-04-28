@@ -6,13 +6,13 @@ import 'package:mascotas_citas/const_values/const_values.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 
 /// Servicio de API centralizado usando Dio.
-class ApiService {
+class DioApiService {
   late final Dio _dio;
   final AuthDataService authDataService;
   String requestToken = '';
 
   /// Inicializa el servicio con el [authDataService] y la [baseUrl] de la API.
-  ApiService({
+  DioApiService({
     required this.authDataService,
   }) {
     _dio = Dio(

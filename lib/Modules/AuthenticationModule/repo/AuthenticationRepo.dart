@@ -13,7 +13,7 @@ abstract class AuthenticationRepo {
 
 class AuthenticationRepoImpl implements AuthenticationRepo {
   IAuthServices webLoginService;
-  ApiService apiService;
+  DioApiService apiService;
 
   AuthenticationRepoImpl(
       {required this.webLoginService, required this.apiService});

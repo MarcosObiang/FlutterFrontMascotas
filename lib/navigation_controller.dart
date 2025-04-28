@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-import 'package:mascotas_citas/Modules/ChatModule/Views/chat_screen.dart';
 import 'package:mascotas_citas/Modules/HomeModule/Views/home_screen.dart';
-import 'package:mascotas_citas/Modules/MatchesModule/Views/matches_screen.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/Views/perfil_screen.dart';
 import 'package:mascotas_citas/Modules/SocialModule/Views/social_screen.dart';
-=======
->>>>>>> dev-rodrigo
 
 
 class NavigationController extends StatefulWidget {
@@ -20,14 +15,16 @@ class _NavigationControllerState extends State<NavigationController> {
   int _selectedIndex = 0;
   
   // Método para obtener las pantallas, asegurando que tengan acceso a los providers
-  List<Widget> _getScreens() => [
-   
+  List<Widget> _getScreens(BuildContext context) => [
+    HomeScreen(),
+    SocialScreen(),
+    PerfilScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     // Obtenemos las pantallas en el momento de construir el widget
-    final screens = _getScreens();
+    final screens = _getScreens(context);
     
     return Scaffold(
       body: screens[_selectedIndex],
@@ -46,18 +43,18 @@ class _NavigationControllerState extends State<NavigationController> {
             icon: Icon(Icons.pets),
             label: 'Descubrir',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Matches',
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.favorite),
+          //   label: 'Matches',
+          // ),
           BottomNavigationBarItem(
             icon: Icon(Icons.photo_library),
             label: 'Social',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'Chats',
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.chat),
+          //   label: 'Chats',
+          // ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Perfil',

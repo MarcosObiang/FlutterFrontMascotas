@@ -2,12 +2,19 @@ import 'package:mascotas_citas/interfaces/self_started_use_case_interface.dart';
 import 'package:mascotas_citas/interfaces/usecase_interface.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 
-class SelfLoginWithGoogleUseCase implements UseCaseInterfacae {
+///
+///
+/// This class is responsible for checking if the user can log in.
+/// It checks if the user is already logged in and if the token is still valid.
+/// It uses the `AuthDataService` to get the authentication data.
+/// If the user is logged in and the token is still valid, it returns `true`.
+/// Otherwise, it returns `false`.
+class CheckIfUsserCanLogInUseCase implements UseCaseInterfacae<bool> {
   AuthDataService authDataService;
-  SelfLoginWithGoogleUseCase({required this.authDataService});
+  CheckIfUsserCanLogInUseCase({required this.authDataService});
   @override
   Future<bool> execute() async {
-    final isUserLogged = await _isUserLogged();
+    bool isUserLogged = await _isAuthDataInMemory();
     if (isUserLogged) {
       final isTokenStillValid = await _isTokenStillValid();
       return isTokenStillValid;
@@ -23,7 +30,7 @@ class SelfLoginWithGoogleUseCase implements UseCaseInterfacae {
   /// If any of the values are null, it returns `false`.
   ///
 
-  Future<bool> _isUserLogged() async {
+  Future<bool> _isAuthDataInMemory() async {
     String? token = authDataService.getToken();
     String? refreshToken = authDataService.getRefreshToken();
     String? userUID = authDataService.getUserUID();
@@ -48,7 +55,8 @@ class SelfLoginWithGoogleUseCase implements UseCaseInterfacae {
   Future<bool> _isTokenStillValid() async {
     DateTime? expirationDate = authDataService.getExpirationDate();
     if (expirationDate != null) {
-      return expirationDate.isAfter(DateTime.now());
+      return expirationDate
+          .isAfter(DateTime.now().subtract(const Duration(hours: 1)));
     } else {
       return false;
     }

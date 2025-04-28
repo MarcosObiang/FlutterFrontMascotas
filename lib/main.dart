@@ -13,11 +13,13 @@ import 'package:mascotas_citas/Modules/SocialModule/State/social_provider.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/state/AuthState.dart';
 import 'package:mascotas_citas/Resources/providers/theme_provider.dart'; // Importa el ThemeProvider
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setUpServices();
   setUpStates();
   setUpDependencies();
+  await initAsyncDependencies();
+
   runApp(const MainApp());
 }
 
@@ -32,7 +34,8 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => MascotaProvider()),
         ChangeNotifierProvider(create: (context) => CreateUserState()),
         ChangeNotifierProvider(create: (context) => SocialProvider()),
-        ChangeNotifierProvider(create: (context) => ThemeProvider()), // Agregar ThemeProvider
+        ChangeNotifierProvider(
+            create: (context) => ThemeProvider()), // Agregar ThemeProvider
       ],
       child: ScreenUtilInit(
         designSize: const Size(1080, 1920),
@@ -44,31 +47,36 @@ class MainApp extends StatelessWidget {
               return MaterialApp(
                 debugShowCheckedModeBanner: false,
                 title: 'WildLove',
-                theme: themeProvider.isDarkMode 
-                  ? themeProvider.themeData // Tema oscuro del provider
-                  : ThemeData(
-                      primarySwatch: Colors.pink,
-                      visualDensity: VisualDensity.adaptivePlatformDensity,
-                      scaffoldBackgroundColor: Color.fromRGBO(242, 217, 208, 1),
-                      appBarTheme: AppBarTheme(
-                        backgroundColor: Color.fromRGBO(242, 217, 208, 1),
-                        foregroundColor: Colors.black,
+                theme: themeProvider.isDarkMode
+                    ? themeProvider.themeData // Tema oscuro del provider
+                    : ThemeData(
+                        primarySwatch: Colors.pink,
+                        visualDensity: VisualDensity.adaptivePlatformDensity,
+                        scaffoldBackgroundColor:
+                            Color.fromRGBO(242, 217, 208, 1),
+                        appBarTheme: AppBarTheme(
+                          backgroundColor: Color.fromRGBO(242, 217, 208, 1),
+                          foregroundColor: Colors.black,
+                        ),
                       ),
-                    ),
                 // Modificar cómo se definen las rutas para mantener el contexto de los providers
                 home: const SplashScreen(),
                 onGenerateRoute: (settings) {
                   switch (settings.name) {
                     case '/splash':
-                      return MaterialPageRoute(builder: (_) => const SplashScreen());
+                      return MaterialPageRoute(
+                          builder: (_) => const SplashScreen());
                     case '/createUserScreen':
-                      return MaterialPageRoute(builder: (_) => const Createuserscreen());
+                      return MaterialPageRoute(
+                          builder: (_) => const Createuserscreen());
                     case '/authScreen':
                       return MaterialPageRoute(builder: (_) => Authscreen());
                     case '/navigation':
-                      return MaterialPageRoute(builder: (_) => const NavigationController());
+                      return MaterialPageRoute(
+                          builder: (_) => const NavigationController());
                     default:
-                      return MaterialPageRoute(builder: (_) => const SplashScreen());
+                      return MaterialPageRoute(
+                          builder: (_) => const SplashScreen());
                   }
                 },
               );

@@ -12,7 +12,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 class WebLoginService implements IAuthServices {
   // Instancias necesarias: una para los enlaces y otra para autenticación web.
   final FlutterWebAuth2 appAuth = FlutterWebAuth2();
-  ApiService apiService;
+  DioApiService apiService;
 
   // Constructor que recibe el servicio de API para hacer llamadas al backend.
   WebLoginService({required this.apiService});

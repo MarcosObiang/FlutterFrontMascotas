@@ -14,7 +14,9 @@ import 'package:mascotas_citas/services/platform/storage/SecureStorage.dart';
 class AuthDataService {
   SecureStorage secureStorage;
 
-  AuthDataService({required this.secureStorage});
+  AuthDataService({required this.secureStorage}){
+    secureStorage = SecureStorage();
+  }
 
   /// The authentication token.
   String? token="";
@@ -48,6 +50,23 @@ class AuthDataService {
     throw Exception("Error procesando token: $e");
   }
 }
+
+  /// Load all the data from the secure storage
+  Future<void> loadAll() async {
+    try {
+      token = await secureStorage.read("token");
+      refreshToken = await secureStorage.read("refreshToken");
+      userUID = await secureStorage.read("userUID");
+      String? expirationDateString = await secureStorage.read("expirationDate");
+      if (expirationDateString != null) {
+        expirationDate = DateTime.parse(expirationDateString);
+      }
+    } catch (e) {
+      debugPrint("Error loading authentication data: $e");
+      throw Exception("Error loading authentication data: $e");
+    }
+  }
+
 
   /// Sets the refresh token.
   /// If the provided [refreshToken] is null or empty, it throws an [ArgumentError].
