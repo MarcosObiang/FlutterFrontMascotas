@@ -829,7 +829,7 @@ Future<void> _loadUserData() async {
                 SizedBox(height: 16),
                 // Ajuste de tamaño para la lista de mascotas
                 SizedBox(
-                  height: 90,
+                  height: 110,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: List.generate(
@@ -854,17 +854,7 @@ Future<void> _loadUserData() async {
                                 radius: 40,
                                 backgroundImage: pets[index].petImage1.startsWith('file://')
                                     ? FileImage(File(pets[index].petImage1.replaceFirst('file://', '')))
-                                    : NetworkImage(pets[index].petImage1) as ImageProvider,
-                                child: Center(
-                                  child: Text(
-                                    pets[index].name.isNotEmpty ? pets[index].name[0].toUpperCase() : '?',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
+                                    : NetworkImage(pets[index].petImage1) as ImageProvider,                                
                               ),
                             ),
                           );

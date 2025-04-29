@@ -168,70 +168,7 @@ class TarjetaMascota extends StatelessWidget {
             ),
           ),
           
-          // Botones de acción
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () {
-                    // Implementar acción para más información
-                    Navigator.of(context).pushNamed(
-                      '/pet-details',
-                      arguments: mascota,
-                    );
-                  },
-                  icon: const Icon(Icons.info_outline),
-                  label: const Text('Más Info'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Theme.of(context).primaryColor,
-                    side: BorderSide(color: Theme.of(context).primaryColor),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // Implementar acción para contactar
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('Contactar sobre ${mascota.name ?? 'esta mascota'}'),
-                        content: const Text('¿Deseas enviar un mensaje al dueño de esta mascota?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Cancelar'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              Navigator.of(context).pushNamed(
-                                '/contact-owner',
-                                arguments: mascota,
-                              );
-                            },
-                            child: const Text('Contactar'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.pets),
-                  label: const Text('Contactar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          
         ],
       ),
     );
