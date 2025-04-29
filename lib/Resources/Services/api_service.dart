@@ -363,7 +363,7 @@ class ApiService {
     };
     
     // Asignar la URL a la propiedad correcta según el índice
-    updateData['petImage${photoIndex}'] = photoUrl;
+    updateData['petImage$photoIndex'] = photoUrl;
     
     final response = await http.post(
       Uri.parse('$_baseUrlPets/pets/update'),

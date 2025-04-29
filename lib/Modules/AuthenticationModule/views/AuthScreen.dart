@@ -40,7 +40,7 @@ class _AuthscreenState extends State<Authscreen> {
     // Si el usuario está autenticado (estado success), navegamos a la pantalla home
     if (logInWithGoogleUseCase.authState.getAuthStatus == AuthStatus.success || logInWithGoogleUseCase.authState.getAuthStatus == AuthStatus.error) {
       if (mounted) {
-        Navigator.pushNamed(context, '/createUserScreen');
+        Navigator.pushNamed(context, '/navigation');
       }
     }
   }

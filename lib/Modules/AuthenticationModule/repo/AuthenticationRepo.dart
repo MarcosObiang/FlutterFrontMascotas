@@ -26,6 +26,7 @@ class AuthenticationRepoImpl implements AuthenticationRepo {
     }
   }
 
+  @override
   Future<bool> isUserAlreadyRegistered() async {
     Response<dynamic> response = await apiService
         .get(path: "/auth/is-user-registered", queryParams: {"userUID": "userUID"});

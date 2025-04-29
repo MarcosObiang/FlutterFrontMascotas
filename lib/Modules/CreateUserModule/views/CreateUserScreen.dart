@@ -499,7 +499,7 @@ class _CreateuserscreenState extends State<Createuserscreen> with SingleTickerPr
                   userName = value;
                 });
               },
-              style: TextStyle(fontSize: 50.sp),
+              style: TextStyle(fontSize: 50.sp, color: Colors.black),
               decoration: InputDecoration(
                 labelText: "Nombre",
                 hintText: "Ingresa tu nombre",
@@ -669,7 +669,7 @@ class _CreateuserscreenState extends State<Createuserscreen> with SingleTickerPr
                   bio = value;
                 });
               },
-              style: TextStyle(fontSize: 50.sp),
+              style: TextStyle(fontSize: 50.sp, color: Colors.black87),
               decoration: InputDecoration(
                 labelText: "Sobre ti",
                 hintText: "Cuéntanos un poco sobre ti...",
@@ -833,7 +833,7 @@ class _CreateuserscreenState extends State<Createuserscreen> with SingleTickerPr
                   petName = value;
                 });
               },
-              style: TextStyle(fontSize: 50.sp),
+              style: TextStyle(fontSize: 50.sp, color: Colors.black87),
               decoration: InputDecoration(
                 labelText: "Nombre de tu mascota",
                 hintText: "¿Cómo se llama?",
@@ -864,7 +864,7 @@ class _CreateuserscreenState extends State<Createuserscreen> with SingleTickerPr
                   color: Colors.grey[50],
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(
-                    color: Colors.pink!,
+                    color: Colors.pink,
                     width: 1,
                   ),
                 ),
@@ -988,7 +988,7 @@ class _CreateuserscreenState extends State<Createuserscreen> with SingleTickerPr
                 color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(
-                  color: Colors.pink!,
+                  color: Colors.pink,
                 ),
               ),
               child: DropdownButtonHideUnderline(
@@ -1007,7 +1007,7 @@ class _CreateuserscreenState extends State<Createuserscreen> with SingleTickerPr
                         'Hamster', 'Cobaya', 'Hurón', 'Tortuga']
                       .map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
-                      value: value,
+                      value: value,                      
                       child: Text(value),
                     );
                   }).toList(),
@@ -1027,7 +1027,7 @@ class _CreateuserscreenState extends State<Createuserscreen> with SingleTickerPr
                   petBio = value;
                 });
               },
-              style: TextStyle(fontSize: 50.sp),
+              style: TextStyle(fontSize: 50.sp, color: Colors.black87),
               decoration: InputDecoration(
                 labelText: "Sobre tu mascota",
                 hintText: "Cuéntanos un poco sobre tu mascota...",

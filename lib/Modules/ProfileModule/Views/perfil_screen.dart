@@ -1,5 +1,6 @@
 // pantallas/perfil_screen.dart
 import 'package:flutter/material.dart';
+import 'dart:io'; // Para FileImage
 import '../../../Resources/Widgets/edit_campo_texto.dart';
 import '../../../Resources/Widgets/selector_fotos.dart';
 import 'package:mascotas_citas/models/PetModel.dart';
@@ -7,6 +8,7 @@ import 'package:mascotas_citas/services/ApiService.dart';
 import 'ajustes_screen.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 import 'package:mascotas_citas/services/platform/storage/SecureStorage.dart';
+import 'package:image_picker/image_picker.dart'; // Añadimos la dependencia de image_picker
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -37,13 +39,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
   final TextEditingController _userBioController = TextEditingController();
   String userImage = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000';
   
-  // Lista de mascotas mock
+  // Lista de mascotas
   List<PetModel> pets = [];
   
   int selectedPetIndex = 0;
   bool isLoading = true;
   bool isSaving = false; // Flag para indicar cuando se están guardando los datos
-  bool useFallbackData = false; // Flag para indicar si estamos usando datos de respaldo
   
   // Controllers para la mascota actual
   late TextEditingController _nameController;
@@ -52,6 +53,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
   late TextEditingController _sexController;
   late TextEditingController _bioController;
   late List<String> petImages;
+  
+  // Instancia del ImagePicker
+  final ImagePicker _picker = ImagePicker();
   
 @override
 void initState() {
@@ -69,10 +73,9 @@ void initState() {
   _authDataService.loadStoredData().then((_) {
     // Ahora obtenemos el userId después de cargar los datos
     setState(() {
-      userId = _authDataService.getUserUID() ?? '';
-      // Limpiar posibles espacios en blanco que pudieran causar errores
-      userId = userId.trim();
-      print('User ID después de cargar: "$userId"');
+      // Para pruebas, podemos usar un ID estático que coincida con nuestro backend local
+      userId = 'cr7erbisho'; // ID que corresponde al usuario de prueba en localhost
+      print('User ID para pruebas con localhost: "$userId"');
     });
     
     // Obtener y mostrar todos los datos de autenticación
@@ -88,18 +91,10 @@ void initState() {
     print('Fecha Expiración: ${expDate?.toString() ?? "no hay fecha"}');
     print('=====================================');
     
-    // Si no hay ID de usuario, mostrar un error o redirigir al login
-    if (userId.isEmpty) {
-      print('No se encontró ID de usuario, es posible que no haya iniciado sesión');
-      setState(() {
-        useFallbackData = true;
-      });
-    }
-    
-    // Cargar solo los datos del usuario
+    // Cargar datos del usuario
     _loadUserData();
-    // Cargar datos mock para mascotas
-    _loadMockPetsData();
+    // Cargar datos de mascotas reales
+    _loadPetsData();
   });
 }
   
@@ -111,15 +106,9 @@ Future<void> _getUserById() async {
       throw Exception('ID de usuario no válido');
     }
     
-    // Validar longitud del ID para evitar errores en el backend
-    // Si el backend espera IDs de cierta longitud, asegurarnos de que cumplan
-    if (userId.length < 6) {
-      throw Exception('ID de usuario demasiado corto');
-    }
-    
-    // Hacer la petición al endpoint de usuario específico
+    // Usar el endpoint local especificado
     final userResponse = await _apiService.get(
-      path: '/users/get-user-data',
+      path: 'http://localhost:8082/users/get-user-data',
       queryParams: {'userUID': userId}, // Usar ID del usuario actual
     );
     
@@ -129,20 +118,24 @@ Future<void> _getUserById() async {
       // Actualizar controladores con datos del usuario
       setState(() {
         _userNameController.text = userData['name'] ?? '';
-        _userAgeController.text = userData['age'] != null 
-            ? "${userData['age']}" 
-            : "${DateTime.now().difference(DateTime.parse(userData['birthDate'] ?? DateTime.now().toString())).inDays ~/ 365}";
-        _userSexController.text = userData['sex'] ?? '';
         
-        // Verificamos si location viene como un objeto con coordinates
-        if (userData['location'] != null && userData['location']['coordinates'] != null) {
-          _userLocationController.text = "${userData['location']['coordinates'][1]}, ${userData['location']['coordinates'][0]}";
+        // Calcular edad desde birthDate (en milisegundos desde epoch)
+        if (userData['birthDate'] != null) {
+          // birthDate viene como timestamp en milisegundos
+          final birthDate = DateTime.fromMillisecondsSinceEpoch(userData['birthDate']);
+          final age = DateTime.now().difference(birthDate).inDays ~/ 365;
+          _userAgeController.text = age.toString();
         } else {
-          _userLocationController.text = "No disponible";
+          _userAgeController.text = "No disponible";
         }
         
+        _userSexController.text = userData['sex'] ?? '';
+        
+        // Por ahora, no tenemos datos de ubicación en la respuesta
+        _userLocationController.text = "No disponible";
+        
         _userBioController.text = userData['userBio'] ?? '';
-        if (userData['userImage1'] != null && userData['userImage1'].isNotEmpty) {
+        if (userData['userImage1'] != null && userData['userImage1'].toString().isNotEmpty) {
           userImage = userData['userImage1'];
         }
       });
@@ -153,57 +146,75 @@ Future<void> _getUserById() async {
     }
   } catch (e) {
     print('Error al obtener el usuario: $e');
-    throw e;
+    rethrow;
   }
 }
 
-// Método para usar datos de fallback cuando hay problemas
-void _setFallbackUserData() {
-  setState(() {
-    _userNameController.text = 'Usuario Temporal';
-    _userAgeController.text = '25';
-    _userSexController.text = 'No especificado';
-    _userLocationController.text = 'No disponible';
-    _userBioController.text = 'Por favor, completa tu perfil cuando se resuelvan los problemas de conexión.';
-    userImage = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000';
-    useFallbackData = true;
-  });
-}
-
-// Método para cargar datos mock para mascotas
-void _loadMockPetsData() {
-  // Crear mascotas de prueba
-  List<PetModel> mockPets = [
-    PetModel(
-      id: 'mock_1',
-      petUID: 'mock_pet_1',
-      onwerUID: userId,
-      name: 'Firulais',
-      petImage1: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=1000',
-      sex: 'Macho',
-      petBio: 'Un perro juguetón y amigable que adora correr en el parque.',
-      birthDate: DateTime.now().subtract(Duration(days: 365 * 3)), // 3 años
-      spicies: 'Perro',
-    ),
-    PetModel(
-      id: 'mock_2',
-      petUID: 'mock_pet_2',
-      onwerUID: userId,
-      name: 'Michi',
-      petImage1: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=1000',
-      sex: 'Hembra',
-      petBio: 'Una gata elegante y un poco caprichosa. Le encanta dormir al sol.',
-      birthDate: DateTime.now().subtract(Duration(days: 365 * 2)), // 2 años
-      spicies: 'Gato',
-    )
-  ];
-  
-  setState(() {
-    pets = mockPets;
-    if (pets.isNotEmpty) {
-      _loadPetData(0);
+// Método para cargar los datos reales de las mascotas desde la API
+Future<void> _loadPetsData() async {
+  try {
+    if (userId.isEmpty) {
+      throw Exception('ID de usuario no válido');
     }
-  });
+    
+    // Llamada a la API para obtener las mascotas del usuario
+    final petsResponse = await _apiService.get(
+      path: 'http://localhost:8083/pets/get-pet-data-by-owner',
+      queryParams: {'ownerUID': userId},
+    );
+    
+    if (petsResponse.statusCode == 200) {
+      // La respuesta es una lista de mascotas
+      final List<dynamic> petsData = petsResponse.data;
+      List<PetModel> fetchedPets = [];
+      
+      // Convertir cada objeto de la respuesta a PetModel
+      for (var petData in petsData) {
+        DateTime birthDate = DateTime.fromMillisecondsSinceEpoch(petData['birthDate'] ?? 0);
+        
+        PetModel pet = PetModel(
+          id: petData['id'] ?? '',
+          petUID: petData['petUID'] ?? '',
+          ownerUID: petData['ownerUID'] ?? '',
+          name: petData['name'] ?? '',
+          petImage1: petData['petImage1'] ?? '',
+          petImage2: petData['petImage2'],
+          petImage3: petData['petImage3'],
+          sex: petData['sex'] ?? '',
+          petBio: petData['petBio'] ?? '',
+          birthDate: birthDate,
+          species: petData['species'] ?? '',
+        );
+        fetchedPets.add(pet);
+      }
+      
+      setState(() {
+        pets = fetchedPets;
+        if (pets.isNotEmpty) {
+          _loadPetData(0);
+        }
+      });
+      
+      print('Mascotas cargadas correctamente: ${pets.length}');
+    } else {
+      throw Exception('Error al obtener mascotas: ${petsResponse.statusCode}');
+    }
+  } catch (e) {
+    print('Error al cargar mascotas: $e');
+    // No usar mascotas de fallback, simplemente mostrar mensaje de error
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error al cargar mascotas: $e'),
+        duration: Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'Reintentar',
+          onPressed: () {
+            _loadPetsData();
+          },
+        ),
+      )
+    );
+  }
 }
 
 // Método para cargar solo datos del usuario desde la API
@@ -214,30 +225,21 @@ Future<void> _loadUserData() async {
   
   try {
     // Intentamos cargar los datos del usuario
-    try {
-      await _getUserById();
-      setState(() {
-        useFallbackData = false;
-      });
-    } catch (e) {
-      print('Error al cargar usuario, usando datos de respaldo: $e');
-      _setFallbackUserData();
-    }
+    await _getUserById();
     
     setState(() {
       isLoading = false;
     });
   } catch (e) {
-    print('Error general al cargar datos: $e');
+    print('Error general al cargar datos de usuario: $e');
     setState(() {
       isLoading = false;
-      useFallbackData = true;
     });
     
     // Mostrar mensaje de error
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Error al cargar datos. Usando datos temporales.'),
+        content: Text('Error al cargar datos del usuario: $e'),
         duration: Duration(seconds: 5),
         action: SnackBarAction(
           label: 'Reintentar',
@@ -256,7 +258,7 @@ Future<void> _loadUserData() async {
     PetModel pet = pets[index];
     _nameController.text = pet.name;
     _ageController.text = "${DateTime.now().difference(pet.birthDate).inDays ~/ 365}";
-    _speciesController.text = pet.spicies;
+    _speciesController.text = pet.species;
     _sexController.text = pet.sex;
     _bioController.text = pet.petBio;
     
@@ -265,32 +267,31 @@ Future<void> _loadUserData() async {
     if (pet.petImage1.isNotEmpty) {
       petImages.add(pet.petImage1);
     }
+    if (pet.petImage2 != null && pet.petImage2!.isNotEmpty) {
+      petImages.add(pet.petImage2!);
+    }
+    if (pet.petImage3 != null && pet.petImage3!.isNotEmpty) {
+      petImages.add(pet.petImage3!);
+    }
   }
   
   void _saveCurrentPetData() {
     if (pets.isEmpty) return;
     
-    // Convertir edad a fecha de nacimiento aproximada
-    int years = int.tryParse(_ageController.text) ?? 0;
-    DateTime approximateBirthDate = DateTime.now().subtract(Duration(days: years * 365));
-    
-    // Obtener ID existente o crear uno nuevo
-    String currentId = pets[selectedPetIndex].id;
-    String currentPetUID = pets[selectedPetIndex].petUID.isNotEmpty ? 
-                          pets[selectedPetIndex].petUID : 
-                          'mascota_${DateTime.now().millisecondsSinceEpoch}';
-    
-    // Crear la mascota actualizada
+    // Como petBio es final, necesitamos crear una nueva instancia de PetModel con los datos actualizados
+    PetModel currentPet = pets[selectedPetIndex];
     PetModel updatedPet = PetModel(
-      id: currentId,
-      petUID: currentPetUID,
-      onwerUID: userId,
-      name: _nameController.text,
-      petImage1: petImages.isNotEmpty ? petImages[0] : '',
-      sex: _sexController.text,
-      petBio: _bioController.text,
-      birthDate: approximateBirthDate,
-      spicies: _speciesController.text,
+      id: currentPet.id,
+      petUID: currentPet.petUID,
+      ownerUID: currentPet.ownerUID,
+      name: currentPet.name,
+      petImage1: currentPet.petImage1,
+      petImage2: currentPet.petImage2,
+      petImage3: currentPet.petImage3,
+      sex: currentPet.sex,
+      petBio: _bioController.text, // Usar el valor actualizado del controlador
+      birthDate: currentPet.birthDate,
+      species: currentPet.species,
     );
     
     setState(() {
@@ -310,67 +311,258 @@ Future<void> _loadUserData() async {
   }
   
   void _addNewPet() {
-    // Guardar datos de la mascota actual si existe
-    if (pets.isNotEmpty) {
-      _saveCurrentPetData();
-    }
-    
-    // Crear nueva mascota mock
-    PetModel newPet = PetModel(
-      id: 'mock_${DateTime.now().millisecondsSinceEpoch}',
-      petUID: 'mock_pet_${DateTime.now().millisecondsSinceEpoch}',
-      onwerUID: userId,
-      name: '',
-      petImage1: '',
-      sex: '',
-      petBio: '',
-      birthDate: DateTime.now(),
-      spicies: '',
+    // Esta función ahora mostraría un mensaje indicando que la funcionalidad
+    // no está disponible en esta versión
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('La creación de nuevas mascotas no está disponible en esta versión.'),
+        duration: Duration(seconds: 3),
+      ),
     );
-    
-    setState(() {
-      pets.add(newPet);
-      selectedPetIndex = pets.length - 1;
-      
-      // Limpiar los controladores para la nueva mascota
-      _nameController.text = '';
-      _ageController.text = '0';
-      _speciesController.text = '';
-      _sexController.text = '';
-      _bioController.text = '';
-      petImages = [];
-    });
   }
   
   void _deleteCurrentPet() {
-    if (pets.length <= 1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Debes tener al menos una mascota')),
-      );
-      return;
-    }
-    
-    setState(() {
-      pets.removeAt(selectedPetIndex);
-      selectedPetIndex = 0;
-      _loadPetData(selectedPetIndex);
-    });
-    
-    // No hacemos llamada a la API para eliminar, solo mostramos un mensaje de éxito
+    // Esta función ahora mostraría un mensaje indicando que la funcionalidad
+    // no está disponible en esta versión
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Mascota eliminada localmente (modo demo)')),
+      SnackBar(
+        content: Text('La eliminación de mascotas no está disponible en esta versión.'),
+        duration: Duration(seconds: 3),
+      ),
     );
   }
   
-  void _updateUserPhoto() {
-    // Aquí iría la lógica para seleccionar una nueva foto
-    // Por simplicidad, solo cambiamos a una foto predefinida
-    setState(() {
-      userImage = 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1000';
-    });
+  // Método para actualizar foto de usuario
+  void _updateUserPhoto() async {
+    // Seleccionar imagen de la galería
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    
+    if (image != null) {
+      // Aquí implementarías la lógica para subir la imagen al servidor
+      // Por ahora, simplemente simularemos que se actualizó correctamente
+      
+      setState(() {
+        // Simulamos que la URL de la imagen se actualizó
+        userImage = 'file://${image.path}';
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Foto de perfil actualizada (simulación)'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
   
-  // Método simulado para guardar datos del usuario
+  // Método para establecer una foto de mascota como principal
+  void _setPetMainPhoto(int index) {
+    if (pets.isEmpty || index == 0) return; // Ya es la principal o no hay mascotas
+    
+    setState(() {
+      PetModel currentPet = pets[selectedPetIndex];
+      
+      // Guarda la foto seleccionada
+      String selectedPhoto = petImages[index];
+      
+      // Crear nueva lista de imágenes con la seleccionada como principal
+      List<String> newPetImages = [selectedPhoto];
+      
+      // Añadir el resto de imágenes, excepto la seleccionada
+      for (int i = 0; i < petImages.length; i++) {
+        if (i != index) {
+          newPetImages.add(petImages[i]);
+        }
+      }
+      
+      // Actualizar el modelo de la mascota
+      PetModel updatedPet = PetModel(
+        id: currentPet.id,
+        petUID: currentPet.petUID,
+        ownerUID: currentPet.ownerUID,
+        name: currentPet.name,
+        petImage1: newPetImages.length > 0 ? newPetImages[0] : '',
+        petImage2: newPetImages.length > 1 ? newPetImages[1] : null,
+        petImage3: newPetImages.length > 2 ? newPetImages[2] : null,
+        sex: currentPet.sex,
+        petBio: currentPet.petBio,
+        birthDate: currentPet.birthDate,
+        species: currentPet.species,
+      );
+      
+      // Actualizar la mascota en la lista
+      pets[selectedPetIndex] = updatedPet;
+      
+      // Actualizar la lista de imágenes para la UI
+      petImages = newPetImages;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Foto establecida como principal'),
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+  
+  // Método para eliminar una foto de mascota
+  void _deletePetPhoto(int index) {
+    if (pets.isEmpty || petImages.isEmpty) return;
+    
+    setState(() {
+      PetModel currentPet = pets[selectedPetIndex];
+      
+      // Eliminar la foto seleccionada
+      petImages.removeAt(index);
+      
+      // Actualizar el modelo de la mascota
+      PetModel updatedPet = PetModel(
+        id: currentPet.id,
+        petUID: currentPet.petUID,
+        ownerUID: currentPet.ownerUID,
+        name: currentPet.name,
+        petImage1: petImages.length > 0 ? petImages[0] : '',
+        petImage2: petImages.length > 1 ? petImages[1] : null,
+        petImage3: petImages.length > 2 ? petImages[2] : null,
+        sex: currentPet.sex,
+        petBio: currentPet.petBio,
+        birthDate: currentPet.birthDate,
+        species: currentPet.species,
+      );
+      
+      // Actualizar la mascota en la lista
+      pets[selectedPetIndex] = updatedPet;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Foto eliminada'),
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+  
+  // Método para actualizar la foto de la mascota seleccionada
+  Future<void> _updatePetPhoto(int photoIndex) async {
+    if (pets.isEmpty) return;
+    
+    try {
+      // Seleccionar imagen de la galería
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      
+      if (image != null) {
+        // Aquí implementarías la lógica para subir la imagen al servidor
+        // Por ahora, simplemente simularemos que se actualizó correctamente
+        
+        setState(() {
+          // Actualizar la imagen en la lista de imágenes
+          if (photoIndex < petImages.length) {
+            petImages[photoIndex] = 'file://${image.path}';
+          }
+          
+          PetModel currentPet = pets[selectedPetIndex];
+          
+          // Crear una nueva instancia de PetModel con las imágenes actualizadas
+          PetModel updatedPet = PetModel(
+            id: currentPet.id,
+            petUID: currentPet.petUID,
+            ownerUID: currentPet.ownerUID,
+            name: currentPet.name,
+            petImage1: petImages.length > 0 ? petImages[0] : '',
+            petImage2: petImages.length > 1 ? petImages[1] : null,
+            petImage3: petImages.length > 2 ? petImages[2] : null,
+            sex: currentPet.sex,
+            petBio: currentPet.petBio,
+            birthDate: currentPet.birthDate,
+            species: currentPet.species,
+          );
+          
+          // Actualizar la mascota en la lista
+          pets[selectedPetIndex] = updatedPet;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Foto de mascota actualizada'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error al actualizar foto: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al actualizar la foto: $e'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+  
+  // Método para añadir una nueva foto a la mascota
+  Future<void> _addNewPetPhoto() async {
+    if (pets.isEmpty) return;
+    
+    try {
+      // Si ya tenemos 3 fotos, mostramos un mensaje
+      if (petImages.length >= 3) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ya tienes el máximo de 3 fotos. Actualiza una existente.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+      
+      // Seleccionar imagen de la galería
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      
+      if (image != null) {
+        setState(() {
+          // Añadir nueva imagen a la lista
+          petImages.add('file://${image.path}');
+          
+          PetModel currentPet = pets[selectedPetIndex];
+          
+          // Crear una nueva instancia de PetModel con las imágenes actualizadas
+          PetModel updatedPet = PetModel(
+            id: currentPet.id,
+            petUID: currentPet.petUID,
+            ownerUID: currentPet.ownerUID,
+            name: currentPet.name,
+            petImage1: petImages.length > 0 ? petImages[0] : '',
+            petImage2: petImages.length > 1 ? petImages[1] : null,
+            petImage3: petImages.length > 2 ? petImages[2] : null,
+            sex: currentPet.sex,
+            petBio: currentPet.petBio,
+            birthDate: currentPet.birthDate,
+            species: currentPet.species,
+          );
+          
+          // Actualizar la mascota en la lista
+          pets[selectedPetIndex] = updatedPet;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Nueva foto añadida'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error al añadir nueva foto: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al añadir nueva foto: $e'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+  
+  // Método para guardar datos del usuario
   Future<void> _saveAllData() async {
   if (isSaving) return; // Evitar múltiples guardados simultáneos
   
@@ -379,36 +571,48 @@ Future<void> _loadUserData() async {
   });
   
   try {
-    // Guardar la mascota actual antes de enviar
+    // Guardar la biografía de la mascota actual antes de enviar
     if (pets.isNotEmpty) {
       _saveCurrentPetData();
     }
     
-    // Usar el ID del usuario actual si está disponible, de lo contrario usar ID de prueba
-    final String idToUse = userId.isNotEmpty ? userId : '6e1503251f';
-    
-    // Solo guardamos los datos del usuario
+    // Guardar datos del usuario - solo la biografía es editable
     await _apiService.post(
       path: '/users/update',
       data: {
-        'userUID': idToUse,
+        'userUID': userId,
         'userBio': _userBioController.text,
-        'userImage1': userImage,
       },
-    ).then((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Perfil de usuario actualizado. Datos de mascotas guardados localmente.')),
+    );
+    
+    // Guardar datos de la mascota actual - biografía e imágenes
+    if (pets.isNotEmpty) {
+      PetModel currentPet = pets[selectedPetIndex];
+      
+      // Aquí deberíamos implementar la lógica para subir las imágenes al servidor
+      // y luego actualizar las URLs en la base de datos
+      
+      await _apiService.post(
+        path: '/pets/update',
+        data: {
+          'petUID': currentPet.petUID,
+          'petBio': currentPet.petBio,
+          'petImage1': currentPet.petImage1,
+          'petImage2': currentPet.petImage2,
+          'petImage3': currentPet.petImage3,
+        },
       );
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar perfil: $error. Datos guardados localmente.')),
-      );
-    });
+    }
+    
+    // Mostrar mensaje de éxito
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Datos actualizados correctamente')),
+    );
     
   } catch (e) {
     print('Error al guardar datos: $e');
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error al guardar datos: $e. Los cambios se han guardado localmente.')),
+      SnackBar(content: Text('Error al guardar datos: $e')),
     );
   } finally {
     setState(() {
@@ -425,6 +629,33 @@ Future<void> _loadUserData() async {
         builder: (context) => AjustesScreen(
           userId: userId,
         ),
+      ),
+    );
+  }
+  
+  // Widget para mostrar campos no editables
+  Widget _showNonEditableField(String label, String value, IconData icon) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey),
+          SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 14),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -464,90 +695,6 @@ Future<void> _loadUserData() async {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Banner de modo de datos de respaldo si estamos usando datos temporales
-              if (useFallbackData)
-                Container(
-                  width: double.infinity,
-                  margin: EdgeInsets.only(bottom: 16),
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.amber.shade700),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Modo de datos temporales',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.amber.shade900,
-                              ),
-                            ),
-                            Text(
-                              'Usando datos temporales debido a problemas de conexión.',
-                              style: TextStyle(
-                                color: Colors.amber.shade900,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: _loadUserData,
-                        child: Text('Reintentar'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.amber.shade900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              
-              // Banner informativo sobre datos mock de mascotas
-              Container(
-                width: double.infinity,
-                margin: EdgeInsets.only(bottom: 16),
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade700),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade900),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Modo de desarrollo',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue.shade900,
-                            ),
-                          ),
-                          Text(
-                            'Usando datos de mascotas de prueba. Solo se guardarán cambios al perfil de usuario.',
-                            style: TextStyle(
-                              color: Colors.blue.shade900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
               // Perfil del usuario con botón de ajustes
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -577,7 +724,9 @@ Future<void> _loadUserData() async {
                       children: [
                         CircleAvatar(
                           radius: 50,
-                          backgroundImage: NetworkImage(userImage),
+                          backgroundImage: userImage.startsWith('file://')
+                              ? FileImage(File(userImage.replaceFirst('file://', '')))
+                              : NetworkImage(userImage) as ImageProvider,
                         ),
                         Positioned(
                           right: 0,
@@ -645,7 +794,7 @@ Future<void> _loadUserData() async {
                       Icon(Icons.pets, size: 40, color: Colors.pink),
                       SizedBox(height: 10),
                       Text(
-                        '¡Añade tu primera mascota!',
+                        '¡No tienes mascotas registradas!',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -658,18 +807,6 @@ Future<void> _loadUserData() async {
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.pink.shade700),
                       ),
-                      SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: _addNewPet,
-                        icon: Icon(Icons.add, color: Colors.white),
-                        label: Text('Añadir mascota', style: TextStyle(color: Colors.white)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pink,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -681,21 +818,10 @@ Future<void> _loadUserData() async {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Mis Mascotas (Demo)',
+                      'Mis Mascotas',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: _addNewPet,
-                      icon: Icon(Icons.add, color: Colors.white),
-                      label: Text('Nueva mascota', style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
                       ),
                     ),
                   ],
@@ -703,166 +829,127 @@ Future<void> _loadUserData() async {
                 SizedBox(height: 16),
                 // Ajuste de tamaño para la lista de mascotas
                 SizedBox(
-  height: 90, // Un poco más alto para evitar desbordamientos
-  child: ListView.builder(
-    scrollDirection: Axis.horizontal,
-    itemCount: pets.length,
-    itemBuilder: (context, index) {
-      return GestureDetector(
-        onTap: () => _changePet(index),
-        child: Container(
-          width: 70, // Ancho fijo para evitar problemas de layout
-          margin: EdgeInsets.only(right: 12),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: index == selectedPetIndex ? Colors.pink : Colors.transparent,
-              width: 2,
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: pets[index].petImage1.isNotEmpty
-                  ? Image.network(
-                      pets[index].petImage1,
-                      height: 50,
-                      width: 50,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      height: 50,
-                      width: 50,
-                      color: Colors.grey[300],
-                      child: Icon(Icons.pets, color: Colors.grey[600], size: 24),
+                  height: 90,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: List.generate(
+                      pets.length + 1, // +1 para el botón de añadir
+                      (index) {
+                        if (index < pets.length) {
+                          // Avatares de mascotas existentes
+                          return GestureDetector(
+                            onTap: () => _changePet(index),
+                            child: Container(
+                              margin: EdgeInsets.only(right: 16),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: selectedPetIndex == index
+                                      ? Colors.pink
+                                      : Colors.transparent,
+                                  width: 3,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                radius: 40,
+                                backgroundImage: pets[index].petImage1.startsWith('file://')
+                                    ? FileImage(File(pets[index].petImage1.replaceFirst('file://', '')))
+                                    : NetworkImage(pets[index].petImage1) as ImageProvider,
+                                child: Center(
+                                  child: Text(
+                                    pets[index].name.isNotEmpty ? pets[index].name[0].toUpperCase() : '?',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        } else {
+                          // Botón para añadir nueva mascota
+                          return GestureDetector(
+                            onTap: _addNewPet,
+                            child: Container(
+                              margin: EdgeInsets.only(right: 16),
+                              child: CircleAvatar(
+                                radius: 40,
+                                backgroundColor: Colors.grey.shade200,
+                                child: Icon(
+                                  Icons.add,
+                                  size: 30,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                      },
                     ),
-              ),
-              SizedBox(height: 2),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: Text(
-                  pets[index].name.isEmpty ? 'Nueva' : pets[index].name,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: index == selectedPetIndex ? FontWeight.bold : FontWeight.normal,
                   ),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis, // Evita desbordamiento de texto
-                  maxLines: 1,
                 ),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  ),
-),
-                SizedBox(height: 24),
+                SizedBox(height: 20),
+
                 
+
                 // Detalles de la mascota seleccionada
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Detalles de ${_nameController.text.isEmpty ? "Nueva Mascota" : _nameController.text}',
+                      'Información de ${pets[selectedPetIndex].name}',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     IconButton(
+                      icon: Icon(Icons.delete, color: Colors.grey),
                       onPressed: _deleteCurrentPet,
-                      icon: Icon(Icons.delete, color: Colors.red),
                       tooltip: 'Eliminar mascota',
                     ),
                   ],
                 ),
-                SizedBox(height: 16),
-                Text(
-                  'Fotos de tu mascota (máximo 3)',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16),
+                SizedBox(height: 10),
+                // Selector de fotos de la mascota
                 SelectorFotos(
-                  fotos: petImages,
-                  maxFotos: 3,
-                  onFotoPrincipalChanged: (newMainPhoto) {
-                    if (petImages.isNotEmpty && petImages.contains(newMainPhoto)) {
-                      setState(() {
-                        // Mover la foto principal al inicio de la lista
-                        petImages.remove(newMainPhoto);
-                        petImages.insert(0, newMainPhoto);
-                      });
-                    }
-                  },
+                  imagenes: petImages,
+                  onSetMainPhoto: _setPetMainPhoto,
+                  onDeletePhoto: _deletePetPhoto,
+                  onAddNewPhoto: _addNewPetPhoto,
+                  maxPhotos: 3,
+                  onReplacePhoto: _updatePetPhoto,
                 ),
-                SizedBox(height: 24),
-                
-                Text(
-                  'Información básica',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+
+                // Datos básicos no editables
+                Row(
+                  children: [
+                    // Columna izquierda - datos básicos
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _showNonEditableField('Nombre', _nameController.text, Icons.pets),
+                          _showNonEditableField('Especie', _speciesController.text, Icons.category),
+                          _showNonEditableField('Sexo', _sexController.text, Icons.male),
+                          _showNonEditableField('Edad', _ageController.text, Icons.cake),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 16),
+
+                // Biografía de la mascota - editable
                 EditCampoTexto(
-                  label: 'Nombre',
-                  controller: _nameController,
-                  icon: Icons.pets,
-                ),
-                SizedBox(height: 8),
-                EditCampoTexto(
-                  label: 'Edad (años)',
-                  controller: _ageController,
-                  icon: Icons.cake,
-                  keyboardType: TextInputType.number,
-                ),
-                SizedBox(height: 8),
-                EditCampoTexto(
-                  label: 'Especie',
-                  controller: _speciesController,
-                  icon: Icons.category,
-                ),
-                SizedBox(height: 8),
-                EditCampoTexto(
-                  label: 'Sexo',
-                  controller: _sexController,
-                  icon: Icons.transgender,
-                ),
-                SizedBox(height: 8),
-                EditCampoTexto(
-                  label: 'Biografía',
+                  label: 'Biografía de la mascota',
                   controller: _bioController,
                   icon: Icons.description,
-                  maxLines: 3,
+                  maxLines: 4,
                 ),
-                SizedBox(height: 32),
-                
-                // Botón de guardar (solo visible si hay cambios pendientes)
-                Container(
-                  width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _saveAllData,
-            child: Text(
-              isSaving ? 'Guardando...' : 'Guardar cambios',
-              style: TextStyle(color: Colors.white),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.pink,
-              padding: EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-SizedBox(height: 24),
+                SizedBox(height: 24),                
               ],
             ],
           ),
@@ -870,45 +957,9 @@ SizedBox(height: 24),
     );
   }
   
-  Widget _showNonEditableField(String label, String value, IconData icon) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 12.0),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: Colors.grey[600]),
-        SizedBox(width: 8),
-        Expanded(  // Asegura que el texto no desborde
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-                overflow: TextOverflow.ellipsis,  // Maneja texto largo
-              ),
-              Text(
-                value.isEmpty ? 'No especificado' : value,
-                style: TextStyle(
-                  fontSize: 16,
-                ),
-                overflow: TextOverflow.ellipsis,  // Maneja texto largo
-                maxLines: 2,  // Permite hasta 2 líneas antes de mostrar ellipsis
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
   @override
   void dispose() {
-    // Dispose controllers to prevent memory leaks
+    // Liberar recursos
     _userNameController.dispose();
     _userAgeController.dispose();
     _userSexController.dispose();

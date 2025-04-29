@@ -48,7 +48,7 @@ class WebLoginService implements IAuthServices {
       );
 
       // Si el usuario completó el login, extraemos el código de autorización
-      print('Código de autorización recibido: ${result}');
+      print('Código de autorización recibido: $result');
       String authCode = _getAuthCode(result);
 
       // Se envía el código al backend para intercambiarlo por un token

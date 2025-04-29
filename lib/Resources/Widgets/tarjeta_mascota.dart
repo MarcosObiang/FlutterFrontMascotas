@@ -4,13 +4,14 @@ import 'package:mascotas_citas/models/PetModel.dart';
 class TarjetaMascota extends StatelessWidget {
   final PetModel mascota;
   
-  const TarjetaMascota({Key? key, required this.mascota}) : super(key: key);
+  const TarjetaMascota({super.key, required this.mascota});
   
   @override
   Widget build(BuildContext context) {
     // Calcular la edad en años
     final DateTime now = DateTime.now();
-    final Duration difference = now.difference(mascota.birthDate);
+    final DateTime petBirthDate = mascota.birthDate ?? now;
+    final Duration difference = now.difference(petBirthDate);
     final int years = (difference.inDays / 365).floor();
     
     return Card(
@@ -30,7 +31,7 @@ class TarjetaMascota extends StatelessWidget {
               children: [
                 // Imagen principal
                 Image.network(
-                  mascota.petImage1,
+                  mascota.petImage1 ?? 'https://via.placeholder.com/400/300?text=No+Image',
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: Colors.grey[300],
@@ -82,7 +83,7 @@ class TarjetaMascota extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              '${mascota.name}, $years años',
+                              '${mascota.name ?? 'Sin nombre'}, $years ${years == 1 ? 'año' : 'años'}',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 24,
@@ -96,20 +97,20 @@ class TarjetaMascota extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: mascota.sex.toLowerCase() == 'male' ? Colors.blue : Colors.pink,
+                              color: (mascota.sex ?? '').toLowerCase() == 'male' ? Colors.blue : Colors.pink,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  mascota.sex.toLowerCase() == 'male' ? Icons.male : Icons.female,
+                                  (mascota.sex ?? '').toLowerCase() == 'male' ? Icons.male : Icons.female,
                                   color: Colors.white,
                                   size: 16,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  mascota.sex.toLowerCase() == 'male' ? 'Macho' : 'Hembra',
+                                  (mascota.sex ?? '').toLowerCase() == 'male' ? 'Macho' : 'Hembra',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -122,7 +123,7 @@ class TarjetaMascota extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        mascota.spicies,
+                        mascota.species ?? 'No especificado',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 16,
@@ -154,7 +155,7 @@ class TarjetaMascota extends StatelessWidget {
                   Expanded(
                     child: SingleChildScrollView(
                       child: Text(
-                        mascota.petBio,
+                        mascota.petBio ?? 'Sin descripción',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Colors.black87,
@@ -197,7 +198,7 @@ class TarjetaMascota extends StatelessWidget {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: Text('Contactar sobre ${mascota.name}'),
+                        title: Text('Contactar sobre ${mascota.name ?? 'esta mascota'}'),
                         content: const Text('¿Deseas enviar un mensaje al dueño de esta mascota?'),
                         actions: [
                           TextButton(

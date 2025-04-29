@@ -1,16 +1,22 @@
-// widgets/selector_fotos.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 class SelectorFotos extends StatelessWidget {
-  final List<String> fotos;
-  final int maxFotos;
-  final Function(String) onFotoPrincipalChanged;
+  final List<String> imagenes;
+  final int maxPhotos;
+  final Function(int) onSetMainPhoto;
+  final VoidCallback onAddNewPhoto;
+  final Function(int) onDeletePhoto;
+  final Function(int) onReplacePhoto;
 
   const SelectorFotos({
     super.key,
-    required this.fotos,
-    required this.maxFotos,
-    required this.onFotoPrincipalChanged,
+    required this.imagenes,
+    required this.onSetMainPhoto,
+    required this.onAddNewPhoto,
+    required this.maxPhotos,
+    required this.onDeletePhoto,
+    required this.onReplacePhoto,
   });
 
   @override
@@ -19,13 +25,13 @@ class SelectorFotos extends StatelessWidget {
       height: 120,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: fotos.length < maxFotos ? fotos.length + 1 : fotos.length,
+        itemCount: imagenes.length < maxPhotos ? imagenes.length + 1 : imagenes.length,
         itemBuilder: (context, index) {
           // Botón para añadir una nueva foto
-          if (index == fotos.length && fotos.length < maxFotos) {
+          if (index == imagenes.length && imagenes.length < maxPhotos) {
             return Container(
               width: 100,
-              margin: EdgeInsets.only(right: 8),
+              margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
@@ -33,23 +39,19 @@ class SelectorFotos extends StatelessWidget {
               ),
               child: IconButton(
                 icon: Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey[600]),
-                onPressed: () {
-                  // Aquí iría la lógica para añadir una nueva foto
-                  // Por ejemplo, mostrando un diálogo para seleccionar una imagen
-                  _mostrarDialogoSeleccionarFoto(context);
-                },
+                onPressed: onAddNewPhoto,
               ),
             );
           }
-          
+
           // Mostrar foto existente
           return GestureDetector(
-            onTap: () => onFotoPrincipalChanged(fotos[index]),
+            onTap: () => _showPhotoOptions(context, index),
             child: Stack(
               children: [
                 Container(
                   width: 100,
-                  margin: EdgeInsets.only(right: 8),
+                  margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
@@ -59,16 +61,7 @@ class SelectorFotos extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(6),
-                    child: Image.network(
-                      fotos[index],
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[300],
-                          child: Icon(Icons.broken_image, color: Colors.grey[600]),
-                        );
-                      },
-                    ),
+                    child: _buildImageWidget(imagenes[index]),
                   ),
                 ),
                 // Indicador de foto principal
@@ -77,42 +70,18 @@ class SelectorFotos extends StatelessWidget {
                     top: 5,
                     right: 13,
                     child: Container(
-                      padding: EdgeInsets.all(2),
-                      decoration: BoxDecoration(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
                         color: Colors.pink,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.star,
                         size: 14,
                         color: Colors.white,
                       ),
                     ),
                   ),
-                // Botón para eliminar foto
-                Positioned(
-                  top: 5,
-                  right: index == 0 ? null : 13,
-                  left: index == 0 ? 13 : null,
-                  child: GestureDetector(
-                    onTap: () {
-                      // Lógica para eliminar la foto
-                      // Por simplicidad, no implementamos aquí
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.close,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           );
@@ -121,21 +90,92 @@ class SelectorFotos extends StatelessWidget {
     );
   }
 
-  void _mostrarDialogoSeleccionarFoto(BuildContext context) {
-    // Este método sería para implementar la selección de fotos
-    // Por simplicidad, no lo implementamos completamente
+  // Método para mostrar opciones al presionar una foto
+  void _showPhotoOptions(BuildContext context, int index) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Seleccionar foto'),
-        content: Text('Aquí irían opciones para seleccionar una imagen'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancelar'),
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(index == 0 ? 'Foto principal' : 'Opciones de foto'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (index != 0)
+                ListTile(
+                  leading: const Icon(Icons.star, color: Colors.pink),
+                  title: const Text('Establecer como principal'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onSetMainPhoto(index);
+                  },
+                ),
+              // Opción para reemplazar la foto actual
+              ListTile(
+                leading: const Icon(Icons.photo_camera, color: Colors.blue),
+                title: const Text('Reemplazar foto'),
+                onTap: () {
+                  Navigator.pop(context);
+                  onReplacePhoto(index);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Eliminar foto'),
+                onTap: () {
+                  Navigator.pop(context);
+                  onDeletePhoto(index);
+                },
+              ),
+              // Añadir nueva opción para subir foto
+              if (imagenes.length < maxPhotos)
+                ListTile(
+                  leading: const Icon(Icons.add_photo_alternate, color: Colors.blue),
+                  title: const Text('Subir nueva foto'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onAddNewPhoto();
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.cancel, color: Colors.grey),
+                title: const Text('Cancelar'),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  // Método para manejar diferentes tipos de imágenes (URL o archivos locales)
+  Widget _buildImageWidget(String imagePath) {
+    if (imagePath.startsWith('file://')) {
+      // Es un archivo local
+      return Image.file(
+        File(imagePath.replaceFirst('file://', '')),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[300],
+            child: Icon(Icons.broken_image, color: Colors.grey[600]),
+          );
+        },
+      );
+    } else {
+      // Es una URL de red
+      return Image.network(
+        imagePath,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[300],
+            child: Icon(Icons.broken_image, color: Colors.grey[600]),
+          );
+        },
+      );
+    }
   }
 }

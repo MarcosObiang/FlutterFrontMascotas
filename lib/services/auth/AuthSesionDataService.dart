@@ -99,9 +99,9 @@ class AuthDataService {
   /// Throws an [Exception] if an error occurs during clearing.
   Future<void> clearAll() async {
     try {
-      this.token = null;
-      this.refreshToken = null;
-      this.userUID = null;
+      token = null;
+      refreshToken = null;
+      userUID = null;
       await secureStorage.delete("token");
       await secureStorage.delete("refreshToken");
       await secureStorage.delete("userUID");

@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:mascotas_citas/models/PetModel.dart';
 import 'package:mascotas_citas/const_values/const_values.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 

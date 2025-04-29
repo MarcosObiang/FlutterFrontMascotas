@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:mascotas_citas/models/PetModel.dart'; // Usamos el modelo PetModel
+import 'package:mascotas_citas/models/PetModel.dart';
 import '../../../Resources/Widgets/boton_accion.dart';
 import '../../../Resources/Widgets/tarjeta_mascota.dart';
-import '../../../Resources/Services/api_service.dart';
+import 'package:mascotas_citas/services/ApiService.dart';
+import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
+import 'package:dio/dio.dart';
+// Import the custom SecureStorage
+import 'package:mascotas_citas/services/platform/storage/SecureStorage.dart'; // Adjust the import path as needed
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,12 +31,17 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String? _error;
   
-  // Servicio API
-  final ApiService _apiService = ApiService();
+  // Servicio API y Dio para peticiones HTTP
+  late final ApiService _apiService;
+  final Dio _dio = Dio();
   
   @override
   void initState() {
     super.initState();
+    // Inicializar el authDataService con la clase SecureStorage personalizada
+    final secureStorage = SecureStorage();
+    final authDataService = AuthDataService(secureStorage: secureStorage);
+    _apiService = ApiService(authDataService: authDataService);
     _cargarMascotas();
   }
   
@@ -44,16 +53,43 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     
     try {
-      final mascotas = await _apiService.getAllPets();
-      setState(() {
-        _mascotas = mascotas;
-        _isLoading = false;
-      });
+      // Usamos Dio directamente para hacer la solicitud HTTP
+      final response = await _dio.get('http://localhost:8083/pets/get-all-pets');
+      
+      if (response.statusCode == 200) {
+        // Convertimos el JSON a una lista de PetModel
+        final List<dynamic> jsonList = response.data;
+        final List<PetModel> mascotas = jsonList.map((json) => 
+          PetModel(
+            id: json['onwerUID'] ?? '', // Usamos onwerUID como id si está presente
+            name: json['name'] ?? '',
+            petImage1: json['petImage1'] ?? '',
+            // Añadimos los parámetros requeridos faltantes
+            petUID: json['petUID'] ?? '',
+            ownerUID: json['ownerUID'] ?? '',
+            sex: json['sex'] ?? '',
+            petBio: json['petBio'] ?? '',
+            birthDate: DateTime.fromMillisecondsSinceEpoch(json['birthDate'] ?? 0),
+            species: json['species'] ?? 'No especificado'
+          )
+        ).toList();
+        
+        setState(() {
+          _mascotas = mascotas;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = 'Error al cargar las mascotas: Código ${response.statusCode}';
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() {
         _error = 'Error al cargar las mascotas: $e';
         _isLoading = false;
       });
+      print('Error detallado: $e'); // Para depuración
     }
   }
   
@@ -61,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // Método para obtener la mascota actual
   PetModel? get mascotaActual {
-    if (_mascotas == null || _currentIndex >= _mascotas!.length) {
+    if (_mascotas == null || _mascotas!.isEmpty || _currentIndex >= _mascotas!.length) {
       return null;
     }
     return _mascotas![_currentIndex];
@@ -73,11 +109,20 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mascotaActual == null) return;
     
     final String userId = "usuarioActual.id"; // Esto debería venir del usuario logueado
-    final String petId = mascotaActual!.id;
+    final String petId = mascotaActual!.id ?? '';
     
     try {
-      // Llamar al API Service para registrar el like
-      final resultado = await _apiService.createLike(userId, petId);
+      // Implementar petición para crear el like usando el ApiService actualizado
+      final response = await _apiService.post(
+        path: '/likes/create-like',
+        data: {
+          'userId': userId,
+          'petId': petId,
+        },
+      );
+      
+      final resultado = response.data;
+      
       if (resultado['isMatch'] == true) {
         // Mostrar notificación de match
         _showMatchNotification(context, mascotaActual!);
@@ -104,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             CircleAvatar(
               radius: 50,
-              backgroundImage: NetworkImage(mascota.petImage1),
+              backgroundImage: NetworkImage(mascota.petImage1 ?? ''),
             ),
             SizedBox(height: 16),
             Text('Has hecho match con ${mascota.name}'),
