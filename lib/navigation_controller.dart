@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'modules/ChatModule/Views/chat_screen.dart';
 import 'modules/HomeModule/Views/home_screen.dart';
-import 'modules/MatchesModule/Views/matches_screen.dart';
+//import 'modules/MatchesModule/Views/matches_screen.dart';
 import 'modules/SocialModule/Views/social_screen.dart';
 import 'modules/ProfileModule/Views/perfil_screen.dart';
 
@@ -18,7 +18,7 @@ class _NavigationControllerState extends State<NavigationController> {
   // Método para obtener las pantallas, asegurando que tengan acceso a los providers
   List<Widget> _getScreens(BuildContext context) => [
     HomeScreen(),
-    MatchesScreen(),
+   // MatchesScreen(),
     SocialScreen(),
     ChatScreen(),
     PerfilScreen(),
@@ -46,10 +46,10 @@ class _NavigationControllerState extends State<NavigationController> {
             icon: Icon(Icons.pets),
             label: 'Descubrir',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Matches',
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.favorite),
+          //   label: 'Matches',
+          // ),
           BottomNavigationBarItem(
             icon: Icon(Icons.photo_library),
             label: 'Social',

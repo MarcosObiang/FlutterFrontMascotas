@@ -1,4 +1,3 @@
-// widgets/edit_campo_texto.dart
 import 'package:flutter/material.dart';
 
 class EditCampoTexto extends StatelessWidget {
@@ -7,6 +6,7 @@ class EditCampoTexto extends StatelessWidget {
   final IconData icon;
   final int maxLines;
   final TextInputType keyboardType;
+  final Function(String)? onChanged;  // Añadido onChanged callback
 
   const EditCampoTexto({
     super.key,
@@ -15,6 +15,7 @@ class EditCampoTexto extends StatelessWidget {
     required this.icon,
     this.maxLines = 1,
     this.keyboardType = TextInputType.text,
+    this.onChanged,  // Añadido onChanged como parámetro opcional
   });
 
   @override
@@ -25,6 +26,7 @@ class EditCampoTexto extends StatelessWidget {
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
+        onChanged: onChanged,  // Usar el callback onChanged aquí
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: Colors.pink),

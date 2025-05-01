@@ -1,6 +1,8 @@
-// pantallas/perfil_screen.dart
+// Importaciones necesarias - añadidas para solucionar errores
 import 'package:flutter/material.dart';
 import 'dart:io'; // Para FileImage
+import 'package:dio/dio.dart'; // Para FormData y MultipartFile
+import 'package:provider/provider.dart';
 import '../../../Resources/Widgets/edit_campo_texto.dart';
 import '../../../Resources/Widgets/selector_fotos.dart';
 import 'package:mascotas_citas/models/PetModel.dart';
@@ -8,7 +10,9 @@ import 'package:mascotas_citas/services/ApiService.dart';
 import 'ajustes_screen.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 import 'package:mascotas_citas/services/platform/storage/SecureStorage.dart';
-import 'package:image_picker/image_picker.dart'; // Añadimos la dependencia de image_picker
+import 'package:image_picker/image_picker.dart';
+import 'package:mascotas_citas/Resources/providers/theme_provider.dart';
+
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -252,318 +256,350 @@ Future<void> _loadUserData() async {
   }
 }
   
-  void _loadPetData(int index) {
-    if (pets.isEmpty) return;
-    
-    PetModel pet = pets[index];
-    _nameController.text = pet.name;
-    _ageController.text = "${DateTime.now().difference(pet.birthDate).inDays ~/ 365}";
-    _speciesController.text = pet.species;
-    _sexController.text = pet.sex;
-    _bioController.text = pet.petBio;
-    
-    // Convertir imágenes en lista
-    petImages = [];
-    if (pet.petImage1.isNotEmpty) {
-      petImages.add(pet.petImage1);
-    }
-    if (pet.petImage2 != null && pet.petImage2!.isNotEmpty) {
-      petImages.add(pet.petImage2!);
-    }
-    if (pet.petImage3 != null && pet.petImage3!.isNotEmpty) {
-      petImages.add(pet.petImage3!);
-    }
+// Método actualizado para cargar datos de la mascota actual
+void _loadPetData(int index) {
+  if (pets.isEmpty) return;
+  
+  PetModel pet = pets[index];
+  _nameController.text = pet.name;
+  _ageController.text = "${DateTime.now().difference(pet.birthDate).inDays ~/ 365}";
+  _speciesController.text = pet.species;
+  _sexController.text = pet.sex;
+  _bioController.text = pet.petBio;
+  
+  // Convertir imágenes en lista, asegurándose de no agregar imágenes vacías
+  List<String> newPetImages = [];
+  if (pet.petImage1.isNotEmpty) {
+    newPetImages.add(pet.petImage1);
+  }
+  if (pet.petImage2 != null && pet.petImage2!.isNotEmpty) {
+    newPetImages.add(pet.petImage2!);
+  }
+  if (pet.petImage3 != null && pet.petImage3!.isNotEmpty) {
+    newPetImages.add(pet.petImage3!);
   }
   
-  void _saveCurrentPetData() {
-    if (pets.isEmpty) return;
-    
-    // Como petBio es final, necesitamos crear una nueva instancia de PetModel con los datos actualizados
-    PetModel currentPet = pets[selectedPetIndex];
-    PetModel updatedPet = PetModel(
-      id: currentPet.id,
-      petUID: currentPet.petUID,
-      ownerUID: currentPet.ownerUID,
-      name: currentPet.name,
-      petImage1: currentPet.petImage1,
-      petImage2: currentPet.petImage2,
-      petImage3: currentPet.petImage3,
-      sex: currentPet.sex,
-      petBio: _bioController.text, // Usar el valor actualizado del controlador
-      birthDate: currentPet.birthDate,
-      species: currentPet.species,
-    );
-    
+  // Actualizar la lista de imágenes
+  setState(() {
+    petImages = newPetImages;
+  });
+  
+  print("Datos de mascota cargados. Imágenes: $petImages");
+}
+  
+void _saveCurrentPetData() {
+  if (pets.isEmpty) return;
+  
+  // Como petBio es final, necesitamos crear una nueva instancia de PetModel con los datos actualizados
+  PetModel currentPet = pets[selectedPetIndex];
+  PetModel updatedPet = PetModel(
+    id: currentPet.id,
+    petUID: currentPet.petUID,
+    ownerUID: currentPet.ownerUID,
+    name: currentPet.name,
+    petImage1: currentPet.petImage1,
+    petImage2: currentPet.petImage2,
+    petImage3: currentPet.petImage3,
+    sex: currentPet.sex,
+    petBio: _bioController.text, // Usar el valor actualizado del controlador
+    birthDate: currentPet.birthDate,
+    species: currentPet.species,
+  );
+  
+  setState(() {
+    // Actualizar la mascota actual
+    pets[selectedPetIndex] = updatedPet;
+  });
+}
+  
+void _changePet(int index) {
+  // Guardar datos de la mascota actual antes de cambiar
+  _saveCurrentPetData();
+  
+  setState(() {
+    selectedPetIndex = index;
+    _loadPetData(index);
+  });
+}
+  
+void _addNewPet() {
+  // Esta función ahora mostraría un mensaje indicando que la funcionalidad
+  // no está disponible en esta versión
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('La creación de nuevas mascotas no está disponible en esta versión.'),
+      duration: Duration(seconds: 3),
+    ),
+  );
+}
+  
+void _deleteCurrentPet() {
+  // Esta función ahora mostraría un mensaje indicando que la funcionalidad
+  // no está disponible en esta versión
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('La eliminación de mascotas no está disponible en esta versión.'),
+      duration: Duration(seconds: 3),
+    ),
+  );
+}
+
+// Método para manejar la actualización de la imagen de perfil del usuario
+void _onUserImageUpdated(List<String> updatedImages) {
+  if (updatedImages.isEmpty) return;
+  
+  setState(() {
+    userImage = updatedImages.first;
+  });
+  
+  // Mostrar mensaje de éxito
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('Foto de perfil actualizada correctamente'),
+      backgroundColor: Colors.green,
+      duration: Duration(seconds: 2),
+    ),
+  );
+}
+
+// Método actualizado para usar el orquestador al actualizar la foto de usuario
+Future<void> _updateUserPhoto() async {
+  try {
+    // Mostrar indicador de carga
     setState(() {
-      // Actualizar la mascota actual
-      pets[selectedPetIndex] = updatedPet;
+      isLoading = true;
     });
-  }
-  
-  void _changePet(int index) {
-    // Guardar datos de la mascota actual antes de cambiar
-    _saveCurrentPetData();
     
-    setState(() {
-      selectedPetIndex = index;
-      _loadPetData(index);
-    });
-  }
-  
-  void _addNewPet() {
-    // Esta función ahora mostraría un mensaje indicando que la funcionalidad
-    // no está disponible en esta versión
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('La creación de nuevas mascotas no está disponible en esta versión.'),
-        duration: Duration(seconds: 3),
-      ),
-    );
-  }
-  
-  void _deleteCurrentPet() {
-    // Esta función ahora mostraría un mensaje indicando que la funcionalidad
-    // no está disponible en esta versión
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('La eliminación de mascotas no está disponible en esta versión.'),
-        duration: Duration(seconds: 3),
-      ),
-    );
-  }
-  
-  // Método para actualizar foto de usuario
-  void _updateUserPhoto() async {
     // Seleccionar imagen de la galería
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80, // Reducir calidad para optimizar tamaño
+    );
     
     if (image != null) {
-      // Aquí implementarías la lógica para subir la imagen al servidor
-      // Por ahora, simplemente simularemos que se actualizó correctamente
+      // Crear un objeto File desde el XFile
+      File imageFile = File(image.path);
       
-      setState(() {
-        // Simulamos que la URL de la imagen se actualizó
-        userImage = 'file://${image.path}';
+      // Preparar los datos para enviar al orquestador
+      final formData = FormData.fromMap({
+        'userImage': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: 'user_image.jpg',
+        ),
       });
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Foto de perfil actualizada (simulación)'),
-          duration: Duration(seconds: 3),
-        ),
+      // Realizar la solicitud al nuevo endpoint del orquestador
+      final response = await _apiService.post(
+        path: 'http://localhost:8093/api/update-user-image',
+        data: formData,
       );
+      
+      // Asegurar que se envíe el userUID en los headers
+      // Asumiendo que _apiService tiene una propiedad dio para acceder al cliente Dio
+      // Si no existe, necesitarás modificar la clase ApiService para exponer esta propiedad
+      
+      if (_apiService is ApiService) {
+      _apiService.dioClient.options.headers['userUID'] = userId;
+      
     }
-  }
-  
-  // Método para establecer una foto de mascota como principal
-  void _setPetMainPhoto(int index) {
-    if (pets.isEmpty || index == 0) return; // Ya es la principal o no hay mascotas
-    
-    setState(() {
-      PetModel currentPet = pets[selectedPetIndex];
       
-      // Guarda la foto seleccionada
-      String selectedPhoto = petImages[index];
-      
-      // Crear nueva lista de imágenes con la seleccionada como principal
-      List<String> newPetImages = [selectedPhoto];
-      
-      // Añadir el resto de imágenes, excepto la seleccionada
-      for (int i = 0; i < petImages.length; i++) {
-        if (i != index) {
-          newPetImages.add(petImages[i]);
+      if (response.statusCode == 200) {
+        // Si la respuesta incluye la URL actualizada de la imagen
+        if (response.data != null && response.data['userImage1'] != null) {
+          setState(() {
+            userImage = response.data['userImage1'];
+          });
+        } else {
+          // Si no hay URL en la respuesta, usar la ruta local temporalmente
+          setState(() {
+            userImage = 'file://${image.path}';
+          });
         }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Foto de perfil actualizada correctamente'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      } else {
+        throw Exception('Error al actualizar foto: ${response.statusCode}');
       }
-      
-      // Actualizar el modelo de la mascota
-      PetModel updatedPet = PetModel(
-        id: currentPet.id,
-        petUID: currentPet.petUID,
-        ownerUID: currentPet.ownerUID,
-        name: currentPet.name,
-        petImage1: newPetImages.length > 0 ? newPetImages[0] : '',
-        petImage2: newPetImages.length > 1 ? newPetImages[1] : null,
-        petImage3: newPetImages.length > 2 ? newPetImages[2] : null,
-        sex: currentPet.sex,
-        petBio: currentPet.petBio,
-        birthDate: currentPet.birthDate,
-        species: currentPet.species,
-      );
-      
-      // Actualizar la mascota en la lista
-      pets[selectedPetIndex] = updatedPet;
-      
-      // Actualizar la lista de imágenes para la UI
-      petImages = newPetImages;
-    });
-    
+    }
+  } catch (e) {
+    // Manejar errores
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Foto establecida como principal'),
-        duration: Duration(seconds: 3),
+        content: Text('Error: ${e.toString()}'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 5),
       ),
     );
-  }
-  
-  // Método para eliminar una foto de mascota
-  void _deletePetPhoto(int index) {
-    if (pets.isEmpty || petImages.isEmpty) return;
-    
+    print('Error al actualizar foto: $e');
+  } finally {
+    // Ocultar indicador de carga
     setState(() {
-      PetModel currentPet = pets[selectedPetIndex];
-      
-      // Eliminar la foto seleccionada
-      petImages.removeAt(index);
-      
-      // Actualizar el modelo de la mascota
-      PetModel updatedPet = PetModel(
-        id: currentPet.id,
-        petUID: currentPet.petUID,
-        ownerUID: currentPet.ownerUID,
-        name: currentPet.name,
-        petImage1: petImages.length > 0 ? petImages[0] : '',
-        petImage2: petImages.length > 1 ? petImages[1] : null,
-        petImage3: petImages.length > 2 ? petImages[2] : null,
-        sex: currentPet.sex,
-        petBio: currentPet.petBio,
-        birthDate: currentPet.birthDate,
-        species: currentPet.species,
-      );
-      
-      // Actualizar la mascota en la lista
-      pets[selectedPetIndex] = updatedPet;
+      isLoading = false;
     });
+  }
+}
+  
+// Callback actualizado para actualizar las imágenes desde el selector de fotos
+// usando el orquestador
+void _onPetImagesUpdated(List<String> updatedImages) async {
+  if (pets.isEmpty) return;
+  
+  print("Imágenes actualizadas recibidas del selector: $updatedImages");
+  
+  // Primero asegurarse de que la lista local se actualice
+  setState(() {
+    petImages = List.from(updatedImages); // Crear una nueva lista para evitar referencia compartida
+  });
+  
+  try {
+    // Obtener la mascota actual
+    PetModel currentPet = pets[selectedPetIndex];
     
+    // Preparar los archivos para enviar
+    List<File> imageFiles = [];
+    
+    // Convertir las URLs a archivos si son locales (empiezan con 'file://')
+    for (String imagePath in updatedImages) {
+      if (imagePath.startsWith('file://')) {
+        imageFiles.add(File(imagePath.replaceFirst('file://', '')));
+      }
+    }
+    
+    // Si no hay archivos nuevos para actualizar, no hacemos nada
+    if (imageFiles.isEmpty) {
+      print("No hay nuevas imágenes para subir");
+      return;
+    }
+    
+    // Preparar el FormData para el orquestador
+    FormData formData = FormData();
+    
+    // Agregar las imágenes al FormData
+    for (int i = 0; i < imageFiles.length; i++) {
+      formData.files.add(
+        MapEntry(
+          'petImage${i + 1}',
+          await MultipartFile.fromFile(
+            imageFiles[i].path,
+            filename: 'pet_image_${i + 1}.jpg',
+          ),
+        ),
+      );
+    }
+    
+    // Establecer los headers necesarios
+    // Asumiendo que _apiService tiene una propiedad dio para acceder al cliente Dio
+    if (_apiService is ApiService) {
+      _apiService.dioClient.options.headers['userUID'] = userId;
+      _apiService.dioClient.options.headers['petUID'] = currentPet.petUID;
+    }
+    
+    // Realizar la solicitud al endpoint del orquestador
+    final response = await _apiService.post(
+      path: 'http://localhost:8093/api/update-pet-images',
+      data: formData,
+    );
+    
+    if (response.statusCode == 200) {
+      // Actualizar el modelo de la mascota con las nuevas URLs si se devuelven
+      if (response.data != null) {
+        PetModel updatedPet = PetModel(
+          id: currentPet.id,
+          petUID: currentPet.petUID,
+          ownerUID: currentPet.ownerUID,
+          name: currentPet.name,
+          petImage1: response.data['petImage1'] ?? currentPet.petImage1,
+          petImage2: response.data['petImage2'] ?? currentPet.petImage2,
+          petImage3: response.data['petImage3'] ?? currentPet.petImage3,
+          sex: currentPet.sex,
+          petBio: currentPet.petBio,
+          birthDate: currentPet.birthDate,
+          species: currentPet.species,
+        );
+        
+        // Actualizar la mascota en la lista
+        setState(() {
+          pets[selectedPetIndex] = updatedPet;
+        });
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Imágenes de ${currentPet.name} actualizadas correctamente'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      throw Exception('Error al actualizar imágenes: ${response.statusCode}');
+    }
+    
+  } catch (e) {
+    print('Error al actualizar imágenes de mascota: $e');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Foto eliminada'),
+        content: Text('Error al actualizar imágenes: $e'),
+        backgroundColor: Colors.red,
         duration: Duration(seconds: 3),
       ),
     );
   }
-  
-  // Método para actualizar la foto de la mascota seleccionada
-  Future<void> _updatePetPhoto(int photoIndex) async {
-    if (pets.isEmpty) return;
+}
+
+// Método para guardar específicamente las imágenes de una mascota en el servidor
+// usando el orquestador
+Future<void> _saveSpecificPetImages(PetModel pet, List<File> imageFiles) async {
+  try {
+    // Preparar el FormData para el orquestador
+    FormData formData = FormData();
     
-    try {
-      // Seleccionar imagen de la galería
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      
-      if (image != null) {
-        // Aquí implementarías la lógica para subir la imagen al servidor
-        // Por ahora, simplemente simularemos que se actualizó correctamente
-        
-        setState(() {
-          // Actualizar la imagen en la lista de imágenes
-          if (photoIndex < petImages.length) {
-            petImages[photoIndex] = 'file://${image.path}';
-          }
-          
-          PetModel currentPet = pets[selectedPetIndex];
-          
-          // Crear una nueva instancia de PetModel con las imágenes actualizadas
-          PetModel updatedPet = PetModel(
-            id: currentPet.id,
-            petUID: currentPet.petUID,
-            ownerUID: currentPet.ownerUID,
-            name: currentPet.name,
-            petImage1: petImages.length > 0 ? petImages[0] : '',
-            petImage2: petImages.length > 1 ? petImages[1] : null,
-            petImage3: petImages.length > 2 ? petImages[2] : null,
-            sex: currentPet.sex,
-            petBio: currentPet.petBio,
-            birthDate: currentPet.birthDate,
-            species: currentPet.species,
-          );
-          
-          // Actualizar la mascota en la lista
-          pets[selectedPetIndex] = updatedPet;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Foto de mascota actualizada'),
-            duration: Duration(seconds: 3),
+    // Agregar las imágenes al FormData
+    for (int i = 0; i < imageFiles.length && i < 3; i++) {
+      formData.files.add(
+        MapEntry(
+          'petImage${i + 1}',
+          await MultipartFile.fromFile(
+            imageFiles[i].path,
+            filename: 'pet_image_${i + 1}.jpg',
           ),
-        );
-      }
-    } catch (e) {
-      print('Error al actualizar foto: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al actualizar la foto: $e'),
-          duration: Duration(seconds: 3),
         ),
       );
     }
-  }
-  
-  // Método para añadir una nueva foto a la mascota
-  Future<void> _addNewPetPhoto() async {
-    if (pets.isEmpty) return;
     
-    try {
-      // Si ya tenemos 3 fotos, mostramos un mensaje
-      if (petImages.length >= 3) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ya tienes el máximo de 3 fotos. Actualiza una existente.'),
-            duration: Duration(seconds: 3),
-          ),
-        );
-        return;
-      }
-      
-      // Seleccionar imagen de la galería
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      
-      if (image != null) {
-        setState(() {
-          // Añadir nueva imagen a la lista
-          petImages.add('file://${image.path}');
-          
-          PetModel currentPet = pets[selectedPetIndex];
-          
-          // Crear una nueva instancia de PetModel con las imágenes actualizadas
-          PetModel updatedPet = PetModel(
-            id: currentPet.id,
-            petUID: currentPet.petUID,
-            ownerUID: currentPet.ownerUID,
-            name: currentPet.name,
-            petImage1: petImages.length > 0 ? petImages[0] : '',
-            petImage2: petImages.length > 1 ? petImages[1] : null,
-            petImage3: petImages.length > 2 ? petImages[2] : null,
-            sex: currentPet.sex,
-            petBio: currentPet.petBio,
-            birthDate: currentPet.birthDate,
-            species: currentPet.species,
-          );
-          
-          // Actualizar la mascota en la lista
-          pets[selectedPetIndex] = updatedPet;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Nueva foto añadida'),
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error al añadir nueva foto: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al añadir nueva foto: $e'),
-          duration: Duration(seconds: 3),
-        ),
-      );
+    // Establecer los headers necesarios
+    // Asumiendo que _apiService tiene una propiedad dio para acceder al cliente Dio
+    if (_apiService is ApiService) {
+      _apiService.dioClient.options.headers['userUID'] = userId;
+      _apiService.dioClient.options.headers['petUID'] = pet.petUID;
     }
+    
+    // Realizar la solicitud al endpoint del orquestador
+    final response = await _apiService.post(
+      path: 'http://localhost:8093/api/update-pet-images',
+      data: formData,
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Error al actualizar imágenes: ${response.statusCode}');
+    }
+    
+    print("Imágenes guardadas en el servidor con éxito");
+    return;
+    
+  } catch (e) {
+    print('Error al guardar imágenes en el servidor: $e');
+    throw e;
   }
+}
   
-  // Método para guardar datos del usuario
-  Future<void> _saveAllData() async {
+// Método para guardar solo las biografías (usuario y mascota)
+Future<void> _saveAllData() async {
   if (isSaving) return; // Evitar múltiples guardados simultáneos
   
   setState(() {
@@ -576,43 +612,62 @@ Future<void> _loadUserData() async {
       _saveCurrentPetData();
     }
     
-    // Guardar datos del usuario - solo la biografía es editable
-    await _apiService.post(
-      path: '/users/update',
-      data: {
-        'userUID': userId,
-        'userBio': _userBioController.text,
-      },
+    // --- ACTUALIZAR SOLO LA BIOGRAFÍA DEL USUARIO ---
+    Map<String, dynamic> userData = {
+      'userUID': userId,
+      'userBio': _userBioController.text,
+    };
+    
+    // Realizar la solicitud de actualización de la biografía del usuario
+    final userResponse = await _apiService.post(
+      path: 'http://localhost:8082/users/update',
+      data: userData,
     );
     
-    // Guardar datos de la mascota actual - biografía e imágenes
+    // Verificar si la actualización del usuario fue exitosa
+    if (userResponse.statusCode != 200) {
+      throw Exception('Error al actualizar la biografía del usuario: ${userResponse.statusCode}');
+    }
+    
+    // --- ACTUALIZAR SOLO LA BIOGRAFÍA DE LA MASCOTA (si existe) ---
     if (pets.isNotEmpty) {
       PetModel currentPet = pets[selectedPetIndex];
       
-      // Aquí deberíamos implementar la lógica para subir las imágenes al servidor
-      // y luego actualizar las URLs en la base de datos
+      // Crear el objeto de datos de la mascota (solo biografía)
+      Map<String, dynamic> petData = {
+        'petUID': currentPet.petUID,
+        'petBio': currentPet.petBio,
+      };
       
-      await _apiService.post(
-        path: '/pets/update',
-        data: {
-          'petUID': currentPet.petUID,
-          'petBio': currentPet.petBio,
-          'petImage1': currentPet.petImage1,
-          'petImage2': currentPet.petImage2,
-          'petImage3': currentPet.petImage3,
-        },
+      // Realizar la solicitud de actualización de la biografía de la mascota
+      final petResponse = await _apiService.post(
+        path: 'http://localhost:8083/pets/update',
+        data: petData,
       );
+      
+      // Verificar si la actualización de la mascota fue exitosa
+      if (petResponse.statusCode != 200) {
+        throw Exception('Error al actualizar la biografía de la mascota: ${petResponse.statusCode}');
+      }
     }
     
     // Mostrar mensaje de éxito
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Datos actualizados correctamente')),
+      SnackBar(
+        content: Text('Biografías actualizadas correctamente'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
     );
     
   } catch (e) {
     print('Error al guardar datos: $e');
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error al guardar datos: $e')),
+      SnackBar(
+        content: Text('Error al guardar datos: $e'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 3),
+      ),
     );
   } finally {
     setState(() {
@@ -621,345 +676,743 @@ Future<void> _loadUserData() async {
   }
 }
   
-  // Método para mostrar la pantalla de ajustes
-  void _showSettings() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AjustesScreen(
-          userId: userId,
+// Método para mostrar la pantalla de ajustes
+void _showSettings() {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => AjustesScreen(
+        userId: userId,
+      ),
+    ),
+  );
+}
+  
+// Widget para mostrar campos no editables
+Widget _showNonEditableField(String label, String value, IconData icon) {
+  return Container(
+    margin: EdgeInsets.only(bottom: 10),
+    child: Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey),
+        SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
         ),
-      ),
-    );
-  }
-  
-  // Widget para mostrar campos no editables
-  Widget _showNonEditableField(String label, String value, IconData icon) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.grey),
-          SizedBox(width: 8),
-          Text(
-            '$label: ',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(fontSize: 14),
+            overflow: TextOverflow.ellipsis,
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(fontSize: 14),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
   
-  @override
+@override
   Widget build(BuildContext context) {
+    // Obtiene el tema actual y la referencia al ThemeProvider personalizado
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    
+    // Usar el tema adecuado según el modo
+    final theme = isDarkMode ? themeProvider.darkTheme : themeProvider.lightTheme;
+    
     // Determinar si hay mascotas registradas
     final bool hasPets = pets.isNotEmpty;
     
-    return Scaffold(      
-      appBar: AppBar(
-        title: Text('Mi Perfil', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        actions: [
-          isSaving 
-            ? Padding(
-                padding: EdgeInsets.all(16.0),
-                child: SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.pink,
-                    strokeWidth: 2.0,
+    return Theme(
+      // Aplicar el tema personalizado a este widget y sus hijos
+      data: theme,
+      child: Scaffold(      
+        appBar: AppBar(
+          title: Text('Mi Perfil', style: TextStyle(fontWeight: FontWeight.bold)),
+          centerTitle: true,
+          actions: [
+            isSaving 
+              ? Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      color: theme.colorScheme.primary,
+                      strokeWidth: 2.0,
+                    ),
                   ),
+                )
+              : TextButton(
+                  onPressed: _saveAllData,
+                  child: Text('Guardar', style: TextStyle(color: theme.colorScheme.primary)),
                 ),
-              )
-            : TextButton(
-                onPressed: _saveAllData,
-                child: Text('Guardar', style: TextStyle(color: Colors.pink)),
-              ),
-        ],
-      ),
-      body: isLoading 
-        ? Center(child: CircularProgressIndicator(color: Colors.pink))
-        : SingleChildScrollView(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Perfil del usuario con botón de ajustes
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Datos del Usuario',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+          ],
+        ),
+        body: isLoading 
+          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+          : SingleChildScrollView(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Perfil del usuario con botón de ajustes
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Datos del Usuario',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.more_vert, color: Colors.pink),
-                    onPressed: _showSettings,
-                    tooltip: 'Ajustes',
-                  ),
-                ],
-              ),
-              SizedBox(height: 16),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Foto del usuario
-                  GestureDetector(
-                    onTap: _updateUserPhoto,
-                    child: Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundImage: userImage.startsWith('file://')
-                              ? FileImage(File(userImage.replaceFirst('file://', '')))
-                              : NetworkImage(userImage) as ImageProvider,
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            padding: EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.pink,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.camera_alt,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
+                    IconButton(
+                      icon: Icon(Icons.more_vert, color: theme.colorScheme.primary),
+                      onPressed: _showSettings,
+                      tooltip: 'Ajustes',
                     ),
-                  ),
-                  SizedBox(width: 16),
-                  // Datos del usuario (solo Bio es editable)
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Mostrar nombre (no editable)
-                        _showNonEditableField('Nombre', _userNameController.text, Icons.person),
-                        
-                        // Mostrar sexo (no editable)
-                        _showNonEditableField('Sexo', _userSexController.text, Icons.person_outline),
-                        
-                        // Mostrar edad (no editable)
-                        _showNonEditableField('Edad', _userAgeController.text, Icons.cake),
-                        
-                        // Mostrar ubicación (no editable)
-                        _showNonEditableField('Ubicación', _userLocationController.text, Icons.location_on),
-                        
-                        // Bio (editable)
-                        EditCampoTexto(
-                          label: 'Biografía',
-                          controller: _userBioController,
-                          icon: Icons.description,
-                          maxLines: 3,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 32),
-
-              // Mensaje para usuarios sin mascota
-              if (!hasPets)
+                  ],
+                ),
+                SizedBox(height: 16),
+                
+                // Tarjeta para foto del usuario y datos básicos
                 Container(
-                  margin: EdgeInsets.symmetric(vertical: 20),
-                  padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.pink.shade50,
+                    color: theme.cardColor,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.pink.shade100),
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.shadow,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: Column(
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.pets, size: 40, color: Colors.pink),
-                      SizedBox(height: 10),
-                      Text(
-                        '¡No tienes mascotas registradas!',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.pink.shade800,
+                      // Foto del usuario usando SelectorFotos
+                      Container(
+                        width: 100,
+                        height: 100,
+                        child: SelectorFotos(
+                          imagenes: [userImage], // Usuario tiene una sola imagen de perfil
+                          onImagesUpdated: _onUserImageUpdated,
+                          maxPhotos: 1, // Solo permitir una foto para el perfil
+                          entidadId: userId, // Usar el ID del usuario
+                          userUID: userId,
+                          tipo: 'usuario', // Especificar que es para un usuario
+                          apiService: _apiService,
                         ),
                       ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Una vez que registres tu mascota, podrás acceder a todas las funciones como encontrar amigos para tu mascota.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.pink.shade700),
+                      SizedBox(width: 16),
+                      // Datos del usuario (solo Bio es editable)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Título
+                            Row(
+                              children: [
+                                Icon(Icons.person, size: 16, color: theme.colorScheme.primary),
+                                SizedBox(width: 6),
+                                Text(
+                                  "Nombre:",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    _userNameController.text,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            Divider(height: 16, thickness: 0.5),
+                            
+                            // Datos en filas
+                            Row(
+                              children: [
+                                // Columna izquierda
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(Icons.person_outline, size: 14, color: theme.colorScheme.outline),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            "Sexo:",
+                                            style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        _userSexController.text,
+                                        style: TextStyle(fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Columna derecha
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(Icons.cake, size: 14, color: theme.colorScheme.outline),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            "Edad:",
+                                            style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        "${_userAgeController.text} años",
+                                        style: TextStyle(fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            SizedBox(height: 10),
+                            
+                            Row(
+                              children: [
+                                Icon(Icons.location_on, size: 14, color: theme.colorScheme.outline),
+                                SizedBox(width: 4),
+                                Text(
+                                  "Ubicación:",
+                                  style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  _userLocationController.text,
+                                  style: TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
                 
-              // Contenido relacionado con mascotas (solo visible si tiene mascotas)
-              if (hasPets) ...[
-                // Selector de mascotas
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Mis Mascotas',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
                 SizedBox(height: 16),
-                // Ajuste de tamaño para la lista de mascotas
-                SizedBox(
-                  height: 110,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: List.generate(
-                      pets.length + 1, // +1 para el botón de añadir
-                      (index) {
-                        if (index < pets.length) {
-                          // Avatares de mascotas existentes
-                          return GestureDetector(
-                            onTap: () => _changePet(index),
-                            child: Container(
-                              margin: EdgeInsets.only(right: 16),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: selectedPetIndex == index
-                                      ? Colors.pink
-                                      : Colors.transparent,
-                                  width: 3,
-                                ),
-                              ),
-                              child: CircleAvatar(
-                                radius: 40,
-                                backgroundImage: pets[index].petImage1.startsWith('file://')
-                                    ? FileImage(File(pets[index].petImage1.replaceFirst('file://', '')))
-                                    : NetworkImage(pets[index].petImage1) as ImageProvider,                                
-                              ),
+                
+                // Biografía en tarjeta separada
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.shadow,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.description, size: 16, color: theme.colorScheme.primary),
+                          SizedBox(width: 8),
+                          Text(
+                            "Biografía",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
                             ),
-                          );
-                        } else {
-                          // Botón para añadir nueva mascota
-                          return GestureDetector(
-                            onTap: _addNewPet,
-                            child: Container(
-                              margin: EdgeInsets.only(right: 16),
-                              child: CircleAvatar(
-                                radius: 40,
-                                backgroundColor: Colors.grey.shade200,
-                                child: Icon(
-                                  Icons.add,
-                                  size: 30,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                    ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      TextField(
+                        controller: _userBioController,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          hintText: "Cuéntanos sobre ti...",
+                          hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                          fillColor: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                          filled: true,
+                          contentPadding: EdgeInsets.all(12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: theme.colorScheme.primaryContainer),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: theme.colorScheme.primaryContainer),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: theme.colorScheme.primary),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 20),
-
                 
-
-                // Detalles de la mascota seleccionada
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Información de ${pets[selectedPetIndex].name}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                SizedBox(height: 32),
+    
+                // Mensaje para usuarios sin mascota
+                if (!hasPets)
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 20),
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: theme.colorScheme.primaryContainer),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(Icons.pets, size: 40, color: theme.colorScheme.primary),
+                        SizedBox(height: 10),
+                        Text(
+                          '¡No tienes mascotas registradas!',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'La creación de mascotas estará disponible próximamente.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: _addNewPet,
+                          icon: Icon(Icons.add),
+                          label: Text('Añadir Mascota'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+    
+                // Sección de mascotas (solo visible si hay mascotas)
+    if (hasPets) ...[
+      // Encabezado de sección
+      Container(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: theme.colorScheme.primaryContainer, width: 1)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Mis Mascotas',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            IconButton(
+              onPressed: () => _deleteCurrentPet(),
+              icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+              tooltip: 'Eliminar Mascota',
+            ),
+          ],
+        ),
+      ),
+      SizedBox(height: 20),
+      
+      // Carrusel de selección de mascotas con botón de añadir
+      Container(
+        height: 100,
+        child: Row(
+          children: [
+            // Lista de mascotas
+            Expanded(
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: pets.length,
+                itemBuilder: (context, index) {
+                  PetModel pet = pets[index];
+                  bool isSelected = index == selectedPetIndex;
+                  
+                  return GestureDetector(
+                    onTap: () => _changePet(index),
+                    child: Container(
+                      width: 85,
+                      margin: EdgeInsets.only(right: 15),
+                      decoration: BoxDecoration(
+                        color: isSelected ? theme.colorScheme.primaryContainer : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete, color: Colors.grey),
-                      onPressed: _deleteCurrentPet,
-                      tooltip: 'Eliminar mascota',
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                // Selector de fotos de la mascota
-                SelectorFotos(
-                  imagenes: petImages,
-                  onSetMainPhoto: _setPetMainPhoto,
-                  onDeletePhoto: _deletePetPhoto,
-                  onAddNewPhoto: _addNewPetPhoto,
-                  maxPhotos: 3,
-                  onReplacePhoto: _updatePetPhoto,
-                ),
-
-                // Datos básicos no editables
-                Row(
-                  children: [
-                    // Columna izquierda - datos básicos
-                    Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _showNonEditableField('Nombre', _nameController.text, Icons.pets),
-                          _showNonEditableField('Especie', _speciesController.text, Icons.category),
-                          _showNonEditableField('Sexo', _sexController.text, Icons.male),
-                          _showNonEditableField('Edad', _ageController.text, Icons.cake),
+                          // Foto de la mascota con indicador de selección
+                          Container(
+                            padding: EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected ? theme.colorScheme.primary : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              radius: 30,
+                              backgroundColor: theme.colorScheme.surfaceVariant,
+                              backgroundImage: pet.petImage1.isNotEmpty 
+                                ? (pet.petImage1.startsWith('file://') 
+                                    ? FileImage(File(pet.petImage1.replaceFirst('file://', ''))) 
+                                    : NetworkImage(pet.petImage1)) as ImageProvider
+                                : AssetImage('assets/images/placeholder_pet.png') as ImageProvider,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          // Nombre de la mascota
+                          Text(
+                            pet.name,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onBackground,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
                         ],
                       ),
                     ),
+                  );
+                },
+              ),
+            ),
+            
+            // Botón circular de añadir mascota
+            Container(
+              width: 70,
+              child: GestureDetector(
+                onTap: () => _addNewPet(),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.colorScheme.primary,
+                      ),
+                      child: Icon(
+                        Icons.add,
+                        color: theme.colorScheme.onPrimary,
+                        size: 30,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Añadir',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.primary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
-                SizedBox(height: 16),
-
-                // Biografía de la mascota - editable
-                EditCampoTexto(
-                  label: 'Biografía de la mascota',
-                  controller: _bioController,
-                  icon: Icons.description,
-                  maxLines: 4,
+              ),
+            ),
+          ],
+        ),
+      ),
+      SizedBox(height: 25),
+      
+      // Panel de detalles de la mascota seleccionada
+      if (selectedPetIndex < pets.length && pets.isNotEmpty)
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.colorScheme.primaryContainer, width: 1),
+          ),
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Selector de fotos (MOVIDO ARRIBA)
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: theme.colorScheme.primaryContainer, width: 1),
                 ),
-                SizedBox(height: 24),                
-              ],
+                child: SelectorFotos(
+                  imagenes: petImages,
+                  onImagesUpdated: _onPetImagesUpdated,
+                  maxPhotos: 3,
+                  entidadId: pets[selectedPetIndex].id,
+                  userUID: userId,
+                  tipo: 'mascota',
+                  apiService: _apiService,
+                ),
+              ),
+              SizedBox(height: 16),
+              
+              // Información básica
+              // Datos de la mascota
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.shadow,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Título
+                    Row(
+                      children: [
+                        Icon(Icons.pets, size: 16, color: theme.colorScheme.primary),
+                        SizedBox(width: 6),
+                        Text(
+                          "Nombre:",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            _nameController.text,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    Divider(height: 16, thickness: 0.5),
+                    
+                    // Datos en filas
+                    Row(
+                      children: [
+                        // Columna izquierda
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.category, size: 14, color: theme.colorScheme.outline),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    "Especie:",
+                                    style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                _speciesController.text,
+                                style: TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Columna derecha
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.transgender, size: 14, color: theme.colorScheme.outline),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    "Sexo:",
+                                    style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                _sexController.text,
+                                style: TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    SizedBox(height: 10),
+                    
+                    Row(
+                      children: [
+                        Icon(Icons.cake, size: 14, color: theme.colorScheme.outline),
+                        SizedBox(width: 4),
+                        Text(
+                          "Edad:",
+                          style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          "${_ageController.text} años",
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              SizedBox(height: 16),
+              
+              // Biografía en tarjeta separada
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.shadow,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.description, size: 16, color: theme.colorScheme.primary),
+                        SizedBox(width: 8),
+                        Text(
+                          "Biografía",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    TextField(
+                      controller: _bioController,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        hintText: "Describe a tu mascota aquí...",
+                        hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                        fillColor: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                        filled: true,
+                        contentPadding: EdgeInsets.all(12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: theme.colorScheme.primaryContainer),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: theme.colorScheme.primaryContainer),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: theme.colorScheme.primary),
+                        ),
+                      ),
+                      onChanged: (text) {
+                        if (pets.isNotEmpty) {
+                          setState(() {
+                            PetModel currentPet = pets[selectedPetIndex];
+                            PetModel updatedPet = PetModel(
+                              id: currentPet.id,
+                              petUID: currentPet.petUID,
+                              ownerUID: currentPet.ownerUID,
+                              name: currentPet.name,
+                              petImage1: currentPet.petImage1,
+                              petImage2: currentPet.petImage2,
+                              petImage3: currentPet.petImage3,
+                              sex: currentPet.sex,
+                              petBio: text,
+                              birthDate: currentPet.birthDate,
+                              species: currentPet.species,
+                            );
+                            pets[selectedPetIndex] = updatedPet;
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
+    ],
+          ],
+        ),
+      ),
+      ),
     );
-  }
-  
-  @override
-  void dispose() {
-    // Liberar recursos
-    _userNameController.dispose();
-    _userAgeController.dispose();
-    _userSexController.dispose();
-    _userLocationController.dispose();
-    _userBioController.dispose();
-    _nameController.dispose();
-    _ageController.dispose();
-    _speciesController.dispose();
-    _sexController.dispose();
-    _bioController.dispose();
-    super.dispose();
-  }
+}
+
+@override
+void dispose() {
+  // Liberar controladores al destruir el widget
+  _userNameController.dispose();
+  _userAgeController.dispose();
+  _userSexController.dispose();
+  _userLocationController.dispose();
+  _userBioController.dispose();
+  _nameController.dispose();
+  _ageController.dispose();
+  _speciesController.dispose();
+  _sexController.dispose();
+  _bioController.dispose();
+  super.dispose();
+}
 }

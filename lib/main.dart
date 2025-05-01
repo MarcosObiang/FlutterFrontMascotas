@@ -44,7 +44,7 @@ class MainApp extends StatelessWidget {
                 debugShowCheckedModeBanner: false,
                 title: 'WildLove',
                 theme: themeProvider.isDarkMode 
-                  ? themeProvider.themeData // Tema oscuro del provider
+                  ? themeProvider.darkTheme // Tema oscuro del provider
                   : ThemeData(
                       primarySwatch: 
 Colors.pink

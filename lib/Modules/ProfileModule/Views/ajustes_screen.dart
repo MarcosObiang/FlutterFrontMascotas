@@ -1,7 +1,6 @@
 // screens/ajustes_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../Resources/Services/api_service.dart';
 import '../../AuthenticationModule/views/AuthScreen.dart';
 import 'package:mascotas_citas/Resources/providers/theme_provider.dart';
 
@@ -18,7 +17,6 @@ class AjustesScreen extends StatefulWidget {
 }
 
 class _AjustesScreenState extends State<AjustesScreen> {
-  final ApiService _apiService = ApiService();
   bool _notificacionesActivas = true;
   double _distanciaMaxima = 20.0;
   String _especieSeleccionada = 'Todas';
@@ -37,14 +35,13 @@ class _AjustesScreenState extends State<AjustesScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar preferencias guardadas del usuario
     _cargarPreferencias();
   }
   
   // Método para cargar preferencias (simulado)
   void _cargarPreferencias() {
     // En una implementación real, aquí cargaríamos las preferencias
-    // desde SharedPreferences o desde la API
+    // desde SharedPreferences o directamente del backend
     setState(() {
       _distanciaMaxima = 20.0;
       _especieSeleccionada = 'Todas';
@@ -59,14 +56,15 @@ class _AjustesScreenState extends State<AjustesScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ajustes', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Ajustes', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
           TextButton(
             onPressed: () {
               // Guardar todos los ajustes
+              _guardarPreferencias();
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Configuración guardada')),
+                const SnackBar(content: Text('Configuración guardada')),
               );
             },
             child: const Text('Guardar', style: TextStyle(color: Colors.pink)),
@@ -74,14 +72,14 @@ class _AjustesScreenState extends State<AjustesScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _construirSeccion('Notificaciones'),
             SwitchListTile(
-              title: Text('Activar notificaciones'),
-              subtitle: Text('Recibe alertas sobre matches y mensajes'),
+              title: const Text('Activar notificaciones'),
+              subtitle: const Text('Recibe alertas sobre matches y mensajes'),
               value: _notificacionesActivas,
               activeColor: Colors.pink,
               onChanged: (bool value) {
@@ -90,19 +88,19 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 });
               },
             ),
-            Divider(),
+            const Divider(),
             
             _construirSeccion('Apariencia'),
             SwitchListTile(
-              title: Text('Modo oscuro'),
-              subtitle: Text('Cambia el tema de la aplicación'),
+              title: const Text('Modo oscuro'),
+              subtitle: const Text('Cambia el tema de la aplicación'),
               value: themeProvider.isDarkMode, // Usamos el valor del ThemeProvider
               activeColor: Colors.pink,
               onChanged: (bool value) {
                 themeProvider.toggleTheme(); // Cambiamos el tema usando el ThemeProvider
               },
             ),
-            Divider(),
+            const Divider(),
             
             _construirSeccion('Criterios de Búsqueda'),
             
@@ -189,38 +187,39 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ),
 
             const SizedBox(height: 16),
-            Divider(),
+            const Divider(),
             
             _construirSeccion('Cuenta'),
             ListTile(
-              title: Text('Cambiar contraseña'),
-              leading: Icon(Icons.key, color: Colors.pink),
+              title: const Text('Cambiar contraseña'),
+              leading: const Icon(Icons.key, color: Colors.pink),
               onTap: () {
                 // Implementar lógica para cambiar contraseña
+                // Aquí sí podrías llamar a un servicio de autenticación si lo necesitas
               },
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
                 side: BorderSide(color: Colors.pink.withOpacity(0.2)),
               ),
-              tileColor: Theme.of(context).cardColor, // Usamos el color del tema
+              tileColor: Theme.of(context).cardColor, 
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             ListTile(
-              title: Text('Cerrar Sesión'),
+              title: const Text('Cerrar Sesión'),
               leading: const Icon(Icons.logout, color: Colors.pink),
               onTap: _cerrarSesion,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
                 side: BorderSide(color: Colors.pink.withOpacity(0.2)),
               ),
-              tileColor: Theme.of(context).cardColor, // Usamos el color del tema
+              tileColor: Theme.of(context).cardColor,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             ListTile(
-              title: Text('Eliminar cuenta', style: TextStyle(color: Colors.red)),
-              leading: Icon(Icons.delete_forever, color: Colors.red),
+              title: const Text('Eliminar cuenta', style: TextStyle(color: Colors.red)),
+              leading: const Icon(Icons.delete_forever, color: Colors.red),
               onTap: () {
                 _mostrarDialogoEliminarCuenta();
               },
@@ -228,10 +227,10 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 borderRadius: BorderRadius.circular(10),
                 side: BorderSide(color: Colors.red.withOpacity(0.2)),
               ),
-              tileColor: Theme.of(context).cardColor, // Usamos el color del tema
+              tileColor: Theme.of(context).cardColor, 
             ),
             
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             
             // Información adicional
             Center(
@@ -239,7 +238,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 children: [
                   Text(
                     'ID de Usuario: ${widget.userId}',
-                    style: TextStyle(color: Colors.grey),
+                    style: const TextStyle(color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -250,29 +249,33 @@ class _AjustesScreenState extends State<AjustesScreen> {
               ),
             ),
             
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             Center(
               child: ElevatedButton(
-                onPressed: () {
-                  // Guardar todos los ajustes
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Configuración guardada')),
-                  );
-                },
+                onPressed: _guardarPreferencias,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.pink,
-                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                child: Text('Guardar cambios', style: TextStyle(color: Colors.white)),
+                child: const Text('Guardar cambios', style: TextStyle(color: Colors.white)),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
         ),
       ),
+    );
+  }
+
+  // Método para guardar las preferencias (simulado)
+  void _guardarPreferencias() {
+    // En una implementación real, aquí guardaríamos las preferencias
+    // en SharedPreferences o las enviaríamos al backend
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Configuración guardada')),
     );
   }
 
@@ -295,7 +298,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Eliminar cuenta'),
+          title: const Text('Eliminar cuenta'),
           content: Text(
             '¿Estás seguro que deseas eliminar tu cuenta? Esta acción no se puede deshacer y perderás todos tus datos.',
             style: TextStyle(color: Colors.red.shade800),
@@ -305,11 +308,12 @@ class _AjustesScreenState extends State<AjustesScreen> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('Cancelar'),
+              child: const Text('Cancelar'),
             ),
             ElevatedButton(
               onPressed: () {
-                // Implementar lógica para eliminar cuenta
+                // Aquí sí necesitarías un servicio para eliminar la cuenta
+                // pero puedes inyectarlo solo cuando sea necesario
                 Navigator.pop(context);
                 
                 // Volver al login
@@ -322,7 +326,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
               ),
-              child: Text('Eliminar', style: TextStyle(color: Colors.white)),
+              child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -336,18 +340,19 @@ class _AjustesScreenState extends State<AjustesScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Cerrar Sesión'),
-          content: Text('¿Estás seguro que deseas cerrar sesión?'),
+          title: const Text('Cerrar Sesión'),
+          content: const Text('¿Estás seguro que deseas cerrar sesión?'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context); // Cerrar el diálogo
               },
-              child: Text('Cancelar'),
+              child: const Text('Cancelar'),
             ),
             ElevatedButton(
               onPressed: () {
-                // Cerrar el diálogo
+                // Aquí podrías llamar a un servicio de autenticación
+                // para realizar el logout en el backend si es necesario
                 Navigator.pop(context);
                 
                 // Navegar a la pantalla de login y eliminar todas las rutas anteriores
@@ -360,7 +365,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink,
               ),
-              child: Text('Cerrar Sesión', style: TextStyle(color: Colors.white)),
+              child: const Text('Cerrar Sesión', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
