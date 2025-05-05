@@ -53,7 +53,7 @@ class DioApiService {
     try {
       return await _dio.get(path, queryParameters: queryParams);
     } on DioException catch (e) {
-      throw Exception(_handleError(e));
+      rethrow;
     }
   }
 
@@ -73,7 +73,7 @@ Future<Response> post({
       return await _dio.post(path, data: data);
     }
   } on DioException catch (e) {
-    throw Exception(_handleError(e));
+      rethrow;
   }
 }
 
@@ -113,7 +113,7 @@ Future<Response> _uploadFiles(String path, dynamic data, Map<String, dynamic> fi
       ),
     );
   } on DioException catch (e) {
-    throw Exception(_handleError(e));
+      rethrow;
   }
 }
 
@@ -127,7 +127,7 @@ Future<Response> _uploadFiles(String path, dynamic data, Map<String, dynamic> fi
     try {
       return await _dio.put(path, data: data);
     } on DioException catch (e) {
-      throw Exception(_handleError(e));
+      rethrow;
     }
   }
 
@@ -141,16 +141,9 @@ Future<Response> _uploadFiles(String path, dynamic data, Map<String, dynamic> fi
     try {
       return await _dio.delete(path, data: data);
     } on DioException catch (e) {
-      throw Exception(_handleError(e));
+      rethrow;
     }
   }
 
-  /// Devuelve un mensaje legible en caso de error.
-  String _handleError(DioException error) {
-    if (error.response != null) {
-      return 'Error ${error.response?.statusCode}: ${error.response?.data}';
-    } else {
-      return 'Error: ${error.message}';
-    }
-  }
+
 }

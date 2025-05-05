@@ -8,6 +8,7 @@ abstract class AuthenticationRepo {
   Future<LoginDTO?> login();
   Future<bool> isUserAlreadyRegistered();
   Future<void> logout();
+  Future<bool> isTokenValid();
   Future<void> refreshToken({required String refreshToken});
 }
 
@@ -47,6 +48,22 @@ class AuthenticationRepoImpl implements AuthenticationRepo {
       }
     } else {
       throw Exception("Error: ${response.statusCode}");
+    }
+  }
+
+  @override
+  Future<bool> isTokenValid() async {
+    try {
+      Response<dynamic> response =
+          await apiService.get(path: "/auth/validate", queryParams: {});
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print(e);
+      return false;
     }
   }
 

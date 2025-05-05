@@ -1,3 +1,4 @@
+import 'package:mascotas_citas/Modules/AuthenticationModule/repo/AuthenticationRepo.dart';
 import 'package:mascotas_citas/interfaces/self_started_use_case_interface.dart';
 import 'package:mascotas_citas/interfaces/usecase_interface.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
@@ -11,16 +12,23 @@ import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 /// Otherwise, it returns `false`.
 class CheckIfUsserCanLogInUseCase implements UseCaseInterfacae<bool> {
   AuthDataService authDataService;
-  CheckIfUsserCanLogInUseCase({required this.authDataService});
+  AuthenticationRepo authRepo;
+
+  CheckIfUsserCanLogInUseCase(
+      {required this.authDataService, required this.authRepo});
   @override
   Future<bool> execute() async {
-    bool isUserLogged = await _isAuthDataInMemory();
-    if (isUserLogged) {
-      final isTokenStillValid = await _isTokenStillValid();
-      return isTokenStillValid;
-    } else {
+    if (!await _isAuthDataInMemory()) {
       return false;
     }
+    if (!await _isTokenStillValid()) {
+      return false;
+    }
+    if (!await authRepo.isUserAlreadyRegistered()) {
+      return false;
+    }
+
+    return true;
   }
 
   /// Check if the user is logged in
@@ -53,12 +61,7 @@ class CheckIfUsserCanLogInUseCase implements UseCaseInterfacae<bool> {
   /// If the expiration date is null, it returns `false`.
   ///
   Future<bool> _isTokenStillValid() async {
-    DateTime? expirationDate = authDataService.getExpirationDate();
-    if (expirationDate != null) {
-      return expirationDate
-          .isAfter(DateTime.now().subtract(const Duration(hours: 1)));
-    } else {
-      return false;
-    }
+    bool isTokenStillValid = await authRepo.isTokenValid();
+    return isTokenStillValid;
   }
 }

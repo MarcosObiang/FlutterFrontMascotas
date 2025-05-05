@@ -24,6 +24,9 @@ class StarterManager {
   }
 
   Future<void> start() async {
+    for (var starter in starters) {
+      await starter.init();
+    }
      await  startAuth();
      Future.value(null);
   

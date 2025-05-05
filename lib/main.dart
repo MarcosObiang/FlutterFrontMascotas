@@ -4,6 +4,7 @@ import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGo
 import 'package:mascotas_citas/Modules/AuthenticationModule/views/AuthScreen.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/state/CreateUserState.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/views/CreateUserScreen.dart';
+import 'package:mascotas_citas/Modules/LikesModule/state/LikeModuleState.dart';
 import 'package:mascotas_citas/navigation_controller.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:provider/provider.dart';
@@ -34,6 +35,7 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => MascotaProvider()),
         ChangeNotifierProvider(create: (context) => CreateUserState()),
         ChangeNotifierProvider(create: (context) => SocialProvider()),
+        ChangeNotifierProvider(create:(context) => LikeModuleState(onErrorData: null),),
         ChangeNotifierProvider(
             create: (context) => ThemeProvider()), // Agregar ThemeProvider
       ],

@@ -50,12 +50,7 @@ class _AuthscreenState extends State<Authscreen> {
                           await logInWithGoogleUseCase.execute().then((value) {
                             if (value) {
                               Navigator.pushNamed(context, "/navigation");
-                            } else if (value == false) {
-                              PresentationDialogs().showErrorDialog(
-                                  title: "Error",
-                                  content: "No se pudo iniciar sesión",
-                                  context: context);
-                            } else {
+                            }else {
                               Navigator.pushNamed(context, "/createUserScreen");
                             }
                           });

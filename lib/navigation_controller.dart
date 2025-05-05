@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mascotas_citas/Modules/HomeModule/Views/home_screen.dart';
+import 'package:mascotas_citas/Modules/LikesModule/views/LieksViewScreen.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/Views/perfil_screen.dart';
 import 'package:mascotas_citas/Modules/SocialModule/Views/social_screen.dart';
 
@@ -17,6 +18,7 @@ class _NavigationControllerState extends State<NavigationController> {
   // Método para obtener las pantallas, asegurando que tengan acceso a los providers
   List<Widget> _getScreens(BuildContext context) => [
     HomeScreen(),
+    LikesViewScreen(),
     SocialScreen(),
     PerfilScreen(),
   ];
@@ -43,10 +45,10 @@ class _NavigationControllerState extends State<NavigationController> {
             icon: Icon(Icons.pets),
             label: 'Descubrir',
           ),
-          // BottomNavigationBarItem(
-          //   icon: Icon(Icons.favorite),
-          //   label: 'Matches',
-          // ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: 'Matches',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.photo_library),
             label: 'Social',

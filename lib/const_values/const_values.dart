@@ -1,10 +1,10 @@
 class ConstValues {
+  /// Cambiar a vuestra host de ngrok la variable [hostName] (la url sin el https://)
 
-    /// Cambiar a vuestra url de ngrok la variable [baseUrl]
-  static const String baseUrl =
-      "https://a835-2a0c-5a81-3408-bd00-62c-4a08-c230-3d7f.ngrok-free.app";
+  static const String hostName =
+      "c774-2a0c-5a81-3405-3900-7629-8b4c-df5a-2ec2.ngrok-free.app";
 
-    ///
+  static const String baseUrl = "https://${hostName}";
 
   static const String redirectUrl = "com.example.mascotascitas:/oauth2redirect";
   static const String googleClientId =
@@ -12,5 +12,4 @@ class ConstValues {
   static const String discoveryUrl =
       "https://accounts.google.com/.well-known/openid-configuration";
   static const String issuer = "https://accounts.google.com";
-  
 }
