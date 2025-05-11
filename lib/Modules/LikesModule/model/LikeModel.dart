@@ -1,18 +1,28 @@
-class LikeModel {
+import 'package:equatable/equatable.dart';
+import 'package:mascotas_citas/const_values/const_values.dart';
+
+class LikeModel extends Equatable {
   String receiverUID; // Corrected typo: reciever -> receiver
   String senderUID;
   String petPictureURL; // Corrected typo: Pucture -> Picture
   String likeUID;
   String likedPetUID;
+  bool isRevealed;
+  String? petName;
+  String? senderName;
+
   DateTime createdAt; // Changed to camelCase: created_at -> createdAt
 
   LikeModel({
     required this.receiverUID,
     required this.senderUID,
     required this.petPictureURL,
+    required this.isRevealed,
     required this.likeUID,
     required this.likedPetUID,
     required this.createdAt,
+    this.petName,
+    this.senderName,
   });
 
   /// Converts this LikeModel instance into a Map (suitable for JSON/Firestore).
@@ -21,8 +31,11 @@ class LikeModel {
       'receiverUID': receiverUID,
       'senderUID': senderUID,
       'petPictureURL': petPictureURL,
+      'isRevealed': isRevealed,
       'likeUID': likeUID,
       'likedPetUID': likedPetUID,
+      'petName': petName,
+      'senderName': senderName,
       // Store DateTime as a Firestore Timestamp for better querying/sorting
       // or use .toIso8601String() if storing as a plain string.
       'createdAt': createdAt.toIso8601String(),
@@ -50,14 +63,34 @@ class LikeModel {
       // throw FormatException("Invalid format for 'createdAt': ${createdAtData.runtimeType}");
     }
 
+    String _getUriFromString(String? urlString) {
+      final baseUri =
+          Uri.parse("${ConstValues.baseUrl}/media-service/media/get-media"); // Ej: https://api.example.com
+
+      return baseUri.replace(
+        queryParameters: {
+          if (urlString != null) 'fileName': urlString,
+        },
+      ).toString();
+    }
+
     return LikeModel(
       receiverUID:
           json['receiverUID'] as String? ?? '', // Provide default if null
       senderUID: json['senderUID'] as String? ?? '',
-      petPictureURL: json['petPictureURL'] as String? ?? '',
+      petPictureURL: _getUriFromString(json['petPictureURL']) as String? ?? '',
+      isRevealed: json['isRevealed'] as bool? ?? false,
       likeUID: json['likeUID'] as String? ?? '',
       likedPetUID: json['likedPetUID'] as String? ?? '',
       createdAt: createdAt,
+      petName: json['petName'] as String? ?? '',
+      senderName: json['senderName'] as String? ?? '',
     );
   }
+
+  @override
+  // TODO: implement props
+  List<Object?> get props => [
+        likeUID,
+      ];
 }

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:mascotas_citas/const_values/const_values.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 import 'dart:io';
@@ -12,8 +11,8 @@ class WebSocketService {
   Timer? _reconnectTimer;
   String? token;
   String? userUID;
-  final Uri wsUri = Uri.parse(
-      "wss://${ConstValues.hostName}/realtime-service/ws/updates");
+  final Uri wsUri =
+      Uri.parse("wss://${ConstValues.hostName}/realtime-service/ws/updates");
 
   WebSocketService({required this.authDataService}) {
     _init();
@@ -21,11 +20,18 @@ class WebSocketService {
 
   void _init() {
     authDataService.onAuthDataChanged.stream.listen((event) {
-      String token = event["token"];
-      String userUID = event["userUID"];
+      String? token = event["token"];
+      String? userUID = event["userUID"];
+
       this.token = token;
       this.userUID = userUID;
-      _connectWebSocket();
+
+      if (this.token != null) {
+        _connectWebSocket();
+      } else {
+        _webSocket?.close();
+        _reconnectTimer?.cancel();
+      }
     });
 
     onMessageReceived = StreamController.broadcast();

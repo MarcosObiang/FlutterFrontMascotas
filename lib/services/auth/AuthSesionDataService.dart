@@ -10,6 +10,7 @@ library;
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:logger/web.dart';
 
 import 'package:mascotas_citas/services/platform/storage/SecureStorage.dart';
 
@@ -78,6 +79,8 @@ class AuthDataService {
       }
 
       if (token != null) {
+        Logger().i("token $token");
+
         onAuthDataChanged.add({
           "token": token,
           "refreshToken": refreshToken,
@@ -147,6 +150,12 @@ class AuthDataService {
       await secureStorage.delete("token");
       await secureStorage.delete("refreshToken");
       await secureStorage.delete("userUID");
+      onAuthDataChanged.add({
+        "token": token,
+        "refreshToken": refreshToken,
+        "userUID": userUID,
+        "expirationDate": expirationDate,
+      });
     } catch (e) {
       debugPrint("Error clearing authentication data: $e");
       throw Exception("Error clearing authentication data: $e");

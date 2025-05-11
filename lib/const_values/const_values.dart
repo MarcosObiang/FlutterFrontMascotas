@@ -2,7 +2,7 @@ class ConstValues {
   /// Cambiar a vuestra host de ngrok la variable [hostName] (la url sin el https://)
 
   static const String hostName =
-      "c774-2a0c-5a81-3405-3900-7629-8b4c-df5a-2ec2.ngrok-free.app";
+      "10ab-2a0c-5a81-3405-3900-87c5-481f-23c0-f6ec.ngrok-free.app";
 
   static const String baseUrl = "https://${hostName}";
 

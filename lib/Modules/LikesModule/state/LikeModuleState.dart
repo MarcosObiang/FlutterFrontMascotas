@@ -37,9 +37,30 @@ class LikeModuleState extends ChangeNotifier implements ModuleState {
   @override
   void setData(data) {
     if (data is LikeModel) {
-      likes = List.from(likes)..add(data);
-      listUpdateInfo!.add("add");
+      if (!likes.contains(data)) {
+        likes = List.from(likes)..add(data);
+        listUpdateInfo!.add("add");
+        notifyListeners();
+        return;
+      }
+
+      _updateUpdateWithRevealedLike(data);
       notifyListeners();
+      return;
+    }
+
+    if (data is List<LikeModel>) {
+      likes = List.from(data);
+      notifyListeners();
+    }
+  }
+
+  void _updateUpdateWithRevealedLike(LikeModel likeModel) {
+    for (var i = 0; i < likes.length; i++) {
+      if (likes[i] == likeModel) {
+        likes[i] = likeModel;
+        break;
+      }
     }
   }
 

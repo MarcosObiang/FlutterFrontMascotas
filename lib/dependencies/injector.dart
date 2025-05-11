@@ -8,7 +8,10 @@ import 'package:mascotas_citas/Modules/CreateUserModule/usecases/CreateUserUseCa
 import 'package:mascotas_citas/Modules/LikesModule/repo/LikesRepository.dart';
 import 'package:mascotas_citas/Modules/LikesModule/starter.dart';
 import 'package:mascotas_citas/Modules/LikesModule/state/LikeModuleState.dart';
+import 'package:mascotas_citas/Modules/LikesModule/usecases/GetLikesUseCase.dart';
 import 'package:mascotas_citas/Modules/LikesModule/usecases/ListenToLikesUseCase.dart';
+import 'package:mascotas_citas/Modules/LikesModule/usecases/RejectLikeUseCase.dart';
+import 'package:mascotas_citas/Modules/LikesModule/usecases/RevealLikesUseCase.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/repo/SettingsRepo.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/state/settingsState.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/usecases/LogOutUseCase.dart';
@@ -50,10 +53,9 @@ void setUpDependencies() {
       dioApiService: getIt<DioApiService>(),
       webSocketService: getIt<WebSocketService>()));
 
-  getIt.registerSingleton<Listentolikesusecase>(
-      Listentolikesusecase(likeRepository: getIt<LikeRepositoryImpl>(),
-      likeModuleState: getIt<LikeModuleState>())
-  );
+  getIt.registerSingleton<Listentolikesusecase>(Listentolikesusecase(
+      likeRepository: getIt<LikeRepositoryImpl>(),
+      likeModuleState: getIt<LikeModuleState>()));
 
   getIt.registerSingleton<SettingsRepo>(SettingsRepoImpl(
       authDataService: getIt<AuthDataService>(),
@@ -71,6 +73,9 @@ void setUpDependencies() {
       locationManager: getIt<LocationManager>(),
       createUserState: getIt<CreateUserState>()));
 
+  getIt.registerSingleton<GetLikesUseCase>(GetLikesUseCase(
+      likeRepository: getIt<LikeRepositoryImpl>(),
+      likeModuleState: getIt<LikeModuleState>()));
   getIt.registerSingleton<LogInWithGoogleUseCase>(LogInWithGoogleUseCase(
       authenticationRepo: getIt<AuthenticationRepo>(),
       authdataService: getIt<AuthDataService>(),
@@ -80,8 +85,9 @@ void setUpDependencies() {
           authDataService: getIt<AuthDataService>(),
           authRepo: getIt<AuthenticationRepo>()));
   getIt.registerSingleton<LikeModuleStarter>(
-      LikeModuleStarter(useCases: [getIt<Listentolikesusecase>()]));
-
+      LikeModuleStarter(useCases: [getIt<Listentolikesusecase>(),getIt<GetLikesUseCase>()]));
+  getIt.registerSingleton<RevealLikeUseCase>(RevealLikeUseCase(likeRepository: getIt<LikeRepositoryImpl>(), likeModuleState: getIt<LikeModuleState>()));
+  getIt.registerSingleton<RejectLikeUseCase>(RejectLikeUseCase(likeRepository:  getIt<LikeRepositoryImpl>(), likeModuleState: getIt<LikeModuleState>()));
   getIt.registerSingleton<StarterManager>(StarterManager(
       selfLoginWithGoogleUseCase: getIt<CheckIfUsserCanLogInUseCase>(),
       starters: [getIt<LikeModuleStarter>()]));
