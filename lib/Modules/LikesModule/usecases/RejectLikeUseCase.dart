@@ -4,22 +4,20 @@ import 'package:mascotas_citas/Modules/LikesModule/state/LikeModuleState.dart';
 import 'package:mascotas_citas/interfaces/usecase_interface.dart';
 
 class RejectLikeUseCase implements UseCaseInterfacae {
-  late LikeRepository _likeRepository;
-  late LikeModuleState _likeModuleState;
+  LikeRepository likeRepository;
+  LikeModuleState likeModuleState;
   RejectLikeUseCase(
-      {required LikeRepository likeRepository,
-      required LikeModuleState likeModuleState}) {
-    _likeRepository = likeRepository;
-    _likeModuleState = likeModuleState;
-  }
+      {required this.likeRepository, required this.likeModuleState});
+
+
   @override
   Future execute() async {
     try {
-      await _likeRepository.rejectLike(_likeModuleState.likes.first.likeUID);
-      _likeModuleState.removeData(_likeModuleState.likes.first);
+      await likeRepository.rejectLike(likeModuleState.likes.first.likeUID);
+      likeModuleState.removeData(likeModuleState.likes.first);
     } catch (e) {
       print(e);
-      _likeModuleState.setError(ModuleException(
+      likeModuleState.setError(ModuleException(
           message: "Error al rechazar el like", title: "Error"));
     }
   }
