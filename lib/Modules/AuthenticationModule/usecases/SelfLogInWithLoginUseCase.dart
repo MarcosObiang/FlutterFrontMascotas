@@ -61,6 +61,10 @@ class CheckIfUsserCanLogInUseCase implements UseCaseInterfacae<bool> {
   ///
   Future<bool> _isTokenStillValid() async {
     bool isTokenStillValid = await authRepo.isTokenValid();
+
+    if (isTokenStillValid == false) {
+      await authDataService.clearAll();
+    }
     return isTokenStillValid;
   }
 }

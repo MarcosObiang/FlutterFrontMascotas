@@ -14,11 +14,9 @@ class WebSocketService {
   final Uri wsUri =
       Uri.parse("wss://${ConstValues.hostName}/realtime-service/ws/updates");
 
-  WebSocketService({required this.authDataService}) {
-    _init();
-  }
+  WebSocketService({required this.authDataService});
 
-  void _init() {
+  void init() {
     authDataService.onAuthDataChanged.stream.listen((event) {
       String? token = event["token"];
       String? userUID = event["userUID"];
@@ -26,13 +24,19 @@ class WebSocketService {
       this.token = token;
       this.userUID = userUID;
 
-      if (this.token != null) {
+
+    });
+
+    this.token=authDataService.getToken();
+    this.userUID=authDataService.getUserUID();
+
+
+          if (this.token != null) {
         _connectWebSocket();
       } else {
         _webSocket?.close();
         _reconnectTimer?.cancel();
       }
-    });
 
     onMessageReceived = StreamController.broadcast();
   }

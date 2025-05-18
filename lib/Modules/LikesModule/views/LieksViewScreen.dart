@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mascotas_citas/Modules/LikesModule/model/LikeModel.dart';
 import 'package:mascotas_citas/Modules/LikesModule/state/LikeModuleState.dart';
+import 'package:mascotas_citas/Modules/LikesModule/usecases/AcceptLikeUseCase.dart';
 import 'package:mascotas_citas/Modules/LikesModule/usecases/RejectLikeUseCase.dart';
 import 'package:mascotas_citas/Modules/LikesModule/usecases/RevealLikesUseCase.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
@@ -36,16 +37,20 @@ class _LikesViewScreenState extends State<LikesViewScreen> {
       value: getIt<LikeModuleState>(),
       child: Consumer<LikeModuleState>(builder:
           (BuildContext context, LikeModuleState state, Widget? child) {
-        state.listUpdateInfo!.stream.listen((event) {
-          if (event == "add") {
-            if (lastListLength < state.likes.length) {
-              lastListLength = state.likes.length;
-              _addItem();
-            }
-          } else {
-            _removeItem();
+        if (state.lastListAction == "add") {
+          if (lastListLength < state.likes.length) {
+            lastListLength = state.likes.length;
+            _addItem();
+            state.lastListActionClear();
           }
-        });
+        } else if (state.lastListAction == "remove") {
+          if (_listKey.currentState != null && state.likes.isEmpty) {
+            lastListLength = state.likes.length;
+            _removeItem();
+            state.lastListActionClear();
+          }
+        }
+
         return SizedBox.expand(
           child: Column(
             children: [
@@ -77,6 +82,7 @@ class _LikesViewScreenState extends State<LikesViewScreen> {
   Padding LikeCard(BoxConstraints constraints, LikeModel likeModel) {
     String? token = getIt<AuthDataService>().getToken();
     RejectLikeUseCase rejectLikeUseCase = getIt<RejectLikeUseCase>();
+    AcceptLikeUseCase acceptLikeUseCase = getIt<AcceptLikeUseCase>();
 
     return Padding(
       padding: EdgeInsets.only(
@@ -126,14 +132,14 @@ class _LikesViewScreenState extends State<LikesViewScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         ElevatedButton(
-                          onPressed: () {
-                            // Acción del primer botón
+                          onPressed: () async {
+                            await acceptLikeUseCase.execute();
                           },
                           child: Text("Aceptar"),
                         ),
                         ElevatedButton(
-                          onPressed: () {
-                            rejectLikeUseCase.execute();
+                          onPressed: () async {
+                            await rejectLikeUseCase.execute();
                           },
                           child: Text("Rechazar"),
                         ),

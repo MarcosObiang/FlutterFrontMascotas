@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:mascotas_citas/const_values/const_values.dart';
+import 'package:mascotas_citas/utils/GetUriFromString.dart';
 
 class LikeModel extends Equatable {
   String receiverUID; // Corrected typo: reciever -> receiver
@@ -63,22 +64,15 @@ class LikeModel extends Equatable {
       // throw FormatException("Invalid format for 'createdAt': ${createdAtData.runtimeType}");
     }
 
-    String getUriFromString(String? urlString) {
-      final baseUri =
-          Uri.parse("${ConstValues.baseUrl}/media-service/media/get-media"); // Ej: https://api.example.com
 
-      return baseUri.replace(
-        queryParameters: {
-          if (urlString != null) 'fileName': urlString,
-        },
-      ).toString();
-    }
 
     return LikeModel(
       receiverUID:
           json['receiverUID'] as String? ?? '', // Provide default if null
       senderUID: json['senderUID'] as String? ?? '',
-      petPictureURL: getUriFromString(json['petPictureURL']) as String? ?? '',
+
+      petPictureURL: Geturifromstring().getUriFromString(json['petPictureURL']) as String? ?? '',
+
       isRevealed: json['isRevealed'] as bool? ?? false,
       likeUID: json['likeUID'] as String? ?? '',
       likedPetUID: json['likedPetUID'] as String? ?? '',
