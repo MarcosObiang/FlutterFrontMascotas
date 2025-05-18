@@ -1,3 +1,4 @@
+import 'package:logger/web.dart';
 import 'package:mascotas_citas/Modules/LikesModule/model/LikeModel.dart';
 import 'package:mascotas_citas/Modules/LikesModule/repo/LikesRepository.dart';
 import 'package:mascotas_citas/Modules/LikesModule/state/LikeModuleState.dart';
@@ -14,9 +15,12 @@ class Listentolikesusecase
   @override
   Future execute() {
     likeRepository.onMessageReceived.listen((data) {
+
+      
       likeModuleState.setData(data);
     }, onError: (error) {
       likeModuleState.setErrorStatus();
+      Logger().e(error);
     });
     return Future.value(true);
   }

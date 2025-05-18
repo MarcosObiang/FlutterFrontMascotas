@@ -16,6 +16,7 @@ class StarterManager {
       bool isUserAlreadyRegistered = await selfLoginWithGoogleUseCase.execute();
       if (isUserAlreadyRegistered) {
         canUserLogIn!.call(value: true);
+        
 
       } else {
         canUserLogIn!.call(value: false);

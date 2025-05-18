@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mascotas_citas/Modules/LikesModule/model/LikeModel.dart';
 import 'package:mascotas_citas/Modules/LikesModule/state/LikeModuleState.dart';
+import 'package:mascotas_citas/Modules/LikesModule/usecases/AcceptLikeUseCase.dart';
 import 'package:mascotas_citas/Modules/LikesModule/usecases/RejectLikeUseCase.dart';
 import 'package:mascotas_citas/Modules/LikesModule/usecases/RevealLikesUseCase.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
@@ -44,13 +45,11 @@ class _LikesViewScreenState extends State<LikesViewScreen> {
             state.lastListActionClear();
           }
         } else if (state.lastListAction == "remove") {
-          if (_listKey.currentState != null &&
-             state.likes.isEmpty) {
+          if (_listKey.currentState != null && state.likes.isEmpty) {
             lastListLength = state.likes.length;
             _removeItem();
             state.lastListActionClear();
           }
-       
         }
 
         return SizedBox.expand(
@@ -84,6 +83,7 @@ class _LikesViewScreenState extends State<LikesViewScreen> {
   Padding LikeCard(BoxConstraints constraints, LikeModel likeModel) {
     String? token = getIt<AuthDataService>().getToken();
     RejectLikeUseCase rejectLikeUseCase = getIt<RejectLikeUseCase>();
+    AcceptLikeUseCase acceptLikeUseCase = getIt<AcceptLikeUseCase>();
 
     return Padding(
       padding: EdgeInsets.only(
@@ -133,8 +133,8 @@ class _LikesViewScreenState extends State<LikesViewScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         ElevatedButton(
-                          onPressed: () {
-                            // Acción del primer botón
+                          onPressed: () async {
+                            await acceptLikeUseCase.execute();
                           },
                           child: Text("Aceptar"),
                         ),

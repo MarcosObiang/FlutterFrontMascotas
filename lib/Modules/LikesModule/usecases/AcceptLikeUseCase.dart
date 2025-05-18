@@ -3,21 +3,19 @@ import 'package:mascotas_citas/Modules/LikesModule/repo/LikesRepository.dart';
 import 'package:mascotas_citas/Modules/LikesModule/state/LikeModuleState.dart';
 import 'package:mascotas_citas/interfaces/usecase_interface.dart';
 
-class RejectLikeUseCase implements UseCaseInterfacae {
-  LikeRepository likeRepository;
+class AcceptLikeUseCase implements UseCaseInterfacae {
   LikeModuleState likeModuleState;
-  RejectLikeUseCase(
-      {required this.likeRepository, required this.likeModuleState});
+  LikeRepository likeRepository;
 
-
+  AcceptLikeUseCase(
+      {required this.likeModuleState, required this.likeRepository});
   @override
   Future execute() async {
     try {
-      await likeRepository.rejectLike(likeModuleState.likes.first.likeUID);
+      await likeRepository.acceptLike(likeModuleState.likes.first.likeUID);
     } catch (e) {
-      print(e);
-      likeModuleState.setError(ModuleException(
-          message: "Error al rechazar el like", title: "Error"));
+      likeModuleState.setError(
+          ModuleException(message: "Error al aceptar like", title: "Error"));
     }
   }
 }

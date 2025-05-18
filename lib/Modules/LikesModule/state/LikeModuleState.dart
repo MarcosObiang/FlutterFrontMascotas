@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:mascotas_citas/Exceptions/ModuleException.dart';
 import 'package:mascotas_citas/Modules/LikesModule/model/LikeModel.dart';
+import 'package:mascotas_citas/Modules/WebSocketModule/WebSocketDataContainer.dart';
 import 'package:mascotas_citas/interfaces/state/IState.dart';
 
 enum Status { loading, initial, error, success }
@@ -48,30 +49,49 @@ class LikeModuleState extends ChangeNotifier implements ModuleState {
     }
   }
 
-  @override
-  void setData(data) {
-    if (data is LikeModel) {
-      if (!likes.contains(data)) {
-        likes = List.from(likes)..add(data);
-        if (likes.isNotEmpty) {
-          likes.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-        }
-        lastListActionAdd();
-        notifyListeners();
-        return;
-      }
-
-      _updateUpdateWithRevealedLike(data);
+  void _processRealtimeData(WebSocketDataContainer<LikeModel> data) {
+    if (data.eventType == ReealtimeEventType.CREATE) {
+      likes = List.from(likes)..add(data.body!);
+      likes.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      lastListActionAdd();
       notifyListeners();
       return;
     }
 
-    if (data is List<LikeModel>) {
-      likes = List.from(data);
-      likes.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    if (data.eventType == ReealtimeEventType.DELETED) {
+      removeData(data.resourceUID);
+      lastListActionRemove();
       notifyListeners();
+
+      return;
+    }
+
+    if (data.eventType == ReealtimeEventType.UPDATE) {
+      _updateUpdateWithRevealedLike(data.body!);
+      notifyListeners();
+      return;
     }
   }
+
+  void _addNewLikes(List<LikeModel> data) {
+    likes = List.from(data);
+    likes.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    notifyListeners();
+  }
+
+  @override
+  void setData(data) {
+    if (data is WebSocketDataContainer<LikeModel>) {
+      _processRealtimeData(data);
+    }
+
+    if (data is List<LikeModel>) {
+      _addNewLikes(data);
+    }
+
+
+    }
+  
 
   void _updateUpdateWithRevealedLike(LikeModel likeModel) {
     for (var i = 0; i < likes.length; i++) {
@@ -85,6 +105,13 @@ class LikeModuleState extends ChangeNotifier implements ModuleState {
   void removeData(data) {
     if (data is LikeModel) {
       likes = List.of(likes)..remove(data);
+      lastListActionRemove();
+      notifyListeners();
+    }
+
+    if (data is String) {
+      likes = List.of(likes)..removeWhere((element) => element.likeUID == data);
+      lastListActionRemove();
       notifyListeners();
     }
   }
