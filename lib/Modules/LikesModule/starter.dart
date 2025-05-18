@@ -4,7 +4,7 @@ import 'package:mascotas_citas/interfaces/starter_interface.dart';
 class LikeModuleStarter implements IStarterInterface {
   List<ISelfStartedUseCaseInterface> _useCases=List.empty();
   LikeModuleStarter({required List<ISelfStartedUseCaseInterface> useCases}){
-    this._useCases = useCases;
+    _useCases = useCases;
 
   }
   @override
@@ -15,9 +15,9 @@ class LikeModuleStarter implements IStarterInterface {
 
   @override
   Future<void> init() {
-    _useCases.forEach((data) {
+    for (var data in _useCases) {
       data.init();
-    });
+    }
     return Future.value();
   }
 }

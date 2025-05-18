@@ -46,7 +46,7 @@ class WebSocketService {
       print("Conectando a WebSocket...");
       _webSocket = await WebSocket.connect(
         wsUri.toString(),
-        headers: {"Authorization": "Bearer ${this.token}"},
+        headers: {"Authorization": "Bearer ${token}"},
       );
       Timer.periodic(Duration(seconds: 10), (_) {
         if (_webSocket?.readyState == WebSocket.open) {

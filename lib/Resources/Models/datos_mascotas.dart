@@ -1,5 +1,4 @@
 // datos/datos_mascotas.dart
-import 'package:intl/intl.dart';
 import 'mascota_api.dart';
 import 'match.dart';
 import 'mensaje.dart';

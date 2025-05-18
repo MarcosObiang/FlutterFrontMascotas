@@ -14,9 +14,9 @@ class AjustesScreen extends StatefulWidget {
   final String userId;
 
   const AjustesScreen({
-    Key? key,
+    super.key,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   _AjustesScreenState createState() => _AjustesScreenState();

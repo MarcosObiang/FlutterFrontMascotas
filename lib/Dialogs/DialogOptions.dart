@@ -11,11 +11,9 @@ class DialogOptions {
 }
 
 class PositiveDialogOptions extends DialogOptions {
-  PositiveDialogOptions({required VoidCallback function, required String text})
-      : super(function: function, text: text);
+  PositiveDialogOptions({required super.function, required super.text});
 }
 
 class NegativeDialogOptions extends DialogOptions {
-  NegativeDialogOptions({required VoidCallback function, required String text})
-      : super(function: function, text: text);
+  NegativeDialogOptions({required super.function, required super.text});
 }

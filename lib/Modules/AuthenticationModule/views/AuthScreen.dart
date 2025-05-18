@@ -5,7 +5,6 @@ import 'package:mascotas_citas/Dialogs/PresentationDialogs.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/state/AuthState.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGoogleUseCase.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
-import 'package:mascotas_citas/types/callbacks.dart';
 import 'package:provider/provider.dart';
 
 class MyWidget extends StatelessWidget {

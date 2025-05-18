@@ -4,7 +4,6 @@ import '../../../Resources/Widgets/edit_campo_texto.dart';
 import '../../../Resources/Widgets/selector_fotos.dart';
 import '../../../Resources/Models/mascota_api.dart';
 import '../../../Resources/Services/api_service.dart';
-import '../../AuthenticationModule/views/AuthScreen.dart';
 import 'ajustes_screen.dart'; // Importamos la nueva pantalla de ajustes
 
 class PerfilScreen extends StatefulWidget {

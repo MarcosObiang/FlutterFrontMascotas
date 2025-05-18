@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:mascotas_citas/Modules/LikesModule/model/LikeModel.dart';
 import 'package:mascotas_citas/services/ApiService.dart';

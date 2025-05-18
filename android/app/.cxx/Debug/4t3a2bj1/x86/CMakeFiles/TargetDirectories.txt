@@ -1,0 +1,2 @@
+C:/Users/marti/Desktop/flutter/proyectos/FlutterFrontMascotas/FlutterFrontMascotas/android/app/.cxx/Debug/4t3a2bj1/x86/CMakeFiles/edit_cache.dir
+C:/Users/marti/Desktop/flutter/proyectos/FlutterFrontMascotas/FlutterFrontMascotas/android/app/.cxx/Debug/4t3a2bj1/x86/CMakeFiles/rebuild_cache.dir

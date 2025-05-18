@@ -63,7 +63,7 @@ class LikeModel extends Equatable {
       // throw FormatException("Invalid format for 'createdAt': ${createdAtData.runtimeType}");
     }
 
-    String _getUriFromString(String? urlString) {
+    String getUriFromString(String? urlString) {
       final baseUri =
           Uri.parse("${ConstValues.baseUrl}/media-service/media/get-media"); // Ej: https://api.example.com
 
@@ -78,7 +78,7 @@ class LikeModel extends Equatable {
       receiverUID:
           json['receiverUID'] as String? ?? '', // Provide default if null
       senderUID: json['senderUID'] as String? ?? '',
-      petPictureURL: _getUriFromString(json['petPictureURL']) as String? ?? '',
+      petPictureURL: getUriFromString(json['petPictureURL']) as String? ?? '',
       isRevealed: json['isRevealed'] as bool? ?? false,
       likeUID: json['likeUID'] as String? ?? '',
       likedPetUID: json['likedPetUID'] as String? ?? '',

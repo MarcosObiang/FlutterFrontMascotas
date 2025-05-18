@@ -68,7 +68,7 @@ class SignUpUseCase {
       createUserState.setCreateUserStatusSuccess();
     } catch (e) {
       ModuleException moduleException = ModuleException(
-        message: "${e.toString()}",
+        message: e.toString(),
         title: "Error",
       );
 

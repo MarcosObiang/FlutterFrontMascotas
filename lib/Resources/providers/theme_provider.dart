@@ -15,7 +15,6 @@ class ThemeProvider extends ChangeNotifier {
       primary: Colors.pink,
       secondary: Colors.pink[300]!,
       surface: Colors.grey[800]!,
-      background: Colors.black,
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.grey[850],
@@ -29,14 +28,14 @@ class ThemeProvider extends ChangeNotifier {
       unselectedItemColor: Colors.grey,
     ),
     switchTheme: SwitchThemeData(
-      thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
-        if (states.contains(MaterialState.selected)) {
+      thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+        if (states.contains(WidgetState.selected)) {
           return Colors.pink;
         }
         return Colors.grey;
       }),
-      trackColor: MaterialStateProperty.resolveWith<Color>((states) {
-        if (states.contains(MaterialState.selected)) {
+      trackColor: WidgetStateProperty.resolveWith<Color>((states) {
+        if (states.contains(WidgetState.selected)) {
           return Colors.pink.withOpacity(0.5);
         }
         return Colors.grey.withOpacity(0.5);
@@ -44,7 +43,6 @@ class ThemeProvider extends ChangeNotifier {
     ),
     dividerColor: Colors.grey[700],
     cardColor: Colors.grey[850],
-    dialogBackgroundColor: Colors.grey[900],
     textTheme: TextTheme(
       bodyLarge: TextStyle(color: Colors.white),
       bodyMedium: TextStyle(color: Colors.white),
@@ -74,7 +72,7 @@ class ThemeProvider extends ChangeNotifier {
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide(color: Colors.pink),
       ),
-    ),
+    ), dialogTheme: DialogThemeData(backgroundColor: Colors.grey[900]),
   );
 
   // Método getter para obtener el tema según el modo

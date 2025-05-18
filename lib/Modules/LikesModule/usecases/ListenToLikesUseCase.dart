@@ -1,4 +1,3 @@
-import 'package:mascotas_citas/Modules/LikesModule/model/LikeModel.dart';
 import 'package:mascotas_citas/Modules/LikesModule/repo/LikesRepository.dart';
 import 'package:mascotas_citas/Modules/LikesModule/state/LikeModuleState.dart';
 import 'package:mascotas_citas/interfaces/self_started_use_case_interface.dart';

@@ -1,5 +1,4 @@
 import 'package:mascotas_citas/Modules/AuthenticationModule/repo/AuthenticationRepo.dart';
-import 'package:mascotas_citas/interfaces/self_started_use_case_interface.dart';
 import 'package:mascotas_citas/interfaces/usecase_interface.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 

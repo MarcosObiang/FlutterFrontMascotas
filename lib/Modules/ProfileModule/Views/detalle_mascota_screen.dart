@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class DetalleMascotaScreen extends StatelessWidget {
   final Map<String, dynamic> mascota;
 
-  const DetalleMascotaScreen({Key? key, required this.mascota}) : super(key: key);
+  const DetalleMascotaScreen({super.key, required this.mascota});
 
   @override
   Widget build(BuildContext context) {

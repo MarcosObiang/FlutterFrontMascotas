@@ -8,7 +8,7 @@ class GenericDialog extends StatelessWidget {
   final String title;
   final DialogType dialogType;
 
-  const GenericDialog({
+  const GenericDialog({super.key, 
     required this.content,
     required this.title,
     this.dialogType = DialogType.info,

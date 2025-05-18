@@ -1,6 +1,5 @@
 // lib/Resources/Models/mascota.dart
 
-import 'package:intl/intl.dart';
 
 class Mascota {
   // Core properties

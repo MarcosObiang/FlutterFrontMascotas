@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/DTOs/LogInDTO.dart';
 import 'package:mascotas_citas/interfaces/auth/IAuthServices.dart';
 import 'package:mascotas_citas/services/ApiService.dart';
-import 'package:mascotas_citas/services/auth/WebLoginService.dart';
 
 abstract class AuthenticationRepo {
   Future<LoginDTO?> login();

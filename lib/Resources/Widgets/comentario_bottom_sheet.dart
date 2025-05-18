@@ -11,11 +11,11 @@ class ComentarioBottomSheet extends StatefulWidget {
   final SocialProvider socialProvider;
 
   const ComentarioBottomSheet({
-    Key? key,
+    super.key,
     required this.publicacion,
     required this.mascotaProvider,
     required this.socialProvider,
-  }) : super(key: key);
+  });
 
   @override
   _ComentarioBottomSheetState createState() => _ComentarioBottomSheetState();

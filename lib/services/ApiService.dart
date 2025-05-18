@@ -52,7 +52,7 @@ class DioApiService {
 
     try {
       return await _dio.get(path, queryParameters: queryParams);
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     }
   }
@@ -72,7 +72,7 @@ Future<Response> post({
       // Si no hay archivos, solo enviamos los datos
       return await _dio.post(path, data: data);
     }
-  } on DioException catch (e) {
+  } on DioException {
       rethrow;
   }
 }
@@ -112,7 +112,7 @@ Future<Response> _uploadFiles(String path, dynamic data, Map<String, dynamic> fi
         },
       ),
     );
-  } on DioException catch (e) {
+  } on DioException {
       rethrow;
   }
 }
@@ -126,7 +126,7 @@ Future<Response> _uploadFiles(String path, dynamic data, Map<String, dynamic> fi
 
     try {
       return await _dio.put(path, data: data);
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     }
   }
@@ -140,7 +140,7 @@ Future<Response> _uploadFiles(String path, dynamic data, Map<String, dynamic> fi
 
     try {
       return await _dio.delete(path, data: data);
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     }
   }
