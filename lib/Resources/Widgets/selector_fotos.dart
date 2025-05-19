@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mascotas_citas/services/ApiService.dart';
-import 'package:flutter/foundation.dart';
 
 class SelectorFotos extends StatefulWidget {
   final List<String> imagenes;
@@ -53,21 +52,38 @@ class _SelectorFotosState extends State<SelectorFotos> {
   @override
   void didUpdateWidget(SelectorFotos oldWidget) {
     super.didUpdateWidget(oldWidget);
+    
     // Si las imágenes cambiaron desde afuera, actualizar la lista local
-    if (oldWidget.imagenes != widget.imagenes) {
+    if (!listEquals(oldWidget.imagenes, widget.imagenes)) {
+      // Limpiar caché de imágenes
       imageCache.clear();
       imageCache.clearLiveImages();
       
+      print("SelectorFotos actualizado con nuevas imágenes: ${widget.imagenes}");
       setState(() {
         _imagenes = List.from(widget.imagenes);
-        print("SelectorFotos actualizado con nuevas imágenes: $_imagenes");
       });
       
-      // Forzar reconstrucción de los widgets de imagen
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() {});
+      // Forzar reconstrucción de los widgets de imagen con un pequeño retraso
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          setState(() {});
+          // Limpiar caché nuevamente después del retraso
+          imageCache.clear();
+          imageCache.clearLiveImages();
+        }
       });
     }
+  }
+  
+  // Función auxiliar para comparar listas
+  bool listEquals<T>(List<T>? a, List<T>? b) {
+    if (a == null) return b == null;
+    if (b == null || a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -541,6 +557,10 @@ class _SelectorFotosState extends State<SelectorFotos> {
       setState(() => _isLoading = true);
       print("Estableciendo foto $index como principal");
 
+      // Limpiar caché de imágenes antes de reorganizar
+      imageCache.clear();
+      imageCache.clearLiveImages();
+
       // Reorganizamos las imágenes localmente
       final String selectedImage = _imagenes[index];
       final List<String> updatedImages = [..._imagenes];
@@ -554,7 +574,18 @@ class _SelectorFotosState extends State<SelectorFotos> {
           _isLoading = false;
         });
         
+        // Notificar cambios al widget padre
         widget.onImagesUpdated(_imagenes);
+        
+        // Forzar reconstrucción después de un breve retraso
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            setState(() {});
+            // Limpiar caché nuevamente después del retraso
+            imageCache.clear();
+            imageCache.clearLiveImages();
+          }
+        });
         
         // Para mascota: Sincronizamos todas las imágenes con el servidor
         if (widget.tipo == 'mascota') {
@@ -694,17 +725,22 @@ class _SelectorFotosState extends State<SelectorFotos> {
     }
   }
 
-  // Método para construir widget de imagen con tamaño fijo
+  // Método mejorado para construir widget de imagen con tamaño fijo
   Widget _buildImageWidget(String imagePath) {
-    // Agregar un Key único usando la ruta de la imagen para forzar reconstrucción
-    final uniqueKey = ValueKey<String>('image_$imagePath');
+    // Agregar un Key único con timestamp para forzar reconstrucción
+    final uniqueKey = ValueKey<String>('image_${imagePath}_${DateTime.now().millisecondsSinceEpoch}');
     
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       // Es una URL de red
       print("Cargando imagen de red: $imagePath");
       
+      // Añadir un parámetro de timestamp a la URL para evitar caché
+      final String cacheBustUrl = imagePath.contains('?') 
+          ? '$imagePath&t=${DateTime.now().millisecondsSinceEpoch}' 
+          : '$imagePath?t=${DateTime.now().millisecondsSinceEpoch}';
+      
       return Image.network(
-        imagePath,
+        cacheBustUrl,
         key: uniqueKey, // Clave única para forzar recarga
         fit: BoxFit.cover, // Asegura que cubra el espacio asignado
         width: _imageSize,
@@ -712,8 +748,12 @@ class _SelectorFotosState extends State<SelectorFotos> {
         // Deshabilitar caché para forzar recarga de la imagen
         cacheWidth: null,
         cacheHeight: null,
-        // Agregar un parámetro random a la URL para evitar caché
-        headers: {'Cache-Control': 'no-cache'},
+        // Añadir encabezados para evitar caché
+        headers: {
+          'Cache-Control': 'no-cache, no-store',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return Center(
@@ -761,9 +801,11 @@ class _SelectorFotosState extends State<SelectorFotos> {
           );
         }
         
-        // Usar Image.file con dimensiones explícitas y key única
-        return Image.file(
-          file,
+        // Usar Image.memory para evitar problemas de caché
+        final bytes = file.readAsBytesSync();
+        
+        return Image.memory(
+          bytes,
           key: uniqueKey, // Clave única para forzar recarga
           fit: BoxFit.cover, // Importante para mantener consistencia
           width: _imageSize,

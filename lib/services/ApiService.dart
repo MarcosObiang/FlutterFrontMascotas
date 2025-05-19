@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:http_parser/http_parser.dart';  // Importante: añadir esta dependencia
+import 'package:http_parser/http_parser.dart';
 import 'package:mascotas_citas/const_values/const_values.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 
@@ -20,8 +20,8 @@ class ApiService {
     _dio = Dio(
       BaseOptions(
         baseUrl: ConstValues.baseUrl,
-        connectTimeout: const Duration(seconds: 30),  // Aumentado para subidas de archivos
-        receiveTimeout: const Duration(seconds: 30),  // Aumentado para subidas de archivos
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -53,72 +53,294 @@ class ApiService {
     _dio.options.headers['Authorization'] = 'Bearer $token';
   }
 
-  /// Realiza una petición GET a [path] con [queryParams].
+  /// Método GET para realizar peticiones HTTP
+  /// 
+  /// @param path URL del endpoint
+  /// @param queryParams Parámetros de consulta opcionales
+  /// @param headers Headers HTTP opcionales para sobrescribir los predeterminados
   Future<Response> get({
     required String path,
-    required Map<String, dynamic> queryParams,
+    Map<String, dynamic>? queryParams,
+    Map<String, dynamic>? headers,
   }) async {
-    setAuthToken();
-
     try {
-      return await _dio.get(path, queryParameters: queryParams);
+      // Si se proporcionan headers específicos, actualizamos los headers del cliente
+      if (headers != null && headers.isNotEmpty) {
+        dioClient.options.headers.addAll(headers);
+      } else {
+        // Asegurarse de que al menos tengamos el header de Content-Type
+        dioClient.options.headers['Content-Type'] = 'application/json';
+        
+        // Intentar obtener y añadir el token si existe
+        String? token = authDataService.token;
+        if (token != null && token.isNotEmpty) {
+          dioClient.options.headers['Authorization'] = 'Bearer $token';
+        }
+      }
+      
+      // Realizar la petición GET
+      final response = await dioClient.get(
+        path,
+        queryParameters: queryParams,
+      );
+      
+      print('*** Request ***');
+      print('uri: $path${queryParams != null ? '?' + queryParams.entries.map((e) => '${e.key}=${e.value}').join('&') : ''}');
+      print('method: GET');
+      print('responseType: ${dioClient.options.responseType}');
+      print('followRedirects: ${dioClient.options.followRedirects}');
+      print('persistentConnection: ${dioClient.options.persistentConnection}');
+      print('connectTimeout: ${dioClient.options.connectTimeout}');
+      print('sendTimeout: ${dioClient.options.sendTimeout}');
+      print('receiveTimeout: ${dioClient.options.receiveTimeout}');
+      print('receiveDataWhenStatusError: ${dioClient.options.receiveDataWhenStatusError}');
+      print('extra: ${dioClient.options.extra}');
+      print('headers:');
+      dioClient.options.headers.forEach((key, value) {
+        print(' $key: $value');
+      });
+      print('data:');
+      print(null);
+      print('');
+      
+      return response;
     } on DioException catch (e) {
-      throw Exception(_handleError(e));
+      print('*** DioException ***:');
+      print('uri: ${e.requestOptions.uri}');
+      print(e.toString());
+      print('uri: ${e.requestOptions.uri}');
+      print('statusCode: ${e.response?.statusCode}');
+      print('headers:');
+      e.response?.headers.forEach((name, values) {
+        print(' $name: ${values.join(',')}');
+      });
+      print('Response Text:');
+      print(e.response?.data.toString());
+      print('\n');
+      
+      if (e.response != null) {
+        throw Exception('Error ${e.response!.statusCode}: ${e.response!.data}');
+      } else {
+        throw Exception('Error de conexión: ${e.message}');
+      }
+    } catch (e) {
+      print('Error general en petición GET: $e');
+      rethrow;
     }
   }
 
-  /// Realiza una petición POST a [path] con el cuerpo [data] y opcionalmente archivos en un mapa [files].
+  /// Método POST para realizar peticiones HTTP
+  /// 
+  /// @param path URL del endpoint
+  /// @param data Datos a enviar en el cuerpo de la petición
+  /// @param queryParams Parámetros de consulta opcionales
+  /// @param headers Headers HTTP opcionales para sobrescribir los predeterminados
+  /// @param files Archivos a subir (opcional)
   Future<Response> post({
     required String path,
-    required dynamic data,
-    Map<String, dynamic>? files,  // Parámetro para archivos en un mapa
+    dynamic data,
+    Map<String, dynamic>? queryParams,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? files,
   }) async {
-    setAuthToken();
     try {
+      // Si se proporcionan headers específicos, actualizamos los headers del cliente
+      if (headers != null && headers.isNotEmpty) {
+        dioClient.options.headers.addAll(headers);
+      } else {
+        // Asegurarse de que al menos tengamos el header de Content-Type
+        dioClient.options.headers['Content-Type'] = 'application/json';
+        
+        // Intentar obtener y añadir el token si existe
+        String? token = authDataService.token;
+        if (token != null && token.isNotEmpty) {
+          dioClient.options.headers['Authorization'] = 'Bearer $token';
+        }
+      }
+      
+      Response response;
+      
+      // Si hay archivos, usamos FormData para incluirlos junto con los datos
       if (files != null && files.isNotEmpty) {
-        // Si hay archivos, usamos FormData para incluirlos junto con los datos
-        return await _uploadFiles(path, data, files, 'POST');
+        response = await _uploadFiles(path, data, files, 'POST', queryParams);
       } else {
         // Si no hay archivos, solo enviamos los datos
-        return await _dio.post(path, data: data);
+        response = await dioClient.post(
+          path,
+          data: data,
+          queryParameters: queryParams,
+        );
       }
+      
+      print('*** Request ***');
+      print('uri: $path${queryParams != null ? '?' + queryParams.entries.map((e) => '${e.key}=${e.value}').join('&') : ''}');
+      print('method: POST');
+      print('responseType: ${dioClient.options.responseType}');
+      print('followRedirects: ${dioClient.options.followRedirects}');
+      print('persistentConnection: ${dioClient.options.persistentConnection}');
+      print('connectTimeout: ${dioClient.options.connectTimeout}');
+      print('sendTimeout: ${dioClient.options.sendTimeout}');
+      print('receiveTimeout: ${dioClient.options.receiveTimeout}');
+      print('receiveDataWhenStatusError: ${dioClient.options.receiveDataWhenStatusError}');
+      print('extra: ${dioClient.options.extra}');
+      print('headers:');
+      dioClient.options.headers.forEach((key, value) {
+        print(' $key: $value');
+      });
+      print('data:');
+      print(data);
+      print('');
+      
+      return response;
     } on DioException catch (e) {
-      throw Exception(_handleError(e));
+      print('*** DioException ***:');
+      print('uri: ${e.requestOptions.uri}');
+      print(e.toString());
+      print('uri: ${e.requestOptions.uri}');
+      print('statusCode: ${e.response?.statusCode}');
+      print('headers:');
+      e.response?.headers.forEach((name, values) {
+        print(' $name: ${values.join(',')}');
+      });
+      print('Response Text:');
+      print(e.response?.data.toString());
+      print('\n');
+      
+      if (e.response != null) {
+        throw Exception('Error ${e.response!.statusCode}: ${e.response!.data}');
+      } else {
+        throw Exception('Error de conexión: ${e.message}');
+      }
+    } catch (e) {
+      print('Error general en petición POST: $e');
+      rethrow;
     }
   }
 
-  /// Realiza una petición PUT a [path] con el cuerpo [data] y opcionalmente archivos.
+//   /// Método privado para manejar la subida de archivos junto con otros datos (FormData).
+// Future<Response> _uploadFiles(String path, dynamic data, Map<String, dynamic> files) async {
+//   try {
+//     // Crear FormData para enviar tanto los archivos como los datos
+//     final formData = FormData.fromMap({
+//       ...files.map((key, value) {
+//         // Asegurarnos de que el valor sea un File o Uint8List
+//         if (value is File) {
+//           return MapEntry(key, MultipartFile.fromFile(value.path, filename: key));
+//         } else if (value is Uint8List) {
+//           return MapEntry(key, MultipartFile.fromBytes(value, filename: key));
+//         } else {
+//           throw Exception('Archivo no soportado. Aceptamos solo File o Uint8List.');
+//         }
+//       }),
+//       // Añadir otros datos a la solicitud
+     
+//     });
+    
+//     Map<dynamic,dynamic> mappedData=data;
+//     mappedData.forEach((key, value) {
+//       formData.fields.add(MapEntry(key, value.toString()));
+//     });
+
+//     print(formData.fields.toSet());
+//     // Realizar la solicitud POST con FormData
+//     return await _dio.post(
+//       path,
+//       data: formData,
+//       options: Options(
+//         headers: {
+//           'Content-Type': 'multipart/form-data',
+//         },
+//       ),
+//     );
+//   } on DioException catch (e) {
+//       rethrow;
+//   }
+// }
+
+  /// Realiza una petición PUT a [path] con el cuerpo [data].
   Future<Response> put({
     required String path,
     required dynamic data,
-    Map<String, dynamic>? files,  // Añadimos soporte para archivos en PUT
   }) async {
-    setAuthToken();
+      setAuthToken();
 
     try {
-      if (files != null && files.isNotEmpty) {
-        // Si hay archivos, usamos FormData para incluirlos junto con los datos
-        return await _uploadFiles(path, data, files, 'PUT');
-      } else {
-        // Si no hay archivos, solo enviamos los datos
-        return await _dio.put(path, data: data);
-      }
+      return await _dio.put(path, data: data);
     } on DioException catch (e) {
-      throw Exception(_handleError(e));
+      rethrow;
     }
   }
 
   /// Realiza una petición DELETE a [path] con el cuerpo [data].
   Future<Response> delete({
     required String path,
-    required dynamic data,
+    dynamic data,
+    Map<String, dynamic>? queryParams,
+    Map<String, dynamic>? headers,
   }) async {
-    setAuthToken();
-
     try {
-      return await _dio.delete(path, data: data);
+      // Si se proporcionan headers específicos, actualizamos los headers del cliente
+      if (headers != null && headers.isNotEmpty) {
+        dioClient.options.headers.addAll(headers);
+      } else {
+        // Asegurarse de que al menos tengamos el header de Content-Type
+        dioClient.options.headers['Content-Type'] = 'application/json';
+        
+        // Intentar obtener y añadir el token si existe
+        String? token = authDataService.token;
+        if (token != null && token.isNotEmpty) {
+          dioClient.options.headers['Authorization'] = 'Bearer $token';
+        }
+      }
+      
+      final response = await dioClient.delete(
+        path, 
+        data: data,
+        queryParameters: queryParams,
+      );
+      
+      print('*** Request ***');
+      print('uri: $path${queryParams != null ? '?' + queryParams.entries.map((e) => '${e.key}=${e.value}').join('&') : ''}');
+      print('method: DELETE');
+      print('responseType: ${dioClient.options.responseType}');
+      print('followRedirects: ${dioClient.options.followRedirects}');
+      print('persistentConnection: ${dioClient.options.persistentConnection}');
+      print('connectTimeout: ${dioClient.options.connectTimeout}');
+      print('sendTimeout: ${dioClient.options.sendTimeout}');
+      print('receiveTimeout: ${dioClient.options.receiveTimeout}');
+      print('receiveDataWhenStatusError: ${dioClient.options.receiveDataWhenStatusError}');
+      print('extra: ${dioClient.options.extra}');
+      print('headers:');
+      dioClient.options.headers.forEach((key, value) {
+        print(' $key: $value');
+      });
+      print('data:');
+      print(data);
+      print('');
+      
+      return response;
     } on DioException catch (e) {
-      throw Exception(_handleError(e));
+      print('*** DioException ***:');
+      print('uri: ${e.requestOptions.uri}');
+      print(e.toString());
+      print('uri: ${e.requestOptions.uri}');
+      print('statusCode: ${e.response?.statusCode}');
+      print('headers:');
+      e.response?.headers.forEach((name, values) {
+        print(' $name: ${values.join(',')}');
+      });
+      print('Response Text:');
+      print(e.response?.data.toString());
+      print('\n');
+      
+      if (e.response != null) {
+        throw Exception('Error ${e.response!.statusCode}: ${e.response!.data}');
+      } else {
+        throw Exception('Error de conexión: ${e.message}');
+      }
+    } catch (e) {
+      print('Error general en petición DELETE: $e');
+      rethrow;
     }
   }
   
@@ -128,6 +350,7 @@ class ApiService {
     dynamic data, 
     Map<String, dynamic> files,
     String method,
+    Map<String, dynamic>? queryParams,
   ) async {
     try {
       // Crear un FormData vacío
@@ -148,15 +371,7 @@ class ApiService {
         if (value is File) {
           // Determinar el tipo MIME basado en la extensión del archivo
           String extension = value.path.split('.').last.toLowerCase();
-          String mimeType = 'image/jpeg'; // Por defecto
-          
-          if (extension == 'png') {
-            mimeType = 'image/png';
-          } else if (extension == 'gif') {
-            mimeType = 'image/gif';
-          } else if (extension == 'webp') {
-            mimeType = 'image/webp';
-          }
+          String mimeType = _getMimeType(extension);
           
           // Crear el MultipartFile
           final fileName = value.path.split('/').last;
@@ -192,6 +407,7 @@ class ApiService {
       return await _dio.request(
         path,
         data: formData,
+        queryParameters: queryParams,
         options: Options(
           method: method,
           headers: {
@@ -230,45 +446,64 @@ class ApiService {
   }
   
   /// Actualiza la imagen de perfil del usuario
-  Future<Response> updateUserImage({
-    required String userUID,
-    required File userImage,
-  }) async {
-    setAuthToken();
+/// Actualiza la imagen de perfil del usuario
+Future<Response> updateUserImage({
+  required String userUID,
+  required File userImage,
+}) async {
+  try {
+    // Crear el FormData
+    final formData = FormData();
     
-    try {
-      // Crear el FormData
-      final formData = FormData();
-      
-      // Determinar el tipo MIME basado en la extensión del archivo
-      String extension = userImage.path.split('.').last.toLowerCase();
-      String mimeType = _getMimeType(extension);
-      
-      // Agregar el archivo con el nombre correcto para el endpoint
-      final fileName = userImage.path.split('/').last;
-      final multipartFile = await MultipartFile.fromFile(
-        userImage.path,
-        filename: fileName,
-        contentType: MediaType.parse(mimeType),
-      );
-      
-      formData.files.add(MapEntry('userImage', multipartFile));
-      
-      // Realizar la solicitud con el header requerido
-      return await _dio.post(
-        '/api/update-user-image',
-        data: formData,
-        options: Options(
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'userUID': userUID,
-          },
-        ),
-      );
-    } on DioException catch (e) {
-      throw Exception(_handleError(e));
+    // Asegurarse de que el archivo existe
+    if (!await userImage.exists()) {
+      throw Exception('El archivo no existe: ${userImage.path}');
     }
+    
+    // Determinar el tipo MIME basado en la extensión del archivo
+    String extension = userImage.path.split('.').last.toLowerCase();
+    String mimeType = _getMimeType(extension);
+    
+    print('Enviando archivo: ${userImage.path}');
+    print('Tipo MIME: $mimeType');
+    
+    // Agregar el archivo con el nombre correcto para el endpoint
+    final fileName = userImage.path.split('/').last;
+    final multipartFile = await MultipartFile.fromFile(
+      userImage.path,
+      filename: fileName,
+      contentType: MediaType.parse(mimeType),
+    );
+    
+    // Agregar el archivo con el nombre correcto según el controlador
+    formData.files.add(MapEntry('file', multipartFile));
+    
+    // Agregar los parámetros requeridos
+    formData.fields.add(MapEntry('userUID', userUID));
+    formData.fields.add(MapEntry('index', '1')); // Asumimos que es la imagen de perfil
+    formData.fields.add(MapEntry('type', 'profileImage')); // Tipo de imagen
+    
+    print('FormData creado con éxito');
+    print('Usuario UID: $userUID');
+    
+    // Establecer los headers correctos
+    Map<String, dynamic> headers = {
+      'Content-Type': 'multipart/form-data',
+    };
+    
+    print('Enviando solicitud a: http://localhost:8091/media/upload');
+    
+    // Realizar la solicitud
+    return await post(
+      path: 'http://localhost:8091/media/upload',
+      data: formData,
+      headers: headers,
+    );
+  } catch (e) {
+    print('Error en updateUserImage: $e');
+    rethrow;
   }
+}
   
   /// Actualiza las imágenes de la mascota
   Future<Response> updatePetImages({
@@ -278,8 +513,6 @@ class ApiService {
     File? petImage2,
     File? petImage3,
   }) async {
-    setAuthToken();
-    
     try {
       // Verificar que se ha proporcionado al menos una imagen
       if (petImage1 == null && petImage2 == null && petImage3 == null) {
@@ -324,19 +557,20 @@ class ApiService {
       }
       
       // Realizar la solicitud con los headers requeridos
-      return await _dio.post(
-        '/api/update-pet-images',
+      final headers = {
+        'Content-Type': 'multipart/form-data',
+        'userUID': userUID,
+        'petUID': petUID,
+      };
+      
+      return await post(
+        path: '/api/update-pet-images',
         data: formData,
-        options: Options(
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'userUID': userUID,
-            'petUID': petUID,
-          },
-        ),
+        headers: headers,
       );
-    } on DioException catch (e) {
-      throw Exception(_handleError(e));
+    } catch (e) {
+      print('Error en updatePetImages: $e');
+      rethrow;
     }
   }
   

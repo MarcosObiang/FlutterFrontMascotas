@@ -1,12 +1,7 @@
-import 'dart:developer' as developer;
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
-import 'package:mascotas_citas/Exceptions/ModuleException.dart';
-import 'package:mascotas_citas/Exceptions/TimeOutException.dart';
 import 'package:mascotas_citas/const_values/const_values.dart';
 import 'package:mascotas_citas/interfaces/auth/IAuthServices.dart';
-import 'package:app_links/app_links.dart';
 import 'package:mascotas_citas/services/ApiService.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 // Esta clase implementa el login con Google en aplicaciones Flutter Web.
 class WebLoginService implements IAuthServices {

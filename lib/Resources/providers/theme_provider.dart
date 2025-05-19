@@ -24,11 +24,9 @@ class ThemeProvider extends ChangeNotifier {
     onError: Colors.white,
     errorContainer: Colors.red[100]!,
     onErrorContainer: Colors.red[900]!,
-    background: Colors.grey[50]!,
-    onBackground: Colors.black,
-    surface: Colors.white,
+    surface: Color.fromRGBO(242, 217, 208, 1),
     onSurface: Colors.black,
-    surfaceVariant: Colors.grey[200]!,
+    surfaceContainerHighest: Colors.grey[200]!,
     onSurfaceVariant: Colors.grey[700]!,
     outline: Colors.grey[400]!,
     shadow: Colors.black.withOpacity(0.1),
@@ -56,11 +54,9 @@ class ThemeProvider extends ChangeNotifier {
     onError: Colors.black,
     errorContainer: Colors.red[900]!,
     onErrorContainer: Colors.red[100]!,
-    background: Color(0xFF121212),
-    onBackground: Colors.white,
     surface: Color(0xFF1E1E1E),
     onSurface: Colors.white,
-    surfaceVariant: Color(0xFF2C2C2C),
+    surfaceContainerHighest: Color(0xFF2C2C2C),
     onSurfaceVariant: Colors.grey[300]!,
     outline: Colors.grey[600]!,
     shadow: Colors.black.withOpacity(0.3),
@@ -73,7 +69,7 @@ class ThemeProvider extends ChangeNotifier {
   ThemeData get lightTheme => ThemeData(
     useMaterial3: true,
     colorScheme: _lightColorScheme,
-    scaffoldBackgroundColor: _lightColorScheme.background,
+    scaffoldBackgroundColor: _lightColorScheme.surface,
     cardColor: Colors.white,
     dividerColor: Colors.grey[300],
     appBarTheme: AppBarTheme(
@@ -102,22 +98,22 @@ class ThemeProvider extends ChangeNotifier {
       ),
     ),
     chipTheme: ChipThemeData(
-      backgroundColor: _lightColorScheme.surfaceVariant,
+      backgroundColor: _lightColorScheme.surfaceContainerHighest,
       selectedColor: _lightColorScheme.primary,
       labelStyle: TextStyle(color: _lightColorScheme.onSurfaceVariant),
     ),
     switchTheme: SwitchThemeData(
-      thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
-        if (states.contains(MaterialState.selected)) {
+      thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+        if (states.contains(WidgetState.selected)) {
           return _lightColorScheme.primary;
         }
         return _lightColorScheme.outline;
       }),
-      trackColor: MaterialStateProperty.resolveWith<Color>((states) {
-        if (states.contains(MaterialState.selected)) {
+      trackColor: WidgetStateProperty.resolveWith<Color>((states) {
+        if (states.contains(WidgetState.selected)) {
           return _lightColorScheme.primary.withOpacity(0.5);
         }
-        return _lightColorScheme.surfaceVariant;
+        return _lightColorScheme.surfaceContainerHighest;
       }),
     ),
     sliderTheme: SliderThemeData(
@@ -131,7 +127,7 @@ class ThemeProvider extends ChangeNotifier {
   ThemeData get darkTheme => ThemeData(
     useMaterial3: true,
     colorScheme: _darkColorScheme,
-    scaffoldBackgroundColor: _darkColorScheme.background,
+    scaffoldBackgroundColor: _darkColorScheme.surface,
     cardColor: _darkColorScheme.surface,
     dividerColor: _darkColorScheme.outline,
     appBarTheme: AppBarTheme(
@@ -160,22 +156,22 @@ class ThemeProvider extends ChangeNotifier {
       ),
     ),
     chipTheme: ChipThemeData(
-      backgroundColor: _darkColorScheme.surfaceVariant,
+      backgroundColor: _darkColorScheme.surfaceContainerHighest,
       selectedColor: _darkColorScheme.primary,
       labelStyle: TextStyle(color: _darkColorScheme.onSurfaceVariant),
     ),
     switchTheme: SwitchThemeData(
-      thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
-        if (states.contains(MaterialState.selected)) {
+      thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+        if (states.contains(WidgetState.selected)) {
           return _darkColorScheme.primary;
         }
         return _darkColorScheme.outline;
       }),
-      trackColor: MaterialStateProperty.resolveWith<Color>((states) {
-        if (states.contains(MaterialState.selected)) {
+      trackColor: WidgetStateProperty.resolveWith<Color>((states) {
+        if (states.contains(WidgetState.selected)) {
           return _darkColorScheme.primary.withOpacity(0.5);
         }
-        return _darkColorScheme.surfaceVariant;
+        return _darkColorScheme.surfaceContainerHighest;
       }),
     ),
     sliderTheme: SliderThemeData(
@@ -186,7 +182,7 @@ class ThemeProvider extends ChangeNotifier {
     ),
     dialogTheme: DialogTheme(
       backgroundColor: _darkColorScheme.surface,
-      surfaceTintColor: _darkColorScheme.surfaceVariant,
+      surfaceTintColor: _darkColorScheme.surfaceContainerHighest,
     ),
   );
 
