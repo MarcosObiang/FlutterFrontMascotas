@@ -10,7 +10,8 @@ import 'package:mascotas_citas/Modules/HomeModule/State/mascota_provider.dart';
 import 'package:mascotas_citas/Modules/SocialModule/State/social_provider.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/state/AuthState.dart';
 import 'package:mascotas_citas/Resources/providers/theme_provider.dart'; // Importa el ThemeProvider
-import 'package:mascotas_citas/Modules/CreateUserModule/state/CreateUserState.dart'; 
+import 'package:mascotas_citas/Modules/CreateUserModule/state/CreateUserState.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/component/configuracion_busqueda_provider.dart'; 
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +33,7 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => CreateUserState()), 
         ChangeNotifierProvider(create: (context) => SocialProvider()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()), // Agregar ThemeProvider
+        ChangeNotifierProvider(create: (context) => ConfiguracionBusquedaProvider()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(1080, 1920),

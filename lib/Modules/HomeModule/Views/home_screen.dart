@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mascotas_citas/models/PetModel.dart';
-import '../../../Resources/Widgets/boton_accion.dart';
-import '../../../Resources/Widgets/tarjeta_mascota.dart';
-import 'package:mascotas_citas/services/ApiService.dart';
-import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
-import 'package:dio/dio.dart';
-// Import the custom SecureStorage
-import 'package:mascotas_citas/services/platform/storage/SecureStorage.dart'; // Adjust the import path as needed
+import '../component/boton_accion.dart';
+import '../component/tarjeta_mascota.dart';
+import 'package:provider/provider.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/component/configuracion_busqueda_provider.dart';
+import '../ViewModel/home_view_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,118 +24,185 @@ class _HomeScreenState extends State<HomeScreen> {
   final double _maxScale = 1.05;
   final double _minOpacity = 0.8;
   
-  // Lista de mascotas con el modelo PetModel
-  List<PetModel>? _mascotas;
-  bool _isLoading = true;
-  String? _error;
-  
-  // Servicio API y Dio para peticiones HTTP
-  late final ApiService _apiService;
-  final Dio _dio = Dio();
+  // ViewModel
+  late final HomeViewModel _viewModel;
   
   @override
   void initState() {
     super.initState();
-    // Inicializar el authDataService con la clase SecureStorage personalizada
-    final secureStorage = SecureStorage();
-    final authDataService = AuthDataService(secureStorage: secureStorage);
-    _apiService = ApiService(authDataService: authDataService);
-    _cargarMascotas();
-  }
-  
-  // Método para cargar las mascotas desde la API
-  Future<void> _cargarMascotas() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
+    _viewModel = HomeViewModel();
+    
+    // Retraso para permitir que el provider se inicialice completamente
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final configProvider = Provider.of<ConfiguracionBusquedaProvider>(context, listen: false);
+      _viewModel.cargarMascotas(configProvider);
     });
-    
-    try {
-      // Usamos Dio directamente para hacer la solicitud HTTP
-      final response = await _dio.get('http://localhost:8083/pets/get-all-pets');
-      
-      if (response.statusCode == 200) {
-        // Convertimos el JSON a una lista de PetModel
-        final List<dynamic> jsonList = response.data;
-        final List<PetModel> mascotas = jsonList.map((json) => 
-          PetModel(
-            id: json['onwerUID'] ?? '', // Usamos onwerUID como id si está presente
-            name: json['name'] ?? '',
-            petImage1: json['petImage1'] ?? '',
-            // Añadimos los parámetros requeridos faltantes
-            petUID: json['petUID'] ?? '',
-            ownerUID: json['ownerUID'] ?? '',
-            sex: json['sex'] ?? '',
-            petBio: json['petBio'] ?? '',
-            birthDate: DateTime.fromMillisecondsSinceEpoch(json['birthDate'] ?? 0),
-            species: json['species'] ?? 'No especificado'
-          )
-        ).toList();
-        
-        setState(() {
-          _mascotas = mascotas;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _error = 'Error al cargar las mascotas: Código ${response.statusCode}';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Error al cargar las mascotas: $e';
-        _isLoading = false;
-      });
-      print('Error detallado: $e'); // Para depuración
-    }
   }
-  
-  int _currentIndex = 0;
-  
-  // Método para obtener la mascota actual
-  PetModel? get mascotaActual {
-    if (_mascotas == null || _mascotas!.isEmpty || _currentIndex >= _mascotas!.length) {
-      return null;
-    }
-    return _mascotas![_currentIndex];
-  }
-  
-  // Método para dar like
-  void darLike() async {
-    // Verificar que hay una mascota actual
-    if (mascotaActual == null) return;
+
+  // Método para mostrar el modal de configuración de búsqueda
+  void _mostrarConfiguracionBusqueda() {
+    final configProvider = Provider.of<ConfiguracionBusquedaProvider>(context, listen: false);
     
-    final String userId = "usuarioActual.id"; // Esto debería venir del usuario logueado
-    final String petId = mascotaActual!.id ?? '';
-    
-    try {
-      // Implementar petición para crear el like usando el ApiService actualizado
-      final response = await _apiService.post(
-        path: '/likes/create-like',
-        data: {
-          'userId': userId,
-          'petId': petId,
-        },
-      );
-      
-      final resultado = response.data;
-      
-      if (resultado['isMatch'] == true) {
-        // Mostrar notificación de match
-        _showMatchNotification(context, mascotaActual!);
-      }
-      // Avanzamos al siguiente perfil
-      setState(() {
-        _currentIndex++;
-      });
-      _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
-    } catch (e) {
-      // Manejar error
-      _showSnackBar(context, 'Error al registrar el like: $e', Colors.red);
-    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            top: 20,
+            left: 20,
+            right: 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Opciones de búsqueda',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Selector del tipo de búsqueda
+                const Text('Tipo de búsqueda:', style: TextStyle(fontWeight: FontWeight.bold)),
+                DropdownButton<TipoBusqueda>(
+                  value: configProvider.tipoBusquedaSeleccionado,
+                  isExpanded: true,
+                  icon: const Icon(Icons.arrow_downward),
+                  onChanged: (TipoBusqueda? newValue) {
+                    if (newValue != null) {
+                      setModalState(() {
+                        configProvider.setTipoBusqueda(newValue);
+                      });
+                    }
+                  },
+                  items: TipoBusqueda.values.map<DropdownMenuItem<TipoBusqueda>>((TipoBusqueda value) {
+                    String label;
+                    switch (value) {
+                      case TipoBusqueda.todas:
+                        label = 'Todas las mascotas';
+                        break;
+                      case TipoBusqueda.porProximidad:
+                        label = 'Por proximidad';
+                        break;
+                      case TipoBusqueda.porEspecie:
+                        label = 'Por especie';
+                        break;
+                    }
+                    return DropdownMenuItem<TipoBusqueda>(
+                      value: value,
+                      child: Text(label),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+                
+                // Configuración específica según el tipo de búsqueda
+                // Solo mostramos las opciones de especie cuando se ha seleccionado específicamente "Por especie"
+                if (configProvider.tipoBusquedaSeleccionado == TipoBusqueda.porEspecie) ...[
+                  const Text('Especie:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: configProvider.getEspeciesDisponibles().map((especie) {
+                      // Corrección del color del chip seleccionado
+                      final bool isSelected = configProvider.especieSeleccionada == especie;
+                      return ChoiceChip(
+                        label: Text(especie),
+                        selected: isSelected,
+                        selectedColor: Colors.pink,  // Color sólido para el seleccionado
+                        backgroundColor: Colors.pink.withOpacity(0.1),
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.white : Colors.black,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        onSelected: (selected) {
+                          if (selected) {
+                            setModalState(() {
+                              configProvider.setEspecieSeleccionada(especie);
+                            });
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
+                
+                // Solo mostramos el radio de búsqueda cuando se ha seleccionado específicamente "Por proximidad"
+                if (configProvider.tipoBusquedaSeleccionado == TipoBusqueda.porProximidad) ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    'Radio de búsqueda (${configProvider.distanciaMaxima.round()} km):',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Slider(
+                    value: configProvider.distanciaMaxima,
+                    min: 1,
+                    max: 100,
+                    divisions: 99,
+                    label: configProvider.distanciaMaxima.round().toString(),
+                    activeColor: Colors.pink,
+                    inactiveColor: Colors.pink.withOpacity(0.2),
+                    onChanged: (double value) {
+                      setModalState(() {
+                        configProvider.setDistanciaMaxima(value);
+                      });
+                    },
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('1 km', style: TextStyle(color: Colors.grey)),
+                      Text('100 km', style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                ],
+                
+                const SizedBox(height: 20),
+                
+                // Botones de acción
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        
+                        // Aplicamos la configuración y guardamos
+                        await configProvider.aplicarCambiosBusqueda();
+                        
+                        // Recargamos mascotas con la nueva configuración
+                        _viewModel.cargarMascotas(configProvider);
+                        
+                        // Mostramos confirmación
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Configuración aplicada')),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pink,
+                      ),
+                      child: const Text('Aplicar', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
-  
+
   // Método para mostrar notificación de match
   void _showMatchNotification(BuildContext context, PetModel mascota) {
     showDialog(
@@ -172,95 +237,151 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
-  // Método para dar dislike
-  void darDislike() {
-    setState(() {
-      _currentIndex++;
-    });
+
+  void _showSnackBar(BuildContext context, String message, Color color) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: const Duration(milliseconds: 800),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.pets, color: Colors.pink),
-            SizedBox(width: 8),
-            Text('Wild Love', style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _cargarMascotas,
-            tooltip: 'Recargar mascotas',
-          ),
-        ],
-      ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : _error != null
-          ? Center(
-              child: Column(
+    // Observamos cambios en el ViewModel y en el ConfigProvider
+    final configProvider = Provider.of<ConfiguracionBusquedaProvider>(context);
+    
+    return ChangeNotifierProvider.value(
+      value: _viewModel,
+      child: Consumer<HomeViewModel>(
+        builder: (context, viewModel, _) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(_error!, style: const TextStyle(color: Colors.red)),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _cargarMascotas,
-                    child: const Text('Reintentar'),
-                  ),
+                  Icon(Icons.pets, color: Colors.pink),
+                  SizedBox(width: 8),
+                  Text('Wild Love', style: TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
-            )
-          : Column(
-              children: [
-                if (mascotaActual == null)
-                  const Expanded(
-                    child: Center(
-                      child: Text('No hay más mascotas disponibles por el momento'),
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: _buildSwipeableCard(context, mascotaActual!),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      BotonAccion(
-                        icon: Icons.close,
-                        color: Colors.red,
-                        onPressed: () {
-                          darDislike();
-                          _showSnackBar(context, 'Descartaste esta mascota', Colors.red);
-                        },
-                      ),
-                      BotonAccion(
-                        icon: Icons.favorite,
-                        color: Colors.pink,
-                        onPressed: () {
-                          darLike();
-                        },
-                      ),
-                    ],
-                  ),
+              centerTitle: true,
+              actions: [
+                // Botón para abrir la configuración de búsqueda
+                IconButton(
+                  icon: const Icon(Icons.filter_list),
+                  onPressed: _mostrarConfiguracionBusqueda,
+                  tooltip: 'Opciones de búsqueda',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => viewModel.cargarMascotas(configProvider),
+                  tooltip: 'Recargar mascotas',
                 ),
               ],
             ),
+            body: _buildBody(viewModel, configProvider),
+          );
+        },
+      ),
+    );
+  }
+  
+  Widget _buildBody(HomeViewModel viewModel, ConfiguracionBusquedaProvider configProvider) {
+    // Mostrar pantalla de carga
+    if (viewModel.status == LoadingStatus.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    // Mostrar pantalla de error
+    if (viewModel.status == LoadingStatus.error) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              viewModel.errorMessage ?? 'Error desconocido', 
+              style: const TextStyle(color: Colors.red)
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => viewModel.cargarMascotas(configProvider),
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // Mostrar contenido principal
+    return Column(
+      children: [
+        // Indicador del tipo de búsqueda actual
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),          
+          child: Row(
+            children: [
+              const Icon(Icons.search, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                viewModel.getTipoBusquedaTexto(configProvider),
+                style: const TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+        if (viewModel.mascotaActual == null)
+          const Expanded(
+            child: Center(
+              child: Text('No hay más mascotas disponibles por el momento'),
+            ),
+          )
+        else
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: _buildSwipeableCard(context, viewModel, viewModel.mascotaActual!),
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              BotonAccion(
+                icon: Icons.close,
+                color: Colors.red,
+                onPressed: () {
+                  viewModel.darDislike();
+                  _showSnackBar(context, 'Descartaste esta mascota', Colors.red);
+                },
+              ),
+              BotonAccion(
+                icon: Icons.favorite,
+                color: Colors.pink,
+                onPressed: () async {
+                  bool isMatch = await viewModel.darLike();
+                  if (isMatch) {
+                    _showMatchNotification(context, viewModel.mascotaActual!);
+                  }
+                  _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildSwipeableCard(BuildContext context, PetModel mascota) {
+  Widget _buildSwipeableCard(
+    BuildContext context, 
+    HomeViewModel viewModel, 
+    PetModel mascota
+  ) {
     final screenWidth = MediaQuery.of(context).size.width;
     final threshold = screenWidth * 0.4; // Umbral para decidir si es swipe
     
@@ -278,15 +399,19 @@ class _HomeScreenState extends State<HomeScreen> {
           _dragPercentage = _dragPercentage.clamp(-1.0, 1.0);
         });
       },
-      onHorizontalDragEnd: (details) {
+      onHorizontalDragEnd: (details) async {
         if (_dragPosition.abs() > threshold) {
           // Si supera el umbral, consideramos que es un swipe completo
           if (_dragPosition > 0) {
             // Swipe derecha (like)
-            darLike();
+            bool isMatch = await viewModel.darLike();
+            if (isMatch) {
+              _showMatchNotification(context, mascota);
+            }
+            _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
           } else {
             // Swipe izquierda (dislike)
-            darDislike();
+            viewModel.darDislike();
             _showSnackBar(context, 'Descartaste esta mascota', Colors.red);
           }
         }
@@ -381,17 +506,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
         ],
-      ),
-    );
-  }
-
-  void _showSnackBar(BuildContext context, String message, Color color) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        duration: const Duration(milliseconds: 800),
       ),
     );
   }

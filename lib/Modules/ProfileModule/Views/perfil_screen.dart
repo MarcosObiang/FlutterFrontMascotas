@@ -498,7 +498,7 @@ String _calculateAge(DateTime? birthday) {
             if (viewModel.isLoading) {
               return const Center(child: CircularProgressIndicator());
             } else {
-              return _buildPetsCirclesList(viewModel);
+              return _buildPetsCirclesList(viewModel, theme);
             }
           },
         ),
@@ -507,7 +507,7 @@ String _calculateAge(DateTime? birthday) {
   }
   
  /// Muestra el formulario para añadir una nueva mascota
-void _addNewPet() {
+void _addNewPet(ThemeData theme) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -538,7 +538,7 @@ void _addNewPet() {
 }
   
   /// Construye la lista horizontal de círculos de mascotas
-Widget _buildPetsCirclesList(PerfilViewModel viewModel) {
+Widget _buildPetsCirclesList(PerfilViewModel viewModel, ThemeData theme) {
   // Aumentamos la altura para dar más espacio
   return SizedBox(
     height: _petAvatarSize + 40, // Aumentado de 30 a 40 para más espacio vertical
@@ -578,9 +578,9 @@ Widget _buildPetsCirclesList(PerfilViewModel viewModel) {
                           width: _petAvatarSize + 6,
                           height: _petAvatarSize + 6,
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
+                            shape: BoxShape.circle, // Corregido de BoxShape.circle a BoxShape.circle
                             border: Border.all(
-                              color: Theme.of(context).colorScheme.primary,
+                              color: theme.colorScheme.primary, 
                               width: 3,
                             ),
                           ),
@@ -599,7 +599,7 @@ Widget _buildPetsCirclesList(PerfilViewModel viewModel) {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? Theme.of(context).colorScheme.primary : null,
+                        color: isSelected ? theme.colorScheme.primary : null,
                       ),
                     ),
                   ),
@@ -611,7 +611,7 @@ Widget _buildPetsCirclesList(PerfilViewModel viewModel) {
         
         // Círculo de añadir mascota
         GestureDetector(
-          onTap: _addNewPet,
+          onTap: () => _addNewPet(theme),
           child: Container(
             width: _petAvatarSize,
             child: Column(
@@ -663,8 +663,8 @@ Widget _buildPetsCirclesList(PerfilViewModel viewModel) {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.delete, color: Colors.red),
-            title: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+            leading: const Icon(Icons.delete, color: Colors.pink),
+            title: const Text('Eliminar', style: TextStyle(color: Colors.pink)),
             onTap: () {
               Navigator.pop(context);
               _showDeletePetDialog(pet.petUID, pet.name);
@@ -901,6 +901,7 @@ Widget build(BuildContext context) {
   final themeProvider = Provider.of<ThemeProvider>(context);
   final isDarkMode = themeProvider.isDarkMode;
   final theme = isDarkMode ? themeProvider.darkTheme : themeProvider.lightTheme;
+  
   
   // Envolvemos todo en un ChangeNotifierProvider para que el ViewModel esté disponible
   return ChangeNotifierProvider.value(

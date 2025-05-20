@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../AuthenticationModule/views/AuthScreen.dart';
 import 'package:mascotas_citas/Resources/providers/theme_provider.dart';
+import '../component/configuracion_busqueda_provider.dart';
 
 class AjustesScreen extends StatefulWidget {
   final String userId;
@@ -17,35 +18,38 @@ class AjustesScreen extends StatefulWidget {
 }
 
 class _AjustesScreenState extends State<AjustesScreen> {
-  bool _notificacionesActivas = true;
-  double _distanciaMaxima = 20.0;
   String _especieSeleccionada = 'Todas';
+  List<String> _opcionesEspecies = [];
+  double _distanciaMaxima = 20.0;
+  bool _notificacionesActivas = true;
+  TipoBusqueda _tipoBusquedaSeleccionado = TipoBusqueda.todas;
   
-  // Opciones de especies
-  final List<String> _opcionesEspecies = [
-    'Todas', 
-    'Perro', 
-    'Gato', 
-    'Ave', 
-    'Conejo', 
-    'Hamster', 
-    'Otro'
+  // Lista de opciones de tipo de búsqueda para mostrar en el dropdown
+  final List<String> _opcionesTipoBusqueda = [
+    'Todas las mascotas',
+    'Por proximidad',
+    'Por especie',
   ];
 
   @override
   void initState() {
     super.initState();
-    _cargarPreferencias();
+    _cargarPreferenciasDesdeProvider();
   }
   
-  // Método para cargar preferencias (simulado)
-  void _cargarPreferencias() {
-    // En una implementación real, aquí cargaríamos las preferencias
-    // desde SharedPreferences o directamente del backend
-    setState(() {
-      _distanciaMaxima = 20.0;
-      _especieSeleccionada = 'Todas';
-      _notificacionesActivas = true;
+  // Cargar preferencias desde el Provider
+  void _cargarPreferenciasDesdeProvider() {
+    // Esperamos al primer frame para asegurarnos que el Provider esté disponible
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final configProvider = Provider.of<ConfiguracionBusquedaProvider>(context, listen: false);
+      
+      setState(() {
+        _especieSeleccionada = configProvider.especieSeleccionada;
+        _distanciaMaxima = configProvider.distanciaMaxima;
+        _notificacionesActivas = configProvider.notificacionesActivas;
+        _tipoBusquedaSeleccionado = configProvider.tipoBusquedaSeleccionado;
+        _opcionesEspecies = configProvider.getEspeciesDisponibles();
+      });
     });
   }
 
@@ -53,6 +57,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
   Widget build(BuildContext context) {
     // Obtenemos la instancia del ThemeProvider
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final configProvider = Provider.of<ConfiguracionBusquedaProvider>(context);
     
     return Scaffold(
       appBar: AppBar(
@@ -60,9 +65,11 @@ class _AjustesScreenState extends State<AjustesScreen> {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: () {
-              // Guardar todos los ajustes
-              _guardarPreferencias();
+            onPressed: () async {
+              // Guardar todos los ajustes usando el provider
+              await configProvider.guardarPreferencias();
+              if (!mounted) return;
+              
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Configuración guardada')),
               );
@@ -85,6 +92,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
               onChanged: (bool value) {
                 setState(() {
                   _notificacionesActivas = value;
+                  configProvider.setNotificacionesActivas(value);
                 });
               },
             ),
@@ -104,107 +112,137 @@ class _AjustesScreenState extends State<AjustesScreen> {
             
             _construirSeccion('Criterios de Búsqueda'),
             
-            // Distancia máxima
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Distancia máxima: ${_distanciaMaxima.toInt()} km',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Colors.pink),
-                    Expanded(
-                      child: Slider(
-                        value: _distanciaMaxima,
-                        min: 1,
-                        max: 100,
-                        divisions: 99,
-                        activeColor: Colors.pink,
-                        inactiveColor: Colors.pink.withOpacity(0.2),
-                        label: '${_distanciaMaxima.toInt()} km',
-                        onChanged: (double value) {
-                          setState(() {
-                            _distanciaMaxima = value;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('1 km', style: TextStyle(color: Colors.grey)),
-                    Text('100 km', style: TextStyle(color: Colors.grey)),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            
-            // Selector de especie
+            // Tipo de búsqueda
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Especie',
+                  'Tipo de búsqueda',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: _opcionesEspecies.map((especie) {
-                    return ChoiceChip(
-                      label: Text(especie),
-                      selected: _especieSeleccionada == especie,
-                      selectedColor: Colors.pink.withOpacity(0.6),
-                      backgroundColor: Colors.pink.withOpacity(0.1),
-                      labelStyle: TextStyle(
-                        color: _especieSeleccionada == especie ? Colors.white : null,
-                        fontWeight: _especieSeleccionada == especie ? FontWeight.bold : FontWeight.normal,
-                      ),
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() {
-                            _especieSeleccionada = especie;
-                          });
-                        }
-                      },
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: configProvider.nombreTipoBusqueda,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.pink.withOpacity(0.2)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    filled: true,
+                    fillColor: Colors.pink.withOpacity(0.05),
+                  ),
+                  items: _opcionesTipoBusqueda.map((String tipo) {
+                    return DropdownMenuItem<String>(
+                      value: tipo,
+                      child: Text(tipo),
                     );
                   }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        configProvider.setTipoBusquedaPorNombre(newValue);
+                      });
+                    }
+                  },
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
+            
+            // Distancia máxima (visible solo si el tipo de búsqueda es por proximidad)
+            if (_deberiaOcultarDistancia(configProvider.tipoBusquedaSeleccionado) == false)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Distancia máxima: ${_distanciaMaxima.toInt()} km',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.pink),
+                      Expanded(
+                        child: Slider(
+                          value: _distanciaMaxima,
+                          min: 1,
+                          max: 100,
+                          divisions: 99,
+                          activeColor: Colors.pink,
+                          inactiveColor: Colors.pink.withOpacity(0.2),
+                          label: '${_distanciaMaxima.toInt()} km',
+                          onChanged: (double value) {
+                            setState(() {
+                              _distanciaMaxima = value;
+                              configProvider.setDistanciaMaxima(value);
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('1 km', style: TextStyle(color: Colors.grey)),
+                      Text('100 km', style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            
+            // Selector de especie (visible solo si el tipo de búsqueda es por especie)
+            if (_deberiaOcultarEspecie(configProvider.tipoBusquedaSeleccionado) == false)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Especie',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: _opcionesEspecies.map((especie) {
+                      return ChoiceChip(
+                        label: Text(especie),
+                        selected: _especieSeleccionada == especie,
+                        selectedColor: Colors.pink.withOpacity(0.6),
+                        backgroundColor: Colors.pink.withOpacity(0.1),
+                        labelStyle: TextStyle(
+                          color: _especieSeleccionada == especie ? Colors.white : null,
+                          fontWeight: _especieSeleccionada == especie ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _especieSeleccionada = especie;
+                              configProvider.setEspecieSeleccionada(especie);
+                            });
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+
             const Divider(),
             
-            _construirSeccion('Cuenta'),
-            ListTile(
-              title: const Text('Cambiar contraseña'),
-              leading: const Icon(Icons.key, color: Colors.pink),
-              onTap: () {
-                // Implementar lógica para cambiar contraseña
-                // Aquí sí podrías llamar a un servicio de autenticación si lo necesitas
-              },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: BorderSide(color: Colors.pink.withOpacity(0.2)),
-              ),
-              tileColor: Theme.of(context).cardColor, 
-            ),
-            const SizedBox(height: 16),
-            
+            _construirSeccion('Cuenta'),                       
             ListTile(
               title: const Text('Cerrar Sesión'),
               leading: const Icon(Icons.logout, color: Colors.pink),
@@ -252,7 +290,14 @@ class _AjustesScreenState extends State<AjustesScreen> {
             const SizedBox(height: 30),
             Center(
               child: ElevatedButton(
-                onPressed: _guardarPreferencias,
+                onPressed: () async {
+                  await configProvider.aplicarCambiosBusqueda();
+                  if (!mounted) return;
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Configuración guardada y aplicada')),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.pink,
                   padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
@@ -270,13 +315,16 @@ class _AjustesScreenState extends State<AjustesScreen> {
     );
   }
 
-  // Método para guardar las preferencias (simulado)
-  void _guardarPreferencias() {
-    // En una implementación real, aquí guardaríamos las preferencias
-    // en SharedPreferences o las enviaríamos al backend
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Configuración guardada')),
-    );
+  // Método para determinar si se debe ocultar la opción de distancia
+  bool _deberiaOcultarDistancia(TipoBusqueda tipoBusqueda) {
+    // Solo mostrar si es específicamente por proximidad
+    return tipoBusqueda != TipoBusqueda.porProximidad;
+  }
+  
+  // Método para determinar si se debe ocultar la opción de especie
+  bool _deberiaOcultarEspecie(TipoBusqueda tipoBusqueda) {
+    // Solo mostrar si es específicamente por especie
+    return tipoBusqueda != TipoBusqueda.porEspecie;
   }
 
   Widget _construirSeccion(String titulo) {
