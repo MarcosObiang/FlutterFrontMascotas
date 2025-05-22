@@ -2,6 +2,11 @@ import 'package:get_it/get_it.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/repo/AuthenticationRepo.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGoogleUseCase.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/SelfLogInWithLoginUseCase.dart';
+import 'package:mascotas_citas/Modules/ChatModule/chat_starter.dart';
+import 'package:mascotas_citas/Modules/ChatModule/repo/ChatRepository.dart';
+import 'package:mascotas_citas/Modules/ChatModule/state/ChatState.dart';
+import 'package:mascotas_citas/Modules/ChatModule/usecases/GetChatsUseCase.dart';
+import 'package:mascotas_citas/Modules/ChatModule/usecases/ListenToChatUpdates.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/repo/CreateUserRepo.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/state/CreateUserState.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/usecases/CreateUserUseCase.dart';
@@ -49,6 +54,7 @@ void setUpStates() {
   getIt.registerSingleton<CreateUserState>(CreateUserState());
   getIt.registerSingleton<Settingsstate>(Settingsstate());
   getIt.registerSingleton<LikeModuleState>(LikeModuleState(onErrorData: null));
+  getIt.registerSingleton<ChatState>(ChatState());
 }
 
 void setUpDependencies() {
@@ -57,10 +63,17 @@ void setUpDependencies() {
   getIt.registerSingleton<LikeRepositoryImpl>(LikeRepositoryImpl(
       dioApiService: getIt<DioApiService>(),
       webSocketService: getIt<WebSocketService>()));
+  getIt.registerSingleton<ChatRepository>(ChatRepositoryImpl(
+      dioApiService: getIt<DioApiService>(),
+      webSocketService: getIt<WebSocketService>()));
 
   getIt.registerSingleton<Listentolikesusecase>(Listentolikesusecase(
       likeRepository: getIt<LikeRepositoryImpl>(),
       likeModuleState: getIt<LikeModuleState>()));
+  getIt.registerSingleton<GetChatsUseCase>(GetChatsUseCase(
+      chatRepository: getIt<ChatRepository>(), chatState: getIt<ChatState>()));
+  getIt.registerSingleton<ListenToChatUpdates>(ListenToChatUpdates(
+      chatRepository: getIt<ChatRepository>(), chatState: getIt<ChatState>()));
 
   getIt.registerSingleton<SettingsRepo>(SettingsRepoImpl(
       authDataService: getIt<AuthDataService>(),
@@ -89,7 +102,8 @@ void setUpDependencies() {
       CheckIfUsserCanLogInUseCase(
           authDataService: getIt<AuthDataService>(),
           authRepo: getIt<AuthenticationRepo>()));
-
+getIt.registerSingleton<ChatModuleStarter>(ChatModuleStarter(
+      useCases: [getIt<GetChatsUseCase>(), getIt<ListenToChatUpdates>()]));
   getIt.registerSingleton<WebSocketStarter>(
       WebSocketStarter(webSocketInitUseCase: getIt<WebSocketInitUseCase>()));
   getIt.registerSingleton<AcceptLikeUseCase>(AcceptLikeUseCase(
@@ -105,7 +119,7 @@ void setUpDependencies() {
       likeModuleState: getIt<LikeModuleState>()));
   getIt.registerSingleton<StarterManager>(StarterManager(
       selfLoginWithGoogleUseCase: getIt<CheckIfUsserCanLogInUseCase>(),
-      starters: [getIt<WebSocketStarter>(), getIt<LikeModuleStarter>()]));
+      starters: [getIt<WebSocketStarter>(), getIt<LikeModuleStarter>(),getIt<ChatModuleStarter>()]));
 }
 
 Future<void> initAsyncDependencies() async {

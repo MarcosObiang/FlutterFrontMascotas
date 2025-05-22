@@ -1,6 +1,7 @@
+import 'package:equatable/equatable.dart';
 import 'package:mascotas_citas/utils/GetUriFromString.dart';
 
-class ChatModel {
+class ChatModel extends Equatable {
   String chatId;
   String chatCreationTimestamp; // Consider using DateTime and parsing
   String user1Id;
@@ -64,4 +65,10 @@ class ChatModel {
       'user2NotificationToken': user2NotificationToken,
     };
   }
+
+  @override
+  // TODO: implement props
+  List<Object?> get props => [
+        chatId,
+      ];
 }

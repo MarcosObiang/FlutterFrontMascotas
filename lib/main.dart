@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/usecases/LogInWithGoogleUseCase.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/views/AuthScreen.dart';
+import 'package:mascotas_citas/Modules/ChatModule/state/ChatState.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/state/CreateUserState.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/views/CreateUserScreen.dart';
 import 'package:mascotas_citas/Modules/LikesModule/state/LikeModuleState.dart';
@@ -35,6 +36,7 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => MascotaProvider()),
         ChangeNotifierProvider(create: (context) => CreateUserState()),
         ChangeNotifierProvider(create: (context) => SocialProvider()),
+        ChangeNotifierProvider(create: (context) => ChatState()),
         ChangeNotifierProvider(create:(context) => LikeModuleState(onErrorData: null),),
         ChangeNotifierProvider(
             create: (context) => ThemeProvider()), // Agregar ThemeProvider

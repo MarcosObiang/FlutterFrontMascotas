@@ -23,10 +23,16 @@ class _LikesViewScreenState extends State<LikesViewScreen> {
   int lastListLength = 0;
 
   void _addItem() {
+    if (_listKey.currentState == null) {
+      return;
+    }
     _listKey.currentState!.insertItem(0, duration: Duration(seconds: 1));
   }
 
   void _removeItem() {
+    if (_listKey.currentState == null) {
+      return;
+    }
     _listKey.currentState!.removeItem(0, (context, animation) {
       return Card();
     });
