@@ -87,9 +87,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       case TipoBusqueda.todas:
                         label = 'Todas las mascotas';
                         break;
-                      case TipoBusqueda.porProximidad:
-                        label = 'Por proximidad';
-                        break;
+                      // case TipoBusqueda.porProximidad:
+                      //   label = 'Por proximidad';
+                      //   break;
                       case TipoBusqueda.porEspecie:
                         label = 'Por especie';
                         break;
@@ -134,34 +134,34 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
                 
                 // Solo mostramos el radio de búsqueda cuando se ha seleccionado específicamente "Por proximidad"
-                if (configProvider.tipoBusquedaSeleccionado == TipoBusqueda.porProximidad) ...[
-                  const SizedBox(height: 20),
-                  Text(
-                    'Radio de búsqueda (${configProvider.distanciaMaxima.round()} km):',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Slider(
-                    value: configProvider.distanciaMaxima,
-                    min: 1,
-                    max: 100,
-                    divisions: 99,
-                    label: configProvider.distanciaMaxima.round().toString(),
-                    activeColor: Colors.pink,
-                    inactiveColor: Colors.pink.withOpacity(0.2),
-                    onChanged: (double value) {
-                      setModalState(() {
-                        configProvider.setDistanciaMaxima(value);
-                      });
-                    },
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('1 km', style: TextStyle(color: Colors.grey)),
-                      Text('100 km', style: TextStyle(color: Colors.grey)),
-                    ],
-                  ),
-                ],
+                // if (configProvider.tipoBusquedaSeleccionado == TipoBusqueda.porProximidad) ...[
+                //   const SizedBox(height: 20),
+                //   Text(
+                //     'Radio de búsqueda (${configProvider.distanciaMaxima.round()} km):',
+                //     style: TextStyle(fontWeight: FontWeight.bold),
+                //   ),
+                //   Slider(
+                //     value: configProvider.distanciaMaxima,
+                //     min: 1,
+                //     max: 100,
+                //     divisions: 99,
+                //     label: configProvider.distanciaMaxima.round().toString(),
+                //     activeColor: Colors.pink,
+                //     inactiveColor: Colors.pink.withOpacity(0.2),
+                //     onChanged: (double value) {
+                //       setModalState(() {
+                //         configProvider.setDistanciaMaxima(value);
+                //       });
+                //     },
+                //   ),
+                //   Row(
+                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //     children: [
+                //       Text('1 km', style: TextStyle(color: Colors.grey)),
+                //       Text('100 km', style: TextStyle(color: Colors.grey)),
+                //     ],
+                //   ),
+                // ],
                 
                 const SizedBox(height: 20),
                 

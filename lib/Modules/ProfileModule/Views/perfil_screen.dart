@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/ViewModels/perfil_view_model.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/Views/ajustes_screen.dart';
@@ -336,14 +338,14 @@ String _calculateAge(DateTime? birthday) {
                         width: _profileImageSize,
                         height: _profileImageSize,
                         child: SelectorFotos(
-                          imagenes: [viewModel.userImage],
-                          maxPhotos: 1,
-                          onImagesUpdated: _handleUserPhotoUpdate,
-                          entidadId: viewModel.userId,
-                          apiService: viewModel.apiService,
-                          tipo: 'usuario',
-                          userUID: viewModel.userId,
-                        ),
+  imagenes: [viewModel.userImage],
+  maxPhotos: 1,
+  onImagesUpdated: _handleUserPhotoUpdateFromSelector, // Usar el adaptador
+  entidadId: viewModel.userId,
+  apiService: viewModel.apiService,
+  tipo: 'usuario',
+  userUID: viewModel.userId,
+),
                       ),
                     ),
                     SizedBox(width: _itemSpacing),
@@ -466,17 +468,49 @@ String _calculateAge(DateTime? birthday) {
     );
   }
   
-  /// Maneja la actualización de foto de perfil del usuario
-  Future<void> _handleUserPhotoUpdate(List<String> updatedImages) async {
-    if (updatedImages.isEmpty) return;
+/// Versión simplificada del adaptador para imágenes de mascota
+void _handlePetImagesUpdate(List<String> updatedImages) async {
+  try {
+    // Actualizar las imágenes en el viewModel
+    setState(() {
+      _viewModel.petImages = updatedImages;
+    });
     
-    try {
-      await _viewModel.updateUserPhoto();
-      _showSuccessMessage('Imagen actualizada correctamente');
-    } catch (e) {
-      _showErrorMessage('Error al actualizar la imagen: $e');
-    }
+    _showSuccessMessage('Imágenes actualizadas correctamente');
+  } catch (e) {
+    _showErrorMessage('Error al actualizar imágenes: $e');
   }
+}
+
+void _handleUserPhotoUpdateFromSelector(List<String> updatedImages) async {
+  if (updatedImages.isEmpty) return;
+  
+  try {
+    // El SelectorFotos maneja internamente la subida de imágenes
+    // Solo necesitamos actualizar la UI local
+    setState(() {
+      // Actualizar la imagen del usuario en el viewModel
+      _viewModel.userImage = updatedImages.first;
+    });
+    
+    // Refrescar los datos para obtener la imagen actualizada desde el servidor
+    await _viewModel.loadUserData();
+    
+    _showSuccessMessage('Imagen actualizada correctamente');
+  } catch (e) {
+    _showErrorMessage('Error al actualizar la imagen: $e');
+  }
+}
+
+  /// Maneja la actualización de foto de perfil del usuario
+Future<void> _handleUserPhotoUpdate(File imageFile) async {
+  try {
+    await _viewModel.selectAndUpdateProfileImage();
+    _showSuccessMessage('Imagen actualizada correctamente');
+  } catch (e) {
+    _showErrorMessage('Error al actualizar la imagen: $e');
+  }
+}
 
   /// Construye la sección de lista de mascotas con círculos horizontales
   Widget _buildPetsListSection(ThemeData theme) {
@@ -536,6 +570,9 @@ void _addNewPet(ThemeData theme) {
     ),
   );
 }
+  
+
+
   
   /// Construye la lista horizontal de círculos de mascotas
 Widget _buildPetsCirclesList(PerfilViewModel viewModel, ThemeData theme) {
@@ -876,24 +913,31 @@ Widget _buildPetsCirclesList(PerfilViewModel viewModel, ThemeData theme) {
 }
   
   /// Maneja la actualización de imágenes de mascota
-  Future<void> _handlePetImagesUpdate(List<String> updatedImages) async {
-    try {
-      await _viewModel.updatePetImages(updatedImages);
-      _showSuccessMessage('Imágenes actualizadas. No olvides guardar los cambios.');
-    } catch (e) {
-      _showErrorMessage('Error al actualizar imágenes: $e');
-    }
-  }
+// Future<void> _handlePetImagesUpdate(List<File> updatedImages) async {
+//   try {
+//     await _viewModel.updateCurrentPetImages(updatedImages);
+//     _showSuccessMessage('Imágenes actualizadas correctamente');
+//   } catch (e) {
+//     _showErrorMessage('Error al actualizar imágenes: $e');
+//   }
+// }
   
   /// Guarda todos los cambios
-  Future<void> _saveAllChanges() async {
-    try {
-      await _viewModel.saveAllData();
-      _showSuccessMessage('Cambios guardados correctamente');
-    } catch (error) {
-      _showErrorMessage('Error al guardar datos: $error');
+Future<void> _saveAllChanges() async {
+  try {
+    // Guardar biografía del usuario si ha cambiado
+    await _viewModel.updateUserBio(_viewModel.userBioController.text);
+    
+    // Guardar biografía de la mascota actual si ha cambiado
+    if (_viewModel.hasPets && _viewModel.currentPet != null) {
+      await _viewModel.updateCurrentPetBio(_viewModel.bioController.text);
     }
+    
+    _showSuccessMessage('Cambios guardados correctamente');
+  } catch (error) {
+    _showErrorMessage('Error al guardar datos: $error');
   }
+}
   
   @override
 Widget build(BuildContext context) {

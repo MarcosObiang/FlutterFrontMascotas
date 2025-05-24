@@ -73,9 +73,9 @@ class HomeViewModel extends ChangeNotifier {
         case TipoBusqueda.todas:
           await _cargarTodasLasMascotas();
           break;
-        case TipoBusqueda.porProximidad:
-          await _cargarMascotasPorProximidad(configProvider.distanciaMaxima);
-          break;
+        // case TipoBusqueda.porProximidad:
+        //   await _cargarMascotasPorProximidad(configProvider.distanciaMaxima);
+        //   break;
         case TipoBusqueda.porEspecie:
           await _cargarMascotasPorEspecie(configProvider.especieSeleccionadaAPI);
           break;
@@ -306,8 +306,8 @@ class HomeViewModel extends ChangeNotifier {
     switch (provider.tipoBusquedaSeleccionado) {
       case TipoBusqueda.todas:
         return 'Mostrando todas las mascotas';
-      case TipoBusqueda.porProximidad:
-        return 'Mascotas cercanas (${provider.distanciaMaxima.round()} km)';
+      // case TipoBusqueda.porProximidad:
+      //   return 'Mascotas cercanas (${provider.distanciaMaxima.round()} km)';
       case TipoBusqueda.porEspecie:
         return 'Mascotas de especie: ${provider.especieSeleccionada}';
     }

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:mascotas_citas/models/PetModel.dart';
 import 'package:mascotas_citas/services/ApiService.dart';
@@ -32,6 +33,8 @@ class PerfilViewModel extends ChangeNotifier {
   String? _userBirthDateStr;
   // NUEVO: Fecha de nacimiento del usuario como objeto DateTime
   DateTime? _userBirthDate;
+  
+  bool get hasPets => pets.isNotEmpty;
   
   // Lista de mascotas
   List<PetModel> pets = [];
@@ -387,6 +390,8 @@ class PerfilViewModel extends ChangeNotifier {
     print("Datos de mascota cargados. Imágenes: $petImages");
   }
   
+
+  
   /// Guarda los datos de la mascota actual
   void saveCurrentPetData() {
     if (pets.isEmpty) return;
@@ -732,263 +737,267 @@ Future<void> updateCurrentPetBio(String newBio) async {
   }
 }
 
-
-  /// Actualiza la imagen del usuario
-Future<void> updateUserPhoto() async {
+/// Método para actualizar la imagen de perfil del usuario
+Future<void> updateUserImage(File imageFile) async {
   try {
-    isLoading = true;
-    notifyListeners();
-    
-    // Seleccionar imagen de la galería
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-    
-    if (image != null) {
-      // Crear un objeto File desde el XFile
-      File imageFile = File(image.path);
-      
-      // Usar el método especializado con los parámetros correctos
-      final response = await _apiService.updateUserImage(
-        userUID: userId,
-        userImage: imageFile,
-      );
-      
-      if (response.statusCode == 200 && response.data != null) {
-        // Según el MediaService, la respuesta es directamente el nombre del archivo
-        // No es un JSON con 'profileImageUrl' o 'fileName'
-        String fileName = '';
-        
-        // Verificar el tipo de respuesta y adaptarse adecuadamente
-        if (response.data is String) {
-          // Si la respuesta es directamente el nombre del archivo como string
-          fileName = response.data;
-        } else if (response.data is Map) {
-          // Si es un mapa (JSON), intentar extraer el nombre del archivo
-          fileName = response.data['fileName'] ?? response.data.toString();
-        }
-        
-        // Actualizar la URL de la imagen en el ViewModel
-        if (fileName.isNotEmpty) {
-          userImage = buildMediaUrl(fileName);
-          
-          // También sería bueno actualizar esto en el modelo de usuario o donde corresponda
-          // para que persista entre sesiones
-          
-          print('Imagen actualizada correctamente. Nueva URL: $userImage');
-        } else {
-          print('Nombre de archivo vacío en la respuesta');
-          throw Exception('Respuesta inválida del servidor');
-        }
-        
-        notifyListeners();
-      } else {
-        throw Exception('Error al actualizar imagen: ${response.statusCode}');
-      }
-    }
-  } catch (e) {
-    print('Error al actualizar foto de perfil: $e');
-    rethrow;
-  } finally {
-    isLoading = false;
-    notifyListeners();
-  }
-}
-  
-  /// Actualiza las imágenes de una mascota
-  Future<void> updatePetImages(List<String> updatedImages) async {
-    if (pets.isEmpty) return;
-    
-    print("Imágenes actualizadas recibidas del selector: $updatedImages");
-    
-    // Primero asegurarse de que la lista local se actualice
-    petImages = List.from(updatedImages); // Crear una nueva lista para evitar referencia compartida
-    notifyListeners();
-    
-    try {
-      // Obtener la mascota actual
-      PetModel currentPet = pets[selectedPetIndex];
-      
-      // Preparar los archivos para enviar
-      List<File> imageFiles = [];
-      
-      // Convertir las URLs a archivos si son locales (empiezan con 'file://')
-      for (String imagePath in updatedImages) {
-        if (imagePath.startsWith('file://')) {
-          String cleanPath = imagePath.replaceFirst('file://', '');
-          File file = File(cleanPath);
-          if (await file.exists()) {
-            imageFiles.add(file);
-          } else {
-            print("Archivo no encontrado: $cleanPath");
-          }
-        }
-      }
-      
-      // Si no hay archivos nuevos para actualizar, no hacemos nada
-      if (imageFiles.isEmpty) {
-        print("No hay nuevas imágenes para subir");
-        return;
-      }
-      
-      // Preparar el FormData para el orquestador
-      FormData formData = FormData();
-      
-      // Agregar las imágenes al FormData
-      for (int i = 0; i < imageFiles.length; i++) {
-        formData.files.add(
-          MapEntry(
-            'petImage${i + 1}',
-            await MultipartFile.fromFile(
-              imageFiles[i].path,
-              filename: 'pet_image_${i + 1}.jpg',
-            ),
-          ),
-        );
-      }
-      
-      // Establecer los headers necesarios
-      _apiService.dioClient.options.headers['userUID'] = userId;
-      _apiService.dioClient.options.headers['petUID'] = currentPet.petUID;
-          
-      // Realizar la solicitud al endpoint del orquestador
-      final response = await _apiService.post(
-        path: 'http://localhost:8093/api/update-pet-images',
-        data: formData,
-      );
-      
-      if (response.statusCode == 200) {
-        // Actualizar el modelo de la mascota con las nuevas URLs si se devuelven
-        if (response.data != null) {
-          PetModel updatedPet = PetModel(
-            id: currentPet.id,
-            petUID: currentPet.petUID,
-            ownerUID: currentPet.ownerUID,
-            name: currentPet.name,
-            petImage1: buildPetImageUrl(response.data['petImage1']) ?? currentPet.petImage1,
-            petImage2: buildPetImageUrl(response.data['petImage2']) ?? currentPet.petImage2,
-            petImage3: buildPetImageUrl(response.data['petImage3']) ?? currentPet.petImage3,
-            sex: currentPet.sex,
-            petBio: currentPet.petBio,
-            birthDate: currentPet.birthDate,
-            species: currentPet.species,
-          );
-          
-          // Actualizar la mascota en la lista
-          pets[selectedPetIndex] = updatedPet;
-          notifyListeners();
-        }
-      } else {
-        throw Exception('Error al actualizar imágenes: ${response.statusCode}');
-      }
-      
-    } catch (e) {
-      print('Error al actualizar imágenes de mascota: $e');
-      rethrow; // Propagar error para manejarlo en la UI
-    }
-  }
-  
-  /// Guarda los datos del usuario y la mascota actual
-  Future<void> saveAllData() async {
-    if (isSaving) return; // Evitar múltiples guardados simultáneos
-    
+    // Indicar que estamos guardando
     isSaving = true;
     notifyListeners();
     
-    try {
-      // Guardar la biografía de la mascota actual antes de enviar
-      if (pets.isNotEmpty) {
-        saveCurrentPetData();
-      }
-      
-      // --- ACTUALIZAR SOLO LA BIOGRAFÍA DEL USUARIO ---
-      Map<String, dynamic> userData = {
-        'userUID': userId,
-        'userBio': userBioController.text,
-      };
-      
-      // Realizar la solicitud de actualización de la biografía del usuario
-      final userResponse = await _apiService.post(
-        path: 'http://localhost:8082/users/update',
-        data: userData,
-      );
-      
-      // Verificar si la actualización del usuario fue exitosa
-      if (userResponse.statusCode != 200) {
-        throw Exception('Error al actualizar la biografía del usuario: ${userResponse.statusCode}');
-      }
-      
-      // --- ACTUALIZAR SOLO LA BIOGRAFÍA DE LA MASCOTA (si existe) ---
-      if (pets.isNotEmpty) {
-        PetModel currentPet = pets[selectedPetIndex];
-        
-        // Crear el objeto de datos de la mascota (solo biografía)
-        Map<String, dynamic> petData = {
-          'petUID': currentPet.petUID,
-          'petBio': currentPet.petBio,
-        };
-        
-        // Realizar la solicitud de actualización de la biografía de la mascota
-        final petResponse = await _apiService.post(
-          path: 'http://localhost:8083/pets/update',
-          data: petData,
-        );
-        
-        // Verificar si la actualización de la mascota fue exitosa
-        if (petResponse.statusCode != 200) {
-          throw Exception('Error al actualizar la biografía de la mascota: ${petResponse.statusCode}');
-        }
-      }
-      
-    } catch (e) {
-      print('Error al guardar datos: $e');
-      rethrow; // Propagar error para manejarlo en la UI
-    } finally {
-      isSaving = false;
-      notifyListeners();
+    // Verificar que tenemos un ID válido
+    if (userId.isEmpty) {
+      throw Exception('ID de usuario no válido');
     }
-  }
-  
-  /// Actualiza la biografía de la mascota actual
-  void updatePetBio(String text) {
-    if (pets.isEmpty) return;
     
-    PetModel currentPet = pets[selectedPetIndex];
-    PetModel updatedPet = PetModel(
-      id: currentPet.id,
-      petUID: currentPet.petUID,
-      ownerUID: currentPet.ownerUID,
-      name: currentPet.name,
-      petImage1: currentPet.petImage1,
-      petImage2: currentPet.petImage2,
-      petImage3: currentPet.petImage3,
-      sex: currentPet.sex,
-      petBio: text,
-      birthDate: currentPet.birthDate,
-      species: currentPet.species,
+    // Verificar que se ha proporcionado una imagen
+    if (!imageFile.existsSync()) {
+      throw Exception('Archivo de imagen no válido');
+    }
+    
+    // Crear FormData para manejar el archivo
+    FormData formData = FormData();
+    
+    // Agregar la imagen
+    formData.files.add(MapEntry(
+      'userImage',
+      await MultipartFile.fromFile(
+        imageFile.path,
+        filename: 'profile_image.${imageFile.path.split('.').last}',
+      ),
+    ));
+    
+    // Establecer el encabezado userUID para autenticación
+    _apiService.dioClient.options.headers['userUID'] = userId;
+    
+    // URL exacta del endpoint como se muestra en el backend
+    final String url = 'http://localhost:8093/api/users/update-image';
+    
+    // Realizar la solicitud PUT usando el método put del ApiService
+    final response = await _apiService.put(
+      path: url,
+      data: formData,
     );
     
-    pets[selectedPetIndex] = updatedPet;
+    if (response.statusCode == 200) {
+      print('Imagen de perfil actualizada correctamente');
+      
+      // Recargar los datos del usuario para obtener la nueva URL de imagen
+      await loadUserData();
+      
+      print('Respuesta: ${response.data}');
+    } else {
+      throw Exception('Error al actualizar la imagen de perfil: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error al actualizar la imagen de perfil: $e');
+    throw Exception('No se pudo actualizar la imagen de perfil: $e');
+  } finally {
+    isSaving = false;
     notifyListeners();
   }
+}
+
+/// Método para seleccionar imagen desde galería y actualizarla
+Future<void> selectAndUpdateProfileImage() async {
+  try {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80, // Comprimir la imagen
+      maxWidth: 800,    // Tamaño máximo
+      maxHeight: 800,
+    );
+    
+    if (image != null) {
+      File imageFile = File(image.path);
+      await updateUserImage(imageFile);
+    }
+  } catch (e) {
+    print('Error al seleccionar y actualizar imagen: $e');
+    throw Exception('No se pudo seleccionar la imagen: $e');
+  }
+}
+
+Future<void> updateUserBirthDate(DateTime newBirthDate) async {
+  try {
+    // Indicar que estamos guardando
+    isSaving = true;
+    notifyListeners();
+    
+    // Verificar que tenemos un ID válido
+    if (userId.isEmpty) {
+      throw Exception('ID de usuario no válido');
+    }
+    
+    // Formatear la fecha como string ISO
+    String formattedDate = "${newBirthDate.year}-${newBirthDate.month.toString().padLeft(2, '0')}-${newBirthDate.day.toString().padLeft(2, '0')}";
+    
+    // Actualizar los datos locales
+    _userBirthDate = newBirthDate;
+    _userBirthDateStr = formattedDate;
+    
+    // Calcular y actualizar la edad
+    final age = DateTime.now().difference(newBirthDate).inDays ~/ 365;
+    userAgeController.text = age.toString();
+    
+    // URL del endpoint para actualizar fecha de nacimiento
+    final String url = 'http://localhost:8082/users/update-birth-date';
+    
+    // Realizar la solicitud PUT
+    final response = await _apiService.put(
+      path: url,
+      data: {
+        'userUID': userId,
+        'birthDate': formattedDate,
+      },
+    );
+    
+    if (response.statusCode == 200) {
+      print('Fecha de nacimiento del usuario actualizada correctamente');
+    } else {
+      throw Exception('Error al actualizar fecha de nacimiento: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error al actualizar fecha de nacimiento del usuario: $e');
+    throw Exception('No se pudo actualizar la fecha de nacimiento: $e');
+  } finally {
+    isSaving = false;
+    notifyListeners();
+  }
+}
+
+/// Método para seleccionar una imagen desde la galería
+Future<File?> pickImageFromGallery() async {
+  try {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1800,
+      maxHeight: 1800,
+      imageQuality: 85,
+    );
+    
+    if (pickedFile != null) {
+      return File(pickedFile.path);
+    }
+    return null;
+  } catch (e) {
+    print('Error al seleccionar imagen de galería: $e');
+    return null;
+  }
+}
+
+/// Método para tomar una foto con la cámara
+Future<File?> takePhotoWithCamera() async {
+  try {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1800,
+      maxHeight: 1800,
+      imageQuality: 85,
+    );
+    
+    if (pickedFile != null) {
+      return File(pickedFile.path);
+    }
+    return null;
+  } catch (e) {
+    print('Error al tomar foto con cámara: $e');
+    return null;
+  }
+}
+
+/// Método para seleccionar múltiples imágenes desde la galería
+Future<List<File>> pickMultipleImagesFromGallery({int maxImages = 3}) async {
+  try {
+    final List<XFile> pickedFiles = await _picker.pickMultiImage(
+      maxWidth: 1800,
+      maxHeight: 1800,
+      imageQuality: 85,
+    );
+    
+    List<File> selectedFiles = [];
+    
+    // Limitar el número de imágenes seleccionadas
+    for (int i = 0; i < pickedFiles.length && i < maxImages; i++) {
+      selectedFiles.add(File(pickedFiles[i].path));
+    }
+    
+    return selectedFiles;
+  } catch (e) {
+    print('Error al seleccionar múltiples imágenes: $e');
+    return [];
+  }
+}
+
+/// Método para refrescar todos los datos
+Future<void> refreshAllData() async {
+  try {
+    await loadAllData();
+  } catch (e) {
+    print('Error al refrescar datos: $e');
+    rethrow;
+  }
+}
+
+/// Método para limpiar recursos cuando el ViewModel se destruye
+@override
+void dispose() {
+  // Limpiar controladores de texto
+  userNameController.dispose();
+  userAgeController.dispose();
+  userSexController.dispose();
+  userLocationController.dispose();
+  userBioController.dispose();
+  nameController.dispose();
+  ageController.dispose();
+  speciesController.dispose();
+  sexController.dispose();
+  bioController.dispose();
   
-  /// Limpia los recursos al finalizar
-  @override
-  void dispose() {
-    userNameController.dispose();
-    userAgeController.dispose();
-    userSexController.dispose();
-    userLocationController.dispose();
-    userBioController.dispose();
-    nameController.dispose();
-    ageController.dispose();
-    speciesController.dispose();
-    sexController.dispose();
-    bioController.dispose();
-    super.dispose();
+  super.dispose();
+}
+
+/// Método para validar si los datos de la mascota son válidos antes de guardar
+bool validatePetData() {
+  return nameController.text.isNotEmpty &&
+         speciesController.text.isNotEmpty &&
+         sexController.text.isNotEmpty;
+}
+
+/// Método para validar si los datos del usuario son válidos
+bool validateUserData() {
+  return userNameController.text.isNotEmpty &&
+         userAgeController.text.isNotEmpty;
+}
+
+/// Método para obtener información resumida de la mascota actual
+Map<String, dynamic> getCurrentPetSummary() {
+  if (pets.isEmpty) {
+    return {};
   }
   
-  /// Indica si el usuario tiene mascotas
-  bool get hasPets => pets.isNotEmpty;
+  PetModel currentPet = pets[selectedPetIndex];
+  final age = DateTime.now().difference(currentPet.birthDate).inDays ~/ 365;
+  
+  return {
+    'name': currentPet.name,
+    'species': currentPet.species,
+    'age': age,
+    'sex': currentPet.sex,
+    'imageUrl': currentPet.petImage1,
+  };
+}
+
+/// Método para obtener información resumida del usuario
+Map<String, dynamic> getUserSummary() {
+  return {
+    'name': userNameController.text,
+    'age': userAgeController.text,
+    'sex': userSexController.text,
+    'location': userLocationController.text,
+    'bio': userBioController.text,
+    'imageUrl': userImage,
+    'birthDate': _userBirthDateStr,
+  };
+}
 }

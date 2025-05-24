@@ -88,6 +88,17 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
     });
   }
 
+  // Función para construir la URL completa de la imagen
+  String _buildImageUrl(String imageSource) {
+    // Si ya es una URL completa (contiene http:// o https://), la devolvemos tal como está
+    if (imageSource.startsWith('http://') || imageSource.startsWith('https://')) {
+      return imageSource;
+    }
+    
+    // Si es solo un nombre de archivo, agregamos el prefijo del servidor local
+    return 'http://localhost:8091/media/get-media?fileName=$imageSource';
+  }
+
   // Obtener lista de imágenes válidas
   List<String> _getValidImages() {
     return [
@@ -105,7 +116,8 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
       return 'https://via.placeholder.com/400/300?text=Sin+Imagen';
     }
     
-    return images[_currentImageIndex];
+    // Construir la URL completa para la imagen actual
+    return _buildImageUrl(images[_currentImageIndex]);
   }
 
   // Traducir la especie al español

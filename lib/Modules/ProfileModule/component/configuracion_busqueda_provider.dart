@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 enum TipoBusqueda {
   todas,
-  porProximidad,
+  // porProximidad, // Opción comentada
   porEspecie,
 }
 
@@ -23,7 +23,7 @@ class ConfiguracionBusquedaProvider extends ChangeNotifier {
   // Mapear los nombres en español a los valores de enum
   final Map<String, TipoBusqueda> _mapaNombresTipoBusqueda = {
     'Todas las mascotas': TipoBusqueda.todas,
-    'Por proximidad': TipoBusqueda.porProximidad,
+    // 'Por proximidad': TipoBusqueda.porProximidad, // Opción comentada
     'Por especie': TipoBusqueda.porEspecie,
   };
   
@@ -49,16 +49,18 @@ class ConfiguracionBusquedaProvider extends ChangeNotifier {
     switch (_tipoBusquedaSeleccionado) {
       case TipoBusqueda.todas:
         return 'Todas las mascotas';
-      case TipoBusqueda.porProximidad:
-        return 'Por proximidad';
+      // case TipoBusqueda.porProximidad:
+      //   return 'Por proximidad';
       case TipoBusqueda.porEspecie:
         return 'Por especie';
+      default:
+        return 'Todas las mascotas';
     }
   }
   
   // Getter para obtener el nombre de la especie para la API (en inglés)
   String get especieSeleccionadaAPI {
-    return _mapaEspeciesAPI[_especieSeleccionada] ?? 'All';
+    return _mapaEspeciesAPI[_especieSeleccionada] ?? 'all';
   }
   
   // Setters
@@ -99,7 +101,12 @@ class ConfiguracionBusquedaProvider extends ChangeNotifier {
       
       // Cargamos el tipo de búsqueda
       final tipoBusquedaIndex = prefs.getInt(_keyTipoBusqueda) ?? TipoBusqueda.todas.index;
-      _tipoBusquedaSeleccionado = TipoBusqueda.values[tipoBusquedaIndex];
+      // Validamos que el índice sea válido para los valores disponibles
+      if (tipoBusquedaIndex < TipoBusqueda.values.length) {
+        _tipoBusquedaSeleccionado = TipoBusqueda.values[tipoBusquedaIndex];
+      } else {
+        _tipoBusquedaSeleccionado = TipoBusqueda.todas;
+      }
       
       // Cargamos la especie seleccionada
       _especieSeleccionada = prefs.getString(_keyEspecieSeleccionada) ?? 'Todas';

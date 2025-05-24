@@ -1,15 +1,17 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mascotas_citas/services/ApiService.dart';
+import 'package:dio/dio.dart';
 
 class SelectorFotos extends StatefulWidget {
   final List<String> imagenes;
   final int maxPhotos;
   final Function(List<String>) onImagesUpdated;
-  final String entidadId; // ID de la mascota o perfil asociado con las fotos
-  final String? userUID; // ID del usuario propietario
-  final String tipo; // "usuario" o "mascota" para determinar qué endpoint usar
+  final String entidadId;
+  final String? userUID;
+  final String tipo;
   final ApiService apiService;
 
   const SelectorFotos({
@@ -35,45 +37,54 @@ class _SelectorFotosState extends State<SelectorFotos> {
   // Constantes para dimensiones uniformes
   final double _imageSize = 100;
   final double _imageHeight = 100;
+  
+  // Variable para forzar la reconstrucción de widgets
+  int _rebuildCounter = 0;
 
   @override
   void initState() {
     super.initState();
     _imagenes = List.from(widget.imagenes);
     print("Inicializando SelectorFotos con imágenes: $_imagenes");
-    
-    // Limpiar caché de imágenes al inicializar
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      imageCache.clear();
-      imageCache.clearLiveImages();
-    });
+    _clearAllImageCaches();
   }
 
   @override
   void didUpdateWidget(SelectorFotos oldWidget) {
     super.didUpdateWidget(oldWidget);
     
-    // Si las imágenes cambiaron desde afuera, actualizar la lista local
     if (!listEquals(oldWidget.imagenes, widget.imagenes)) {
-      // Limpiar caché de imágenes
-      imageCache.clear();
-      imageCache.clearLiveImages();
-      
       print("SelectorFotos actualizado con nuevas imágenes: ${widget.imagenes}");
+      _clearAllImageCaches();
       setState(() {
         _imagenes = List.from(widget.imagenes);
+        _rebuildCounter++; // Incrementar contador para forzar reconstrucción
       });
       
-      // Forzar reconstrucción de los widgets de imagen con un pequeño retraso
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) {
-          setState(() {});
-          // Limpiar caché nuevamente después del retraso
-          imageCache.clear();
-          imageCache.clearLiveImages();
-        }
-      });
+      // Forzar actualización completa después de un breve retraso
+      _forceImageRefresh();
     }
+  }
+  
+  // Método mejorado para limpiar todos los cachés de imágenes
+  void _clearAllImageCaches() {
+    imageCache.clear();
+    imageCache.clearLiveImages();
+    // También limpiar caché de red si es necesario
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+  }
+  
+  // Método para forzar la actualización de imágenes
+  void _forceImageRefresh() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        setState(() {
+          _rebuildCounter++;
+        });
+        _clearAllImageCaches();
+      }
+    });
   }
   
   // Función auxiliar para comparar listas
@@ -93,11 +104,12 @@ class _SelectorFotosState extends State<SelectorFotos> {
         SizedBox(
           height: _imageHeight,
           child: ListView.builder(
+            key: ValueKey('listview_$_rebuildCounter'), // Key única para forzar reconstrucción
             scrollDirection: Axis.horizontal,
             itemCount: _imagenes.length < widget.maxPhotos ? _imagenes.length + 1 : _imagenes.length,
             itemBuilder: (context, index) {
-              // Botón para añadir una nueva foto
-              if (index == _imagenes.length && _imagenes.length < widget.maxPhotos) {
+              // Botón para añadir una nueva foto (solo para mascotas)
+              if (index == _imagenes.length && _imagenes.length < widget.maxPhotos && widget.tipo == 'mascota') {
                 return Container(
                   width: _imageSize,
                   height: _imageHeight,
@@ -114,8 +126,9 @@ class _SelectorFotosState extends State<SelectorFotos> {
                 );
               }
 
-              // Mostrar foto existente
+              // Mostrar foto existente con key única
               return GestureDetector(
+                key: ValueKey('image_container_${index}_$_rebuildCounter'),
                 onTap: () => _showPhotoOptions(context, index),
                 child: Stack(
                   children: [
@@ -132,7 +145,7 @@ class _SelectorFotosState extends State<SelectorFotos> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(6),
-                        child: _buildImageWidget(_imagenes[index]),
+                        child: _buildImageWidget(_imagenes[index], index),
                       ),
                     ),
                     // Indicador de foto principal
@@ -171,50 +184,57 @@ class _SelectorFotosState extends State<SelectorFotos> {
     );
   }
 
-  // Método para mostrar opciones al presionar una foto
+  // Método para mostrar opciones al presionar una foto (SIN OPCIÓN DE ELIMINAR)
   void _showPhotoOptions(BuildContext context, int index) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(index == 0 ? 'Foto principal' : 'Opciones de foto'),
+          title: Text(widget.tipo == 'usuario' 
+              ? 'Foto de perfil' 
+              : (index == 0 ? 'Foto principal' : 'Opciones de foto')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (index != 0)
+              // Para usuarios, solo permitir reemplazar la foto de perfil
+              if (widget.tipo == 'usuario')
                 ListTile(
-                  leading: const Icon(Icons.star, color: Colors.pink),
-                  title: const Text('Establecer como principal'),
+                  leading: const Icon(Icons.photo_camera, color: Colors.blue),
+                  title: const Text('Cambiar foto de perfil'),
                   onTap: () {
                     Navigator.pop(context);
-                    _handleSetMainPhoto(index);
+                    _handleReplacePhoto(index);
                   },
                 ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera, color: Colors.blue),
-                title: const Text('Reemplazar foto'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _handleReplacePhoto(index);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('Eliminar foto'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _handleDeletePhoto(index);
-                },
-              ),
-              if (_imagenes.length < widget.maxPhotos)
+              // Para mascotas, mostrar opciones (SIN ELIMINAR)
+              if (widget.tipo == 'mascota') ...[
+                if (index != 0)
+                  ListTile(
+                    leading: const Icon(Icons.star, color: Colors.pink),
+                    title: const Text('Establecer como principal'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _handleSetMainPhoto(index);
+                    },
+                  ),
                 ListTile(
-                  leading: const Icon(Icons.add_photo_alternate, color: Colors.blue),
-                  title: const Text('Subir nueva foto'),
+                  leading: const Icon(Icons.photo_camera, color: Colors.blue),
+                  title: const Text('Reemplazar foto'),
                   onTap: () {
                     Navigator.pop(context);
-                    _handleAddNewPhoto();
+                    _handleReplacePhoto(index);
                   },
                 ),
+                if (_imagenes.length < widget.maxPhotos)
+                  ListTile(
+                    leading: const Icon(Icons.add_photo_alternate, color: Colors.blue),
+                    title: const Text('Subir nueva foto'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _handleAddNewPhoto();
+                    },
+                  ),
+              ],
               ListTile(
                 leading: const Icon(Icons.cancel, color: Colors.grey),
                 title: const Text('Cancelar'),
@@ -285,8 +305,10 @@ class _SelectorFotosState extends State<SelectorFotos> {
     return null;
   }
   
-  // Método actualizado para añadir una nueva foto usando los métodos específicos de API
+  // Método para añadir una nueva foto (solo para mascotas)
   Future<void> _handleAddNewPhoto() async {
+    if (widget.tipo != 'mascota') return;
+    
     try {
       final File? imageFile = await _selectImage();
       if (imageFile == null) {
@@ -297,117 +319,58 @@ class _SelectorFotosState extends State<SelectorFotos> {
       setState(() => _isLoading = true);
       print("Añadiendo nueva foto: ${imageFile.path}");
 
+      // Encontrar el primer slot disponible
+      int nextSlot = _imagenes.length + 1;
+      if (nextSlot > widget.maxPhotos) {
+        setState(() => _isLoading = false);
+        _showErrorSnackbar('Ya has alcanzado el máximo de fotos permitidas');
+        return;
+      }
+
       try {
-        String? imageUrl;
-        
-        if (widget.tipo == 'usuario') {
-          if (widget.userUID == null) {
-            throw Exception('userUID es requerido para subir imagen de usuario');
-          }
-          
-          // Usar el método específico para actualizar imagen de usuario
-          final response = await widget.apiService.updateUserImage(
-            userUID: widget.userUID!,
-            userImage: imageFile,
-          );
-          
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            // Extraer URL de la respuesta
-            if (response.data is String) {
-              imageUrl = response.data.toString();
-            } else if (response.data is Map) {
-              imageUrl = response.data['url'];
-            }
-          }
-        } else {
-          // Para mascota, usar el método específico para actualizar imagen de mascota
-          if (widget.userUID == null) {
-            throw Exception('userUID es requerido para subir imagen de mascota');
-          }
-          
-          // Determinar qué posición de imagen estamos actualizando
-          int position = _imagenes.length + 1;
-          
-          // Crear los argumentos para el método updatePetImages
-          Map<String, File?> petImages = {
-            'petImage1': null,
-            'petImage2': null,
-            'petImage3': null,
-          };
-          
-          // Asignar el archivo a la posición correcta
-          if (position == 1) {
-            petImages['petImage1'] = imageFile;
-          } else if (position == 2) {
-            petImages['petImage2'] = imageFile;
-          } else if (position == 3) {
-            petImages['petImage3'] = imageFile;
-          } else {
-            throw Exception('No se puede añadir más de 3 imágenes para mascotas');
-          }
-          
-          final response = await widget.apiService.updatePetImages(
-            userUID: widget.userUID!,
-            petUID: widget.entidadId,
-            petImage1: petImages['petImage1'],
-            petImage2: petImages['petImage2'],
-            petImage3: petImages['petImage3'],
-          );
-          
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            // Extraer URL de la respuesta
-            if (response.data is String) {
-              imageUrl = response.data.toString();
-            } else if (response.data is Map) {
-              imageUrl = response.data['url'];
-            }
-          }
+        if (widget.userUID == null) {
+          throw Exception('userUID es requerido para actualizar mascota');
         }
         
-        if (imageUrl != null) {
-          // Limpiar caché de imágenes antes de actualizar el estado
-          imageCache.clear();
-          imageCache.clearLiveImages();
-          
-          setState(() {
-            List<String> newImagenes = List.from(_imagenes);
-            newImagenes.add(imageUrl!);
-            _imagenes = newImagenes;
-            _isLoading = false;
-          });
-          
-          widget.onImagesUpdated(_imagenes);
-          print("Imagen añadida con éxito: $imageUrl");
-          
+        FormData formData = FormData();
+        
+        // CLAVE: Enviar el orden actual de imágenes
+        formData.fields.add(MapEntry('currentImageOrder', _imagenes.join(',')));
+        formData.fields.add(MapEntry('action', 'addNewPhoto'));
+        formData.fields.add(MapEntry('newImagePosition', nextSlot.toString()));
+        
+        formData.files.add(MapEntry(
+          'petImage$nextSlot',
+          await MultipartFile.fromFile(
+            imageFile.path,
+            filename: 'pet_image_$nextSlot.${imageFile.path.split('.').last}',
+          ),
+        ));
+        
+        widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
+        
+        final String url = 'http://localhost:8093/api/pets/update/${widget.entidadId}';
+        
+        final response = await widget.apiService.put(
+          path: url,
+          data: formData,
+        );
+        
+        print("Respuesta del servidor: ${response.statusCode} - ${response.data}");
+        
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          await _updateImageSuccessfully(imageFile.path, isAdd: true);
           _showSuccessSnackbar('Imagen añadida correctamente');
         } else {
           setState(() => _isLoading = false);
-          _showErrorSnackbar('Error al subir la imagen: No se obtuvo URL');
+          _showErrorSnackbar('Error del servidor: ${response.statusCode}');
         }
       } catch (apiError) {
-        print("Error en API al subir imagen: $apiError");
-        
-        // Para desarrollo local
-        if (widget.entidadId == 'test' || true) { // En producción, quitar '|| true'
-          final String localImagePath = imageFile.path;
-          
-          imageCache.clear();
-          imageCache.clearLiveImages();
-          
-          setState(() {
-            List<String> newImagenes = List.from(_imagenes);
-            newImagenes.add(localImagePath);
-            _imagenes = newImagenes;
-            _isLoading = false;
-          });
-          
-          widget.onImagesUpdated(_imagenes);
-          _showSuccessSnackbar('Imagen añadida correctamente (modo local)');
-        } else {
-          setState(() => _isLoading = false);
-          _showErrorSnackbar('Error al comunicarse con el servidor: $apiError');
-        }
+        print("Error en API al añadir imagen: $apiError");
+        setState(() => _isLoading = false);
+        _showErrorSnackbar('Error al comunicarse con el servidor: $apiError');
       }
+      
     } catch (e) {
       setState(() => _isLoading = false);
       _showErrorSnackbar('Error inesperado: $e');
@@ -427,120 +390,16 @@ class _SelectorFotosState extends State<SelectorFotos> {
       setState(() => _isLoading = true);
       print("Reemplazando foto en posición $index: ${_imagenes[index]} -> ${imageFile.path}");
 
-      final String oldImageUrl = _imagenes[index];
-
       try {
-        String? imageUrl;
-        
         if (widget.tipo == 'usuario') {
-          if (widget.userUID == null) {
-            throw Exception('userUID es requerido para subir imagen de usuario');
-          }
-          
-          // Usar el método específico para actualizar imagen de usuario
-          final response = await widget.apiService.updateUserImage(
-            userUID: widget.userUID!,
-            userImage: imageFile,
-          );
-          
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            // Extraer URL de la respuesta
-            if (response.data is String) {
-              imageUrl = response.data.toString();
-            } else if (response.data is Map) {
-              imageUrl = response.data['url'];
-            }
-          }
-        } else {
-          // Para mascota, usar el método específico para actualizar imagen de mascota
-          if (widget.userUID == null) {
-            throw Exception('userUID es requerido para subir imagen de mascota');
-          }
-          
-          // Crear los argumentos para el método updatePetImages
-          Map<String, File?> petImages = {
-            'petImage1': null,
-            'petImage2': null,
-            'petImage3': null,
-          };
-          
-          // Asignar el archivo a la posición correcta
-          if (index == 0) {
-            petImages['petImage1'] = imageFile;
-          } else if (index == 1) {
-            petImages['petImage2'] = imageFile;
-          } else if (index == 2) {
-            petImages['petImage3'] = imageFile;
-          } else {
-            throw Exception('Índice fuera de rango para imágenes de mascota');
-          }
-          
-          final response = await widget.apiService.updatePetImages(
-            userUID: widget.userUID!,
-            petUID: widget.entidadId,
-            petImage1: petImages['petImage1'],
-            petImage2: petImages['petImage2'],
-            petImage3: petImages['petImage3'],
-          );
-          
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            // Extraer URL de la respuesta
-            if (response.data is String) {
-              imageUrl = response.data.toString();
-            } else if (response.data is Map) {
-              imageUrl = response.data['url'];
-            }
-          }
-        }
-        
-        if (imageUrl != null) {
-          // Limpiar caché de imágenes antes de actualizar el estado
-          imageCache.clear();
-          imageCache.clearLiveImages();
-          
-          setState(() {
-            List<String> newImagenes = List.from(_imagenes);
-            newImagenes[index] = imageUrl!;
-            _imagenes = newImagenes;
-            _isLoading = false;
-          });
-          
-          widget.onImagesUpdated(_imagenes);
-          print("Imagen reemplazada con éxito: $imageUrl");
-          _showSuccessSnackbar('Imagen reemplazada correctamente');
-        } else {
-          setState(() {
-            _isLoading = false;
-            _imagenes[index] = oldImageUrl; // Restaurar imagen original
-          });
-          _showErrorSnackbar('Error al reemplazar la imagen');
+          await _handleUserImageReplace(imageFile, index);
+        } else if (widget.tipo == 'mascota') {
+          await _handlePetImageReplace(imageFile, index);
         }
       } catch (apiError) {
         print("Error en API al reemplazar imagen: $apiError");
-        
-        // Para desarrollo local solamente
-        if (widget.entidadId == 'test' || true) { // Simular éxito en desarrollo
-          final String localImagePath = imageFile.path;
-          
-          imageCache.clear();
-          imageCache.clearLiveImages();
-          
-          setState(() {
-            List<String> newImagenes = List.from(_imagenes);
-            newImagenes[index] = localImagePath;
-            _imagenes = newImagenes;
-            _isLoading = false;
-          });
-          
-          widget.onImagesUpdated(_imagenes);
-          _showSuccessSnackbar('Imagen reemplazada correctamente (modo local)');
-        } else {
-          setState(() {
-            _isLoading = false;
-            _imagenes[index] = oldImageUrl; // Restaurar imagen original
-          });
-          _showErrorSnackbar('Error al comunicarse con el servidor: $apiError');
-        }
+        setState(() => _isLoading = false);
+        _showErrorSnackbar('Error al comunicarse con el servidor: $apiError');
       }
     } catch (e) {
       setState(() => _isLoading = false);
@@ -548,311 +407,406 @@ class _SelectorFotosState extends State<SelectorFotos> {
       print("Error general reemplazando foto: $e");
     }
   }
-
-  // Método actualizado para establecer una foto como principal
-  Future<void> _handleSetMainPhoto(int index) async {
-    if (index == 0) return; // Ya es la principal
-
-    try {
-      setState(() => _isLoading = true);
-      print("Estableciendo foto $index como principal");
-
-      // Limpiar caché de imágenes antes de reorganizar
-      imageCache.clear();
-      imageCache.clearLiveImages();
-
-      // Reorganizamos las imágenes localmente
-      final String selectedImage = _imagenes[index];
-      final List<String> updatedImages = [..._imagenes];
-      updatedImages.removeAt(index);
-      updatedImages.insert(0, selectedImage);
-      
-      try {
-        // Realizamos la actualización en el frontend inmediatamente para mejor UX
-        setState(() {
-          _imagenes = updatedImages;
-          _isLoading = false;
-        });
-        
-        // Notificar cambios al widget padre
-        widget.onImagesUpdated(_imagenes);
-        
-        // Forzar reconstrucción después de un breve retraso
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (mounted) {
-            setState(() {});
-            // Limpiar caché nuevamente después del retraso
-            imageCache.clear();
-            imageCache.clearLiveImages();
-          }
-        });
-        
-        // Para mascota: Sincronizamos todas las imágenes con el servidor
-        if (widget.tipo == 'mascota') {
-          await _syncPetImages();
-        }
-        
-        _showSuccessSnackbar('Foto principal actualizada');
-      } catch (e) {
-        // En caso de error, revertimos los cambios
-        setState(() {
-          _imagenes = List.from(widget.imagenes);
-          _isLoading = false;
-        });
-        _showErrorSnackbar('Error al establecer como principal: $e');
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      _showErrorSnackbar('Error: $e');
-      print("Error general al establecer foto principal: $e");
-    }
-  }
-
-  // Método actualizado para eliminar una foto
-  Future<void> _handleDeletePhoto(int index) async {
-    try {
-      setState(() => _isLoading = true);
-      
-      final String imageToDelete = _imagenes[index];
-      print("Eliminando foto en posición $index: $imageToDelete");
-      
-      // Guardamos una copia temporal por si necesitamos revertir cambios
-      final List<String> tempImagenes = List.from(_imagenes);
-
-      // Limpiar caché de imágenes para evitar problemas con la reconstrucción
-      imageCache.clear();
-      imageCache.clearLiveImages();
-
-      // Eliminamos la imagen de la lista local inmediatamente para mejor UX
-      setState(() {
-        List<String> newImagenes = List.from(_imagenes);
-        newImagenes.removeAt(index);
-        _imagenes = newImagenes;
-      });
-
-      try {
-        // Para mascotas, sincronizamos todas las imágenes con el backend
-        if (widget.tipo == 'mascota') {
-          await _syncPetImages();
-        }
-        // Para usuario, no permitimos eliminar la foto de perfil, solo reemplazarla
-        
-        widget.onImagesUpdated(_imagenes);
-        setState(() => _isLoading = false);
-        
-        // Forzar reconstrucción después de un breve retraso
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (mounted) setState(() {});
-        });
-        
-        _showSuccessSnackbar('Imagen eliminada correctamente');
-      } catch (apiError) {
-        print("Error en API al eliminar imagen: $apiError");
-        
-        // Para desarrollo local, simular éxito
-        if (widget.entidadId == 'test' || true) {
-          setState(() => _isLoading = false);
-          widget.onImagesUpdated(_imagenes);
-          
-          // Forzar reconstrucción después de un breve retraso
-          Future.delayed(const Duration(milliseconds: 100), () {
-            if (mounted) setState(() {});
-          });
-        } else {
-          // En caso de error, revertimos los cambios
-          setState(() {
-            _imagenes = tempImagenes;
-            _isLoading = false;
-          });
-          _showErrorSnackbar('Error al comunicarse con el servidor: $apiError');
-        }
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      _showErrorSnackbar('Error: $e');
-      print("Error general eliminando foto: $e");
-    }
-  }
-
-  // Método para sincronizar imágenes de mascota con el backend
-  Future<void> _syncPetImages() async {
-    if (widget.userUID == null || widget.tipo != 'mascota') {
-      return;
+  
+  // Método separado para manejar reemplazo de imagen de usuario
+  Future<void> _handleUserImageReplace(File imageFile, int index) async {
+    if (widget.userUID == null) {
+      throw Exception('userUID es requerido para subir imagen de usuario');
     }
     
-    try {
-      // Necesitamos obtener archivos File para cada imagen
-      List<File?> imageFiles = [null, null, null];
+    FormData formData = FormData();
+    
+    formData.files.add(MapEntry(
+      'userImage',
+      await MultipartFile.fromFile(
+        imageFile.path,
+        filename: 'profile_image.${imageFile.path.split('.').last}',
+      ),
+    ));
+    
+    widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
+    
+    const String url = 'http://localhost:8093/api/users/update-image';
+    
+    final response = await widget.apiService.put(
+      path: url,
+      data: formData,
+    );
+    
+    print("Respuesta del servidor: ${response.statusCode} - ${response.data}");
+    
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      await _updateImageSuccessfully(imageFile.path, index: index);
+      _showSuccessSnackbar('Imagen actualizada correctamente');
+    } else {
+      setState(() => _isLoading = false);
+      _showErrorSnackbar('Error del servidor: ${response.statusCode}');
+    }
+  }
+  
+  // MÉTODO CORREGIDO - Separado para manejar reemplazo de imagen de mascota
+  Future<void> _handlePetImageReplace(File imageFile, int index) async {
+    if (widget.userUID == null) {
+      throw Exception('userUID es requerido para actualizar mascota');
+    }
+    
+    FormData formData = FormData();
+    
+    // CLAVE: Enviar información sobre el reemplazo específico
+    formData.fields.add(MapEntry('action', 'replacePhoto'));
+    formData.fields.add(MapEntry('replaceIndex', index.toString()));
+    formData.fields.add(MapEntry('currentImageOrder', _imagenes.join(',')));
+    
+    // Mantener la numeración original para evitar confusiones
+    int imageNumber = index + 1;
+    formData.files.add(MapEntry(
+      'petImage$imageNumber',
+      await MultipartFile.fromFile(
+        imageFile.path,
+        filename: 'pet_image_${imageNumber}_replace.${imageFile.path.split('.').last}',
+      ),
+    ));
+    
+    // Información adicional para el servidor
+    formData.fields.add(MapEntry('preserveMainPhoto', (index != 0).toString()));
+    if (index != 0) {
+      formData.fields.add(MapEntry('mainPhotoUrl', _imagenes[0]));
+    }
+    
+    widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
+    
+    final String url = 'http://localhost:8093/api/pets/update/${widget.entidadId}';
+    
+    final response = await widget.apiService.put(
+      path: url,
+      data: formData,
+    );
+    
+    print("Respuesta del servidor para reemplazo: ${response.statusCode} - ${response.data}");
+    
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      await _updateImageSuccessfully(imageFile.path, index: index);
+      _showSuccessSnackbar('Imagen reemplazada correctamente');
+    } else {
+      setState(() => _isLoading = false);
+      _showErrorSnackbar('Error del servidor: ${response.statusCode}');
+    }
+  }
+  
+  // Método unificado para actualizar exitosamente una imagen
+  Future<void> _updateImageSuccessfully(String imagePath, {int? index, bool isAdd = false}) async {
+    // Limpiar todos los cachés antes de actualizar
+    _clearAllImageCaches();
+    
+    // Crear URL única con timestamp para evitar caché
+    String newImageUrl = '${imagePath}?t=${DateTime.now().millisecondsSinceEpoch}';
+    
+    setState(() {
+      List<String> newImagenes = List.from(_imagenes);
       
-      // Procesar solo las imágenes locales (no URLs)
-      for (int i = 0; i < _imagenes.length && i < 3; i++) {
-        final path = _imagenes[i];
-        
-        if (path.startsWith('http')) {
-          // No podemos re-subir imágenes de red, ya están en el servidor
-          continue;
-        }
-        
-        // Crear objeto File para cada ruta local
-        String cleanPath = path;
-        if (cleanPath.startsWith('file://')) {
-          cleanPath = cleanPath.substring(7);
-        }
-        
-        final file = File(cleanPath);
-        if (file.existsSync()) {
-          imageFiles[i] = file;
-        }
+      if (isAdd) {
+        // Añadir nueva imagen
+        newImagenes.add(newImageUrl);
+      } else if (index != null) {
+        // Reemplazar imagen existente SIN AFECTAR EL ORDEN
+        newImagenes[index] = newImageUrl;
+        print("🔄 Reemplazando imagen en índice $index");
+        print("📋 Antes: $_imagenes");
+        print("📋 Después: $newImagenes");
       }
       
-      // Si no hay archivos para subir, terminar
-      if (imageFiles.every((file) => file == null)) {
-        return;
-      }
-      
-      // Usar el método específico para sincronizar imágenes de mascota
-      await widget.apiService.updatePetImages(
-        userUID: widget.userUID!,
-        petUID: widget.entidadId,
-        petImage1: imageFiles[0],
-        petImage2: imageFiles[1],
-        petImage3: imageFiles[2],
-      );
-      
-    } catch (e) {
-      print("Error sincronizando imágenes: $e");
-      // No lanzamos error porque esto es una operación secundaria
+      _imagenes = newImagenes;
+      _rebuildCounter++; // Incrementar contador para forzar reconstrucción
+      _isLoading = false;
+    });
+    
+    // Notificar al widget padre
+    widget.onImagesUpdated(_imagenes);
+    print("Imagen actualizada con éxito: $newImageUrl");
+    
+    // Forzar actualización completa con múltiples estrategias
+    await _forceCompleteRefresh();
+  }
+  
+  // Método para forzar actualización completa
+  Future<void> _forceCompleteRefresh() async {
+    // Primera actualización inmediata
+    if (mounted) {
+      setState(() {
+        _rebuildCounter++;
+      });
+      _clearAllImageCaches();
+    }
+    
+    // Segunda actualización después de un breve retraso
+    await Future.delayed(const Duration(milliseconds: 50));
+    if (mounted) {
+      setState(() {
+        _rebuildCounter++;
+      });
+      _clearAllImageCaches();
+    }
+    
+    // Tercera actualización para asegurar que todo se actualizó
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (mounted) {
+      setState(() {
+        _rebuildCounter++;
+      });
+      _clearAllImageCaches();
     }
   }
 
-  // Método mejorado para construir widget de imagen con tamaño fijo
-  Widget _buildImageWidget(String imagePath) {
-    // Agregar un Key único con timestamp para forzar reconstrucción
-    final uniqueKey = ValueKey<String>('image_${imagePath}_${DateTime.now().millisecondsSinceEpoch}');
+  // MÉTODO PRINCIPAL CORREGIDO - Establecer foto como principal
+  Future<void> _handleSetMainPhoto(int index) async {
+    if (index == 0 || widget.tipo != 'mascota') return;
+
+    try {
+      setState(() => _isLoading = true);
+      print("🔄 Estableciendo foto en posición $index como principal");
+      print("📋 Estado actual de imágenes: $_imagenes");
+
+      if (widget.userUID == null) {
+        throw Exception('userUID es requerido para actualizar mascota');
+      }
+
+      // Preparar la lista reordenada LOCALMENTE
+      List<String> reorderedImages = List.from(_imagenes);
+      String newMainImage = reorderedImages[index];
+      String oldMainImage = reorderedImages[0];
+      
+      // Intercambiar las imágenes
+      reorderedImages[0] = newMainImage;
+      reorderedImages[index] = oldMainImage;
+      
+      print("🔄 Nuevo orden que se enviará: $reorderedImages");
+
+      // Crear FormData con información del cambio
+      FormData formData = FormData();
+      formData.fields.add(MapEntry('action', 'setMainPhoto'));
+      formData.fields.add(MapEntry('newMainIndex', index.toString()));
+      formData.fields.add(MapEntry('currentImageOrder', _imagenes.join(',')));
+      formData.fields.add(MapEntry('newImageOrder', reorderedImages.join(',')));
+
+      widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
+      
+      final String url = 'http://localhost:8093/api/pets/update/${widget.entidadId}';
+      
+      final response = await widget.apiService.put(
+        path: url,
+        data: formData,
+      );
+      
+      print("📡 Respuesta del servidor: ${response.statusCode} - ${response.data}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // CAMBIO CLAVE: Limpiar caché y actualizar INMEDIATAMENTE
+        _clearAllImageCaches();
+        
+        // Actualizar el estado local con el nuevo orden
+        setState(() {
+          _imagenes = List.from(reorderedImages); // Nueva lista para evitar referencias
+          _rebuildCounter++;
+          _isLoading = false;
+        });
+
+        print("✅ Estado local actualizado: $_imagenes");
+        
+        // Notificar al widget padre INMEDIATAMENTE
+        widget.onImagesUpdated(List.from(_imagenes));
+        
+        _showSuccessSnackbar('Foto principal actualizada correctamente');
+        
+        // Forzar múltiples actualizaciones para asegurar que todo se refleje
+        await _forceCompleteRefresh();
+        
+        print("🎯 Foto establecida como principal completamente");
+      } else {
+        setState(() => _isLoading = false);
+        _showErrorSnackbar('Error del servidor al cambiar foto principal: ${response.statusCode}');
+      }
+      
+    } catch (apiError) {
+      print("❌ Error en API al establecer foto principal: $apiError");
+      setState(() => _isLoading = false);
+      _showErrorSnackbar('Error al comunicarse con el servidor: $apiError');
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showErrorSnackbar('Error al establecer foto principal: $e');
+      print("❌ Error estableciendo foto principal: $e");
+    }
+  }
+
+  // Método mejorado para construir widget de imagen
+  Widget _buildImageWidget(String imagePath, int index) {
+    // Key única que incluye el índice, path, timestamp y contador de reconstrucción
+    final uniqueKey = ValueKey<String>('image_${index}_${imagePath.hashCode}_${_rebuildCounter}_${DateTime.now().millisecondsSinceEpoch}');
     
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      // Es una URL de red
-      print("Cargando imagen de red: $imagePath");
-      
-      // Añadir un parámetro de timestamp a la URL para evitar caché
-      final String cacheBustUrl = imagePath.contains('?') 
-          ? '$imagePath&t=${DateTime.now().millisecondsSinceEpoch}' 
-          : '$imagePath?t=${DateTime.now().millisecondsSinceEpoch}';
-      
-      return Image.network(
-        cacheBustUrl,
-        key: uniqueKey, // Clave única para forzar recarga
-        fit: BoxFit.cover, // Asegura que cubra el espacio asignado
-        width: _imageSize,
-        height: _imageHeight,
-        // Deshabilitar caché para forzar recarga de la imagen
-        cacheWidth: null,
-        cacheHeight: null,
-        // Añadir encabezados para evitar caché
-        headers: {
-          'Cache-Control': 'no-cache, no-store',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Center(
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded / 
-                      loadingProgress.expectedTotalBytes!
-                  : null,
-              strokeWidth: 2.0,
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          print("Error cargando imagen de red: $error");
-          return Container(
-            width: _imageSize,
-            height: _imageHeight,
-            color: Colors.grey[300],
-            child: Icon(Icons.broken_image, color: Colors.grey[600]),
-          );
-        },
-      );
+      return _buildNetworkImage(imagePath, uniqueKey);
     } else {
-      // Es un archivo local
-      print("Cargando imagen local: $imagePath");
-      
-      try {
-        // Eliminar el prefijo 'file://' si existe
-        String cleanPath = imagePath;
-        if (cleanPath.startsWith('file://')) {
-          cleanPath = cleanPath.substring(7);
-        }
-        
-        // Crear un objeto File con la ruta limpia
-        final file = File(cleanPath);
-        
-        // Verificar si el archivo existe antes de intentar mostrarlo
-        if (!file.existsSync()) {
-          print("El archivo no existe: $cleanPath");
-          return Container(
-            width: _imageSize,
-            height: _imageHeight,
-            color: Colors.grey[300],
-            child: Icon(Icons.image_not_supported, color: Colors.grey[600]),
-          );
-        }
-        
-        // Usar Image.memory para evitar problemas de caché
-        final bytes = file.readAsBytesSync();
-        
-        return Image.memory(
-          bytes,
-          key: uniqueKey, // Clave única para forzar recarga
-          fit: BoxFit.cover, // Importante para mantener consistencia
-          width: _imageSize,
-          height: _imageHeight,
-          // Deshabilitar caché
-          cacheWidth: null,
-          cacheHeight: null,
-          gaplessPlayback: false, // Desactivar reproducción sin huecos
-          errorBuilder: (context, error, stackTrace) {
-            print("Error cargando imagen local: $error");
-            return Container(
-              width: _imageSize,
-              height: _imageHeight,
-              color: Colors.grey[300],
-              child: Icon(Icons.broken_image, color: Colors.grey[600]),
-            );
-          },
+      return _buildLocalImage(imagePath, uniqueKey);
+    }
+  }
+  
+  // Widget para imagen de red
+  Widget _buildNetworkImage(String imagePath, Key uniqueKey) {
+    print("Cargando imagen de red: $imagePath");
+    
+    // Añadir parámetros únicos para evitar caché
+    final String cacheBustUrl = imagePath.contains('?') 
+        ? '$imagePath&t=${DateTime.now().millisecondsSinceEpoch}&r=$_rebuildCounter' 
+        : '$imagePath?t=${DateTime.now().millisecondsSinceEpoch}&r=$_rebuildCounter';
+    
+    return Image.network(
+      cacheBustUrl,
+      key: uniqueKey,
+      fit: BoxFit.cover,
+      width: _imageSize,
+      height: _imageHeight,
+      cacheWidth: null,
+      cacheHeight: null,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Center(
+          child: CircularProgressIndicator(
+            value: loadingProgress.expectedTotalBytes != null
+                ? loadingProgress.cumulativeBytesLoaded / 
+                    loadingProgress.expectedTotalBytes!
+                : null,
+            strokeWidth: 2.0,
+          ),
         );
-      } catch (e) {
-        print("Excepción al cargar imagen local: $e");
+      },
+      errorBuilder: (context, error, stackTrace) {
+        print("Error cargando imagen de red: $error");
         return Container(
           width: _imageSize,
           height: _imageHeight,
           color: Colors.grey[300],
           child: Icon(Icons.broken_image, color: Colors.grey[600]),
         );
+      },
+    );
+  }
+  
+  // Widget para imagen local
+  Widget _buildLocalImage(String imagePath, Key uniqueKey) {
+    print("Cargando imagen local: $imagePath");
+    
+    try {
+      String cleanPath = imagePath;
+      if (cleanPath.startsWith('file://')) {
+        cleanPath = cleanPath.substring(7);
       }
-    }
-  }
+      
+      // Remover parámetros de query si existen para la verificación del archivo
+      final cleanPathForFile = cleanPath.split('?').first;
+      final file = File(cleanPathForFile);
+      
+      if (!file.existsSync()) {
+        print("El archivo no existe: $cleanPathForFile");
+        return Container(
+          width: _imageSize,
+          height: _imageHeight,
+          color: Colors.grey[300],
+          child: Icon(Icons.image_not_supported, color: Colors.grey[600]),
+        );
+      }
+      
+      // Leer bytes del archivo cada vez para evitar caché
+      return FutureBuilder<Uint8List>(
+        key: uniqueKey,
+        future: file.readAsBytes(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            print("Error leyendo archivo: ${snapshot.error}");
+            return Container(
+              width: _imageSize,
+              height: _imageHeight,
+              color: Colors.grey[300],
+              child: Icon(Icons.broken_image, color: Colors.grey[600]),
+            );
+          }
+          
+          if (!snapshot.hasData) {
+            return Container(
+              width: _imageSize,
+              height: _imageHeight,
+              color: Colors.grey[100],
+              child: const Center(
+                child: CircularProgressIndicator(strokeWidth: 2.0),
+              ),
+            );
+          }
+          
+          return Image.memory(
+            snapshot.data!,
+            key: ValueKey('memory_image_${uniqueKey.toString()}_${snapshot.data!.length}'),
+            fit: BoxFit.cover,
+            width: _imageSize,
+            height: _imageHeight,
+            cacheWidth: null,
+            cacheHeight: null,
+            gaplessPlayback: false,
+            errorBuilder: (context, error, stackTrace) {
+              print("Error mostrando imagen desde memoria: $error");
+             return Container(
+               width: _imageSize,
+               height: _imageHeight,
+               color: Colors.grey[300],
+               child: Icon(Icons.broken_image, color: Colors.grey[600]),
+             );
+           },
+         );
+       },
+     );
+   } catch (e) {
+     print("Error procesando imagen local: $e");
+     return Container(
+       width: _imageSize,
+       height: _imageHeight,
+       color: Colors.grey[300],
+       child: Icon(Icons.error, color: Colors.grey[600]),
+     );
+   }
+ }
 
-  // Método para mostrar un mensaje de error
-  void _showErrorSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
+ // Método para mostrar mensaje de éxito
+ void _showSuccessSnackbar(String message) {
+   if (mounted) {
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(
+         content: Text(message),
+         backgroundColor: Colors.green,
+         duration: const Duration(seconds: 2),
+       ),
+     );
+   }
+ }
 
-  // Método para mostrar un mensaje de éxito
-  void _showSuccessSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
+ // Método para mostrar mensaje de error
+ void _showErrorSnackbar(String message) {
+   if (mounted) {
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(
+         content: Text(message),
+         backgroundColor: Colors.red,
+         duration: const Duration(seconds: 3),
+       ),
+     );
+   }
+ }
+
+ @override
+ void dispose() {
+   // Limpiar caché al destruir el widget
+   _clearAllImageCaches();
+   super.dispose();
+ }
 }

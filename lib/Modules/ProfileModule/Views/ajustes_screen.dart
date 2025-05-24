@@ -27,7 +27,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
   // Lista de opciones de tipo de búsqueda para mostrar en el dropdown
   final List<String> _opcionesTipoBusqueda = [
     'Todas las mascotas',
-    'Por proximidad',
+    // 'Por proximidad', // COMENTADO: Opción de búsqueda por proximidad deshabilitada temporalmente
     'Por especie',
   ];
 
@@ -153,6 +153,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ),
             const SizedBox(height: 16),
             
+            // COMENTADO: Distancia máxima (no se muestra ya que la búsqueda por proximidad está deshabilitada)
+            /*
             // Distancia máxima (visible solo si el tipo de búsqueda es por proximidad)
             if (_deberiaOcultarDistancia(configProvider.tipoBusquedaSeleccionado) == false)
               Column(
@@ -198,6 +200,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                   const SizedBox(height: 16),
                 ],
               ),
+            */
             
             // Selector de especie (visible solo si el tipo de búsqueda es por especie)
             if (_deberiaOcultarEspecie(configProvider.tipoBusquedaSeleccionado) == false)
@@ -315,11 +318,14 @@ class _AjustesScreenState extends State<AjustesScreen> {
     );
   }
 
-  // Método para determinar si se debe ocultar la opción de distancia
+  // COMENTADO: Método para determinar si se debe ocultar la opción de distancia
+  // (No es necesario ya que la opción de proximidad está deshabilitada)
+  /*
   bool _deberiaOcultarDistancia(TipoBusqueda tipoBusqueda) {
     // Solo mostrar si es específicamente por proximidad
     return tipoBusqueda != TipoBusqueda.porProximidad;
   }
+  */
   
   // Método para determinar si se debe ocultar la opción de especie
   bool _deberiaOcultarEspecie(TipoBusqueda tipoBusqueda) {

@@ -445,66 +445,54 @@ class ApiService {
     }
   }
   
-  /// Actualiza la imagen de perfil del usuario
+  // Añadir este método a tu clase ApiService
+
 /// Actualiza la imagen de perfil del usuario
 Future<Response> updateUserImage({
   required String userUID,
   required File userImage,
 }) async {
   try {
-    // Crear el FormData
-    final formData = FormData();
-    
-    // Asegurarse de que el archivo existe
-    if (!await userImage.exists()) {
-      throw Exception('El archivo no existe: ${userImage.path}');
-    }
-    
-    // Determinar el tipo MIME basado en la extensión del archivo
-    String extension = userImage.path.split('.').last.toLowerCase();
-    String mimeType = _getMimeType(extension);
-    
-    print('Enviando archivo: ${userImage.path}');
-    print('Tipo MIME: $mimeType');
-    
-    // Agregar el archivo con el nombre correcto para el endpoint
-    final fileName = userImage.path.split('/').last;
-    final multipartFile = await MultipartFile.fromFile(
-      userImage.path,
-      filename: fileName,
-      contentType: MediaType.parse(mimeType),
+    // Crear FormData para multipart/form-data
+    FormData formData = FormData.fromMap({
+      'userImage': await MultipartFile.fromFile(
+        userImage.path,
+        filename: 'user_image_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        contentType: MediaType('image', 'jpeg'),
+      ),
+    });
+
+    // Configurar headers específicos para esta petición
+    final options = Options(
+      headers: {
+        'userUID': userUID,
+        'Content-Type': 'multipart/form-data',
+      },
     );
-    
-    // Agregar el archivo con el nombre correcto según el controlador
-    formData.files.add(MapEntry('file', multipartFile));
-    
-    // Agregar los parámetros requeridos
-    formData.fields.add(MapEntry('userUID', userUID));
-    formData.fields.add(MapEntry('index', '1')); // Asumimos que es la imagen de perfil
-    formData.fields.add(MapEntry('type', 'profileImage')); // Tipo de imagen
-    
-    print('FormData creado con éxito');
-    print('Usuario UID: $userUID');
-    
-    // Establecer los headers correctos
-    Map<String, dynamic> headers = {
-      'Content-Type': 'multipart/form-data',
-    };
-    
-    print('Enviando solicitud a: http://localhost:8091/media/upload');
-    
-    // Realizar la solicitud
-    return await post(
-      path: 'http://localhost:8091/media/upload',
+
+    // Realizar petición PUT al endpoint específico
+    final response = await _dio.put(
+      '/users/update-image',
       data: formData,
-      headers: headers,
+      options: options,
     );
+
+    return response;
+  } on DioException catch (e) {
+    print('Error en updateUserImage: ${e.message}');
+    print('Response: ${e.response?.data}');
+    rethrow;
   } catch (e) {
-    print('Error en updateUserImage: $e');
+    print('Error general en updateUserImage: $e');
     rethrow;
   }
 }
-  
+
+// También necesitarás estos imports en tu archivo ApiService:
+// import 'dart:io';
+// import 'package:dio/dio.dart';
+// import 'package:http_parser/http_parser.dart';
+
   /// Actualiza las imágenes de la mascota
   Future<Response> updatePetImages({
     required String userUID,

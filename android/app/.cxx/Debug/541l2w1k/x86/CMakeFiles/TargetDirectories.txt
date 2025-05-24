@@ -1,0 +1,2 @@
+/Users/rygodc/Documents/TFG/FlutterFrontMascotas/android/app/.cxx/Debug/541l2w1k/x86/CMakeFiles/edit_cache.dir
+/Users/rygodc/Documents/TFG/FlutterFrontMascotas/android/app/.cxx/Debug/541l2w1k/x86/CMakeFiles/rebuild_cache.dir
