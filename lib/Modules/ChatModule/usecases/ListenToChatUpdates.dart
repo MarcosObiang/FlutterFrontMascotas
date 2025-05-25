@@ -1,6 +1,7 @@
 import 'package:logger/web.dart';
 import 'package:mascotas_citas/Modules/ChatModule/repo/ChatRepository.dart';
 import 'package:mascotas_citas/Modules/ChatModule/state/ChatState.dart';
+import 'package:mascotas_citas/interfaces/data_handler_interface.dart';
 import 'package:mascotas_citas/interfaces/self_started_use_case_interface.dart';
 import 'package:mascotas_citas/interfaces/usecase_interface.dart';
 
@@ -16,7 +17,7 @@ class ListenToChatUpdates
     chatRepository.onMessageReceived.listen((data) {
       chatState.setData(data);
     }, onError: (error) {
-      chatState.setErrorStatus();
+      chatState.setStatus(Status.error);
       Logger().e(error);
     });
     return Future.value(true);

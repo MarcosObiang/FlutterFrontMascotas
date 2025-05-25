@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mascotas_citas/Modules/ChatModule/model/ChatModel.dart';
 import 'package:mascotas_citas/Modules/ChatModule/state/ChatState.dart';
+import 'package:mascotas_citas/Modules/MessagesModule/view/MessagesView.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
+import 'package:mascotas_citas/interfaces/data_handler_interface.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 import 'package:provider/provider.dart';
 
@@ -80,6 +82,11 @@ class _ChatViewState extends State<ChatView> {
             // Handle chat tap
             // You can navigate to a chat detail page or perform any action
             print("Chat tapped: ${chat.user1Name}");
+            Navigator.push(context, MaterialPageRoute(builder: (context) {
+              // Aquí puedes navegar a la vista de mensajes del chat
+              // Asegúrate de que la vista de mensajes esté implementada
+              return MessagesView(chatUID: chat.chatId);
+            }));
           },
         ),
         const Divider(),

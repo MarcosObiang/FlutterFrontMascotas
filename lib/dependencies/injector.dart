@@ -18,6 +18,8 @@ import 'package:mascotas_citas/Modules/LikesModule/usecases/GetLikesUseCase.dart
 import 'package:mascotas_citas/Modules/LikesModule/usecases/ListenToLikesUseCase.dart';
 import 'package:mascotas_citas/Modules/LikesModule/usecases/RejectLikeUseCase.dart';
 import 'package:mascotas_citas/Modules/LikesModule/usecases/RevealLikesUseCase.dart';
+import 'package:mascotas_citas/Modules/MessagesModule/MessagesModuleStarter.dart';
+import 'package:mascotas_citas/Modules/MessagesModule/dependencies/injector.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/repo/SettingsRepo.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/state/settingsState.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/usecases/LogOutUseCase.dart';
@@ -58,6 +60,7 @@ void setUpStates() {
 }
 
 void setUpDependencies() {
+  MessagesModuleInjector.init();
   getIt.registerSingleton<WebSocketInitUseCase>(
       WebSocketInitUseCase(webSocketService: getIt<WebSocketService>()));
   getIt.registerSingleton<LikeRepositoryImpl>(LikeRepositoryImpl(
@@ -103,6 +106,7 @@ void setUpDependencies() {
           authDataService: getIt<AuthDataService>(),
           authRepo: getIt<AuthenticationRepo>()));
 getIt.registerSingleton<ChatModuleStarter>(ChatModuleStarter(
+      chatState: getIt<ChatState>(),
       useCases: [getIt<GetChatsUseCase>(), getIt<ListenToChatUpdates>()]));
   getIt.registerSingleton<WebSocketStarter>(
       WebSocketStarter(webSocketInitUseCase: getIt<WebSocketInitUseCase>()));
@@ -110,6 +114,7 @@ getIt.registerSingleton<ChatModuleStarter>(ChatModuleStarter(
       likeModuleState: getIt<LikeModuleState>(),
       likeRepository: getIt<LikeRepositoryImpl>()));
   getIt.registerSingleton<LikeModuleStarter>(LikeModuleStarter(
+      likeModuleState: getIt<LikeModuleState>(),
       useCases: [getIt<Listentolikesusecase>(), getIt<GetLikesUseCase>()]));
   getIt.registerSingleton<RevealLikeUseCase>(RevealLikeUseCase(
       likeRepository: getIt<LikeRepositoryImpl>(),
@@ -119,7 +124,8 @@ getIt.registerSingleton<ChatModuleStarter>(ChatModuleStarter(
       likeModuleState: getIt<LikeModuleState>()));
   getIt.registerSingleton<StarterManager>(StarterManager(
       selfLoginWithGoogleUseCase: getIt<CheckIfUsserCanLogInUseCase>(),
-      starters: [getIt<WebSocketStarter>(), getIt<LikeModuleStarter>(),getIt<ChatModuleStarter>()]));
+      starters: [getIt<WebSocketStarter>(), getIt<LikeModuleStarter>(),getIt<ChatModuleStarter>(),
+        getIt<MessagesModuleStarter>()]));
 }
 
 Future<void> initAsyncDependencies() async {
