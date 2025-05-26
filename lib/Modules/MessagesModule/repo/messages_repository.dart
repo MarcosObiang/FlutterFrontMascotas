@@ -51,6 +51,8 @@ class MessagesRepositoryImpl implements MessagesRepository {
   @override
   Future<void> sendMessage({required MessageModel message}) async {
     try {
+      dynamic messageParsed=message.toJson();
+      print(messageParsed);
       final result = await dioApiService.post(
           path: "/messages-service/api/messages", data: message.toJson());
       if (result.statusCode != 201) {

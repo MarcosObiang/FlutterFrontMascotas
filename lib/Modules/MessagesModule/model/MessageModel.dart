@@ -43,9 +43,9 @@ class MessageModel extends Equatable {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      
       'chatUID': chatUID,
-      'created_at': createdAt.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
       'readByReciever': readByReciever,
       'senderId': senderId,
       'recieverId': recieverId,

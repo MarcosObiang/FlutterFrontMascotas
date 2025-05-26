@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mascotas_citas/Exceptions/ModuleException.dart';
 import 'package:mascotas_citas/Modules/MessagesModule/DataHandlers/MessagesDataHandler.dart';
+import 'package:mascotas_citas/Modules/MessagesModule/DataHandlers/MessagesRealTimeAddDataHandlerStrategy.dart';
 import 'package:mascotas_citas/Modules/MessagesModule/model/MessagesContainer.dart';
 import 'package:mascotas_citas/interfaces/data_handler_interface.dart';
 import 'package:mascotas_citas/interfaces/i_list_item_manager.dart';
@@ -21,6 +22,7 @@ class MessagesState extends ChangeNotifier
     setStatus(Status.initial);
     dataProcessingStrategies = List.empty(growable: true);
     addDataProcessingStrategy(MesasgesDataHandler());
+    addDataProcessingStrategy(MessagesRealTimeAddDataHandlerStrategy());
   }
 
   void addDataProcessingStrategy(
@@ -56,6 +58,10 @@ class MessagesState extends ChangeNotifier
 
   @override
   void setLastListAction({required LastListAction action}) {
-    // TODO: implement setLastListAction
+    lastListAction = action;
+
+    WidgetsBinding.instance.scheduleFrameCallback((_) {
+      notifyListeners();
+    });
   }
 }
