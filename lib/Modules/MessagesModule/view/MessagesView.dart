@@ -18,6 +18,14 @@ class MessagesView extends StatefulWidget {
 class _MessagesViewState extends State<MessagesView> {
   ScrollController scrollController = ScrollController();
 
+  void initState() {
+    super.initState();
+
+    // Aquí podrías iniciar cualquier lógica necesaria, como escuchar cambios en el estado de los mensajes.
+    // Por ejemplo, si tienes un UseCase que escucha mensajes, podrías iniciarlo aquí.
+    // getIt<ListenToMessagesUseCase>().init();
+  }
+
   @override
   void dispose() {
     scrollController.dispose();
@@ -40,9 +48,34 @@ class _MessagesViewState extends State<MessagesView> {
                 MessagesContainer(chatUID: widget.chatUID, messages: []);
 
         // Programa el desplazamiento al final después de que el frame se haya construido
+        // Esto se ejecutará después de cada reconstrucción del Consumer debido a cambios en messagesState.
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (scrollController.hasClients) {
-            scrollController.jumpTo(scrollController.position.maxScrollExtent);
+          // Asegurarse de que hay clientes y mensajes antes de intentar scrollear.
+          // Y que el scrollController todavía esté montado.
+          if (scrollController.hasClients &&
+              selectedMessageContainer.messages.isNotEmpty) {
+            // Usar Future.delayed para asegurar que el scroll ocurra después
+            // de que el layout se haya estabilizado completamente.
+            Future.delayed(Duration.zero, () {
+              if (scrollController.hasClients) {
+                // Re-verificar por si acaso el widget se desmontó mientras esperaba
+                double previousMaxScrollExtent = -1.0;
+                double currentMaxScrollExtent;
+
+                // Intentar scrollear al fondo. Repetir si el maxScrollExtent aumenta después de un salto.
+                // El bucle se detendrá cuando maxScrollExtent deje de aumentar.
+                while (true) {
+                  currentMaxScrollExtent = scrollController.position.maxScrollExtent;
+                  if (currentMaxScrollExtent > previousMaxScrollExtent) {
+                    scrollController.position.jumpTo(currentMaxScrollExtent);
+                    previousMaxScrollExtent = currentMaxScrollExtent; // Actualizar el valor de referencia.
+                  } else {
+                    // Si maxScrollExtent no aumentó, significa que ya estamos al final o se ha estabilizado.
+                    break;
+                  }
+                }
+              }
+            });
           }
         });
 
@@ -56,7 +89,11 @@ class _MessagesViewState extends State<MessagesView> {
               children: [
                 Expanded(
                   child: ListView.builder(
+                    addAutomaticKeepAlives: true,
+                    cacheExtent: 1000.0, // Ajusta según tus necesidades
+
                     controller: scrollController,
+                    reverse: false,
                     itemCount: selectedMessageContainer.messages.length,
                     itemBuilder: (context, index) {
                       final message = selectedMessageContainer.messages[index];
@@ -111,10 +148,14 @@ class _MessageBubbleState extends State<MessageBubble> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
-          crossAxisAlignment: isMyMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isMyMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Text(widget.message.messageContent),
-            Text(widget.message.createdAt.toLocal().toString().substring(11,16), style: TextStyle(fontSize: 10, color: Colors.black54),) // Hora del mensaje
+            Text(
+              widget.message.createdAt.toLocal().toString().substring(11, 16),
+              style: TextStyle(fontSize: 10, color: Colors.black54),
+            ) // Hora del mensaje
           ],
         ),
       ),
@@ -141,7 +182,6 @@ class _MessageInputBarState extends State<MessageInputBar> {
   final FocusNode _focusNode = FocusNode();
   final SendMessageUseCase sendMessageUseCase = getIt<SendMessageUseCase>();
 
-
   @override
   void dispose() {
     _textController.dispose();
@@ -149,32 +189,29 @@ class _MessageInputBarState extends State<MessageInputBar> {
     super.dispose();
   }
 
-  Future<void> _sendMessage() async{
+  Future<void> _sendMessage() async {
     if (_textController.text.trim().isEmpty) {
       return; // No enviar mensajes vacíos
     }
 
- 
-     final authService = getIt<AuthDataService>();
-    
-     final newMessage = MessageModel(
-       chatUID: widget.chatUID,
-       createdAt: DateTime.now().toUtc(),
-       readByReciever: false,
-       senderId: authService.userUID!,
-       recieverId: authService.userUID!, // Necesitarías pasar esto
-       messageContent: _textController.text,
-       messageType: 'TEXT', // O el tipo que corresponda
-       messageId: "UID_DEL_MENSAJE", // Generar un ID único
-     );
-     sendMessageUseCase.execute(newMessage);
+    final authService = getIt<AuthDataService>();
 
-
-
+    final newMessage = MessageModel(
+      chatUID: widget.chatUID,
+      createdAt: DateTime.now().toUtc(),
+      readByReciever: false,
+      senderId: authService.userUID!,
+      recieverId: authService.userUID!, // Necesitarías pasar esto
+      messageContent: _textController.text,
+      messageType: 'TEXT', // O el tipo que corresponda
+      messageId: "UID_DEL_MENSAJE", // Generar un ID único
+    );
+    sendMessageUseCase.execute(newMessage);
 
     print('Mensaje enviado: ${_textController.text}');
     _textController.clear();
-    _focusNode.requestFocus(); // Para mantener el foco después de enviar, opcional
+    _focusNode
+        .requestFocus(); // Para mantener el foco después de enviar, opcional
   }
 
   @override
@@ -191,12 +228,13 @@ class _MessageInputBarState extends State<MessageInputBar> {
                 hintText: 'Escribe un mensaje...',
                 border: OutlineInputBorder(),
               ),
-              onSubmitted: (_)async =>await _sendMessage(), // Enviar con la tecla Enter del teclado
+              onSubmitted: (_) async =>
+                  await _sendMessage(), // Enviar con la tecla Enter del teclado
             ),
           ),
           IconButton(
             icon: const Icon(Icons.send),
-            onPressed:() async =>  await _sendMessage(),
+            onPressed: () async => await _sendMessage(),
           ),
         ],
       ),

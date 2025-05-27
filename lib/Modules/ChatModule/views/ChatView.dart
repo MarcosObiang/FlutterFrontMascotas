@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:mascotas_citas/Modules/ChatModule/model/ChatModel.dart';
 import 'package:mascotas_citas/Modules/ChatModule/state/ChatState.dart';
 import 'package:mascotas_citas/Modules/MessagesModule/view/MessagesView.dart';
@@ -17,6 +18,10 @@ class ChatView extends StatefulWidget {
 }
 
 class _ChatViewState extends State<ChatView> {
+  // Formateadores para la hora y la fecha
+  final DateFormat _timeFormatter = DateFormat.Hm(); // HH:mm
+  final DateFormat _dateFormatter = DateFormat('dd/MM'); // dd/MM
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
@@ -50,6 +55,30 @@ class _ChatViewState extends State<ChatView> {
     );
   }
 
+  String _getDateLabel(DateTime timestamp) {
+    final now = DateTime.now();
+    final localTimestamp = timestamp.toLocal();
+
+    if (now.year == localTimestamp.year &&
+        now.month == localTimestamp.month &&
+        now.day == localTimestamp.day) {
+      return "Hoy";
+    } else {
+      // Opcional: Podrías añadir lógica para "Ayer" aquí si lo deseas
+      // final yesterday = now.subtract(const Duration(days: 1));
+      // if (yesterday.year == localTimestamp.year &&
+      //     yesterday.month == localTimestamp.month &&
+      //     yesterday.day == localTimestamp.day) {
+      //   return "Ayer";
+      // }
+      return _dateFormatter.format(localTimestamp);
+    }
+  }
+
+  String _getTimeLabel(DateTime timestamp) {
+    return _timeFormatter.format(timestamp.toLocal());
+  }
+
   Column chatTile(ChatState state, int index, ChatModel chat) {
     String? token = getIt<AuthDataService>().getToken();
 
@@ -59,7 +88,7 @@ class _ChatViewState extends State<ChatView> {
           leading: Container(
             width: 180.w,
             height: 180.w,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
             ),
             child: ClipOval(
@@ -71,16 +100,35 @@ class _ChatViewState extends State<ChatView> {
                 placeholder: (context, url) => SizedBox(
                     height: 100.h,
                     width: 100.w,
-                    child: CircularProgressIndicator()),
-                errorWidget: (context, url, error) => Icon(Icons.error),
+                    child: const CircularProgressIndicator()),
+                errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
             ),
           ),
           title: Text(chat.user1Name),
-          subtitle: Text("chat.lastMessage"),
+          subtitle: Text(chat.lastMessage?.messageContent ?? ''),
+          trailing: chat.lastMessage != null
+              ? Column(
+                  mainAxisSize: MainAxisSize.min, // Para que la columna no ocupe todo el alto
+                  mainAxisAlignment: MainAxisAlignment.center, // Centrar verticalmente
+                  crossAxisAlignment: CrossAxisAlignment.end, // Alinear texto a la derecha
+                  children: <Widget>[
+                    Text(
+                      _getDateLabel(chat.lastMessage!.createdAt),
+                      style: TextStyle(
+                        fontSize: 35.sp, // Ligeramente más pequeño
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    SizedBox(height: 2.h), // Pequeño espacio vertical
+                    Text(
+                      _getTimeLabel(chat.lastMessage!.createdAt),
+                      style: TextStyle(fontSize: 30.sp), // Tamaño original de la hora
+                    ),
+                  ],
+                )
+              : const SizedBox.shrink(), // No mostrar nada si no hay último mensaje
           onTap: () {
-            // Handle chat tap
-            // You can navigate to a chat detail page or perform any action
             print("Chat tapped: ${chat.user1Name}");
             Navigator.push(context, MaterialPageRoute(builder: (context) {
               // Aquí puedes navegar a la vista de mensajes del chat

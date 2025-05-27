@@ -45,7 +45,13 @@ class RealTimeUpdateChatDataHandler
         DataProcessingStrategy<ChatModel, WebSocketDataContainer<ChatModel>,
             ChatState> {
   @override
-  bool canProcess(WebSocketDataContainer<ChatModel> data, ChatState state) {
+  bool canProcess(dynamic data, ChatState state) {
+    if (data == null) {
+      return false;
+    }
+    if (data is! WebSocketDataContainer<ChatModel>) {
+      return false;
+    }
     return data.eventType == ReealtimeEventType.UPDATE;
   }
 
@@ -75,7 +81,13 @@ class RealTimeDeleteChatDataHandler
         DataProcessingStrategy<ChatModel, WebSocketDataContainer<ChatModel>,
             ChatState> {
   @override
-  bool canProcess(WebSocketDataContainer<ChatModel> data, ChatState state) {
+  bool canProcess(dynamic data, ChatState state) {
+    if (data == null) {
+      return false;
+    }
+    if (data is! WebSocketDataContainer<ChatModel>) {
+      return false;
+    }
     return data.eventType == ReealtimeEventType.DELETED;
   }
 

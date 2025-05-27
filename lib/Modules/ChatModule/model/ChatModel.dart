@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:mascotas_citas/Modules/MessagesModule/model/MessageModel.dart';
 import 'package:mascotas_citas/utils/GetUriFromString.dart';
 
 class ChatModel extends Equatable {
@@ -14,6 +15,7 @@ class ChatModel extends Equatable {
   bool user2Blocked;
   String? user1NotificationToken; // Nullable if it can be absent
   String? user2NotificationToken; // Nullable if it can be absent
+  MessageModel? lastMessage; // Nullable if no messages exist
 
   ChatModel({
     required this.chatId,

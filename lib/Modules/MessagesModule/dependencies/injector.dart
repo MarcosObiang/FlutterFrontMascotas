@@ -1,3 +1,4 @@
+import 'package:mascotas_citas/Modules/ChatModule/state/ChatState.dart';
 import 'package:mascotas_citas/Modules/MessagesModule/MessagesModuleStarter.dart';
 import 'package:mascotas_citas/Modules/MessagesModule/repo/messages_repository.dart';
 import 'package:mascotas_citas/Modules/MessagesModule/state/MessagesState.dart';
@@ -21,12 +22,14 @@ class MessagesModuleInjector {
     getIt.registerSingleton<GetMessagesUseCase>(GetMessagesUseCase(
       messagesRepository: getIt<MessagesRepository>(),
       messagesState: getIt<MessagesState>(),
+      chatState: getIt<ChatState>(),
     ));
 
     getIt.registerSingleton<ListenToMessagesUseCase>(
       ListenToMessagesUseCase(
         messagesRepository: getIt<MessagesRepository>(),
         messagesState: getIt<MessagesState>(),
+        chatState: getIt<ChatState>(),
       ),
     );
 

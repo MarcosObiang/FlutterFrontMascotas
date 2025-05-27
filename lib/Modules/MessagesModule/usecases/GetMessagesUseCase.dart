@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:mascotas_citas/Modules/ChatModule/state/ChatState.dart';
 import 'package:mascotas_citas/Modules/MessagesModule/model/MessageModel.dart';
 import 'package:mascotas_citas/Modules/MessagesModule/model/MessagesContainer.dart';
 import 'package:mascotas_citas/Modules/MessagesModule/repo/messages_repository.dart';
@@ -39,7 +40,8 @@ class GetMessagesUseCase
     implements UseCaseInterfacae, ISelfStartedUseCaseInterface {
   MessagesRepository messagesRepository;
   MessagesState messagesState;
-  GetMessagesUseCase({required this.messagesRepository, required this.messagesState});
+  ChatState chatState;
+  GetMessagesUseCase({required this.messagesRepository, required this.messagesState, required this.chatState});
 
   @override
   Future<List<MessagesContainer>> execute() async {
@@ -54,6 +56,7 @@ class GetMessagesUseCase
           debugLabel: 'GetMessagesUseCase - parseAllMessagesInBackground');
 
       messagesState.setData(parsedMessages);
+      chatState.setData(parsedMessages);
 
 
       return parsedMessages;

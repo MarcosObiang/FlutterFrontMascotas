@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mascotas_citas/Exceptions/ModuleException.dart';
 import 'package:mascotas_citas/Modules/ChatModule/DataHandlers/ChatDataHandler.dart';
 import 'package:mascotas_citas/Modules/ChatModule/DataHandlers/RealTimeChatDataHandler.dart';
+import 'package:mascotas_citas/Modules/ChatModule/DataHandlers/RealTimeChatSortDataHandler.dart';
 import 'package:mascotas_citas/Modules/ChatModule/model/ChatModel.dart';
 // import 'package:mascotas_citas/Modules/LikesModule/model/LikeModel.dart'; // Import no utilizado
 import 'package:mascotas_citas/Modules/WebSocketModule/WebSocketDataContainer.dart';
@@ -48,9 +49,11 @@ class ChatState extends ChangeNotifier
     setStatus(Status.initial);
     dataProcessingStrategies = List.empty(growable: true);
     addDataProcessingStrategy(ChatDataHandler());
+    addDataProcessingStrategy(SortChatByMessageDataHandler());
     addDataProcessingStrategy(RealTimeAddChatDataHandler());
     addDataProcessingStrategy(RealTimeUpdateChatDataHandler());
     addDataProcessingStrategy(RealTimeDeleteChatDataHandler());
+    addDataProcessingStrategy(RealTimeSortChatByMessageDataHandlerStrategy());
   }
 
   /// Establece los datos en el estado.
