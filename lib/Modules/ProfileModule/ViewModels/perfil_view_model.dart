@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:mascotas_citas/models/PetModel.dart';
 import 'package:mascotas_citas/services/ApiService.dart';
@@ -216,8 +215,8 @@ class PerfilViewModel extends ChangeNotifier {
       
       // Usar el endpoint local especificado
       final userResponse = await _apiService.get(
-        path: 'http://localhost:8082/users/get-user-data',
-        queryParams: {'userUID': userId}, // Usar ID del usuario actual
+        path: 'http://localhost:8082/users/get',
+        headers: {'userUID': userId}, // Usar ID del usuario actual
       );
       
       if (userResponse.statusCode == 200) {
