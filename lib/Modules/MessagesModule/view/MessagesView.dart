@@ -17,6 +17,8 @@ class MessagesView extends StatefulWidget {
 
 class _MessagesViewState extends State<MessagesView> {
   ScrollController scrollController = ScrollController();
+  bool isScrollPositionListenerCalled=false;
+  bool shouldMakeScrollButtonVisible=false;
 
   void initState() {
     super.initState();
@@ -31,6 +33,40 @@ class _MessagesViewState extends State<MessagesView> {
     scrollController.dispose();
     super.dispose();
   }
+
+
+  void scrollPositionListener() {
+    if (!scrollController.hasClients) return;
+    if(isScrollPositionListenerCalled) return;
+    isScrollPositionListenerCalled=true;
+
+    scrollController.addListener(() {
+      double scrollControllerPosition=scrollController.position.pixels;
+      double scrollControllerMaxPosition=scrollController.position.maxScrollExtent;
+      double scrollPercentage=(scrollControllerPosition/scrollControllerMaxPosition)*100;
+
+      if(scrollPercentage>=30){
+        if(shouldMakeScrollButtonVisible) return;
+        setState(() {
+          shouldMakeScrollButtonVisible=true;
+        });
+
+      }
+      else{
+        if(!shouldMakeScrollButtonVisible) return;
+        setState(() {
+          shouldMakeScrollButtonVisible=false;
+        });
+      }
+
+
+      
+
+      print(scrollPercentage);
+    });
+      
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -50,33 +86,9 @@ class _MessagesViewState extends State<MessagesView> {
         // Programa el desplazamiento al final después de que el frame se haya construido
         // Esto se ejecutará después de cada reconstrucción del Consumer debido a cambios en messagesState.
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          scrollPositionListener();
           // Asegurarse de que hay clientes y mensajes antes de intentar scrollear.
           // Y que el scrollController todavía esté montado.
-          if (scrollController.hasClients &&
-              selectedMessageContainer.messages.isNotEmpty) {
-            // Usar Future.delayed para asegurar que el scroll ocurra después
-            // de que el layout se haya estabilizado completamente.
-            Future.delayed(Duration.zero, () {
-              if (scrollController.hasClients) {
-                // Re-verificar por si acaso el widget se desmontó mientras esperaba
-                double previousMaxScrollExtent = -1.0;
-                double currentMaxScrollExtent;
-
-                // Intentar scrollear al fondo. Repetir si el maxScrollExtent aumenta después de un salto.
-                // El bucle se detendrá cuando maxScrollExtent deje de aumentar.
-                while (true) {
-                  currentMaxScrollExtent = scrollController.position.maxScrollExtent;
-                  if (currentMaxScrollExtent > previousMaxScrollExtent) {
-                    scrollController.position.jumpTo(currentMaxScrollExtent);
-                    previousMaxScrollExtent = currentMaxScrollExtent; // Actualizar el valor de referencia.
-                  } else {
-                    // Si maxScrollExtent no aumentó, significa que ya estamos al final o se ha estabilizado.
-                    break;
-                  }
-                }
-              }
-            });
-          }
         });
 
         return Scaffold(
@@ -88,17 +100,45 @@ class _MessagesViewState extends State<MessagesView> {
             child: Column(
               children: [
                 Expanded(
-                  child: ListView.builder(
-                    addAutomaticKeepAlives: true,
-                    cacheExtent: 1000.0, // Ajusta según tus necesidades
-
-                    controller: scrollController,
-                    reverse: false,
-                    itemCount: selectedMessageContainer.messages.length,
-                    itemBuilder: (context, index) {
-                      final message = selectedMessageContainer.messages[index];
-                      return MessageBubble(message: message);
-                    },
+                  child: Stack(
+                    children: [
+                
+                      ListView.builder(
+                        
+                        
+                                          
+                        controller: scrollController,
+                        reverse: true,
+                        itemCount: selectedMessageContainer.messages.length,
+                        itemBuilder: (context, index) {
+                          final message = selectedMessageContainer.messages[selectedMessageContainer.messages.length - index - 1];
+                          return MessageBubble(message: message);
+                        },
+                      ),
+                       shouldMakeScrollButtonVisible?     RepaintBoundary(
+                         child: Align(
+                          alignment: Alignment.bottomRight,
+                          child: FloatingActionButton(
+                            backgroundColor: Colors.black.withAlpha(100),
+                            foregroundColor: Colors.black,
+                            mini: true,
+                            shape: const CircleBorder(),
+                            elevation: 0,
+                            
+                            onPressed: () {
+                              if(shouldMakeScrollButtonVisible){
+                                scrollController.animateTo(
+                                  scrollController.position.minScrollExtent,
+                                  duration: const Duration(milliseconds: 500),
+                                  curve: Curves.easeOut,
+                                );
+                              }
+                            },
+                            child: const Icon(Icons.arrow_downward,color: Colors.white,),
+                          ),
+                                               ),
+                       ):SizedBox(height: 0,width: 0,),
+                    ],
                   ),
                 ),
                 MessageInputBar(
@@ -241,3 +281,5 @@ class _MessageInputBarState extends State<MessageInputBar> {
     );
   }
 }
+
+
