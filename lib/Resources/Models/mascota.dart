@@ -23,7 +23,7 @@ class Mascota {
   final String estado; // "disponible", "en proceso", "adoptada"
   
   // Añadido el getter fotoPerfil que retorna la primera foto o una URL por defecto
-  String get fotoPerfil => fotos.isNotEmpty ? fotos[0] : 'https://via.placeholder.com/150';
+  String get fotoPerfil => fotos.isNotEmpty ? fotos[0] : 'assets/images/default_user.png';
   
   // Getter para determinar si la mascota pertenece a un particular
   bool get esDeParticular => propietarioId != null;

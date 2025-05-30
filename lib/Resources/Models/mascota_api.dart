@@ -313,7 +313,7 @@ class Mascota {
       birthDate: json['birthDate'] ?? 0,
       intereses: intereses,
       propietarioNombre: ownerData['name'] ?? 'Propietario',
-      propietarioFoto: ownerData['userImage1'] ?? 'https://via.placeholder.com/150',
+      propietarioFoto: ownerData['userImage1'] ?? 'assets/images/default_user.png',
       ubicacion: ownerData['location'] ?? 'Desconocida',
     );
   }

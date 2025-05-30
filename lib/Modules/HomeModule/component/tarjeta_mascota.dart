@@ -109,11 +109,11 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
   }
 
   // Obtener imagen actual para mostrar
-  String _getCurrentImage() {
+  String? _getCurrentImage() {
     final List<String> images = _getValidImages();
     
     if (images.isEmpty) {
-      return 'https://via.placeholder.com/400/300?text=Sin+Imagen';
+      return null; // Retornamos null en lugar de placeholder
     }
     
     // Construir la URL completa para la imagen actual
@@ -140,13 +140,81 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
     }
   }
 
+  // Widget para mostrar cuando no hay imagen
+  Widget _buildNoImageWidget(ColorScheme colorScheme) {
+    return Container(
+      color: colorScheme.surfaceContainerHighest,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.pets,
+            size: 80,
+            color: colorScheme.primary.withOpacity(0.6),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Sin imagen disponible',
+            style: TextStyle(
+              color: colorScheme.onSurface.withOpacity(0.7),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Foto próximamente',
+            style: TextStyle(
+              color: colorScheme.onSurface.withOpacity(0.5),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget para mostrar error de carga de imagen
+  Widget _buildImageErrorWidget(ColorScheme colorScheme) {
+    return Container(
+      color: colorScheme.surfaceContainerHighest,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.broken_image,
+            size: 60,
+            color: colorScheme.error.withOpacity(0.7),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Error al cargar imagen',
+            style: TextStyle(
+              color: colorScheme.error,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Verifica tu conexión',
+            style: TextStyle(
+              color: colorScheme.onSurface.withOpacity(0.6),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Obtener el provider de tema
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-  final theme = isDarkMode ? themeProvider.darkTheme : themeProvider.lightTheme;
-  final colorScheme = theme.colorScheme;
+    final theme = isDarkMode ? themeProvider.darkTheme : themeProvider.lightTheme;
+    final colorScheme = theme.colorScheme;
     
     // Calcular la edad en años
     final DateTime now = DateTime.now();
@@ -157,8 +225,7 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
     
     // Obtener la lista de imágenes disponibles para los indicadores
     final List<String> images = _getValidImages();
-    
-    
+    final String? currentImageUrl = _getCurrentImage();
     
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -176,42 +243,29 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Imagen principal con animación
-                FadeTransition(
-                  opacity: _animation,
-                  child: Image.network(
-                    _getCurrentImage(),
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: colorScheme.surfaceContainerHighest,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.error, size: 50, color: colorScheme.error),
-                          const SizedBox(height: 10),
-                          Text(
-                            '¡Ups! No se pudo cargar la imagen',
-                            style: TextStyle(
-                              color: colorScheme.error,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: theme.colorScheme.primary,
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                              : null,
+                // Imagen principal con animación o placeholder
+                currentImageUrl != null
+                    ? FadeTransition(
+                        opacity: _animation,
+                        child: Image.network(
+                          currentImageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => 
+                              _buildImageErrorWidget(colorScheme),
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                color: theme.colorScheme.primary,
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
-                ),
+                      )
+                    : _buildNoImageWidget(colorScheme),
                 
                 // Gradiente para mejor legibilidad del texto
                 Positioned(
@@ -254,7 +308,7 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
                 ),
                 
                 // Botones de navegación para las fotos
-                if (images.length > 1) ...[
+                if (images.length > 1 && currentImageUrl != null) ...[
                   // Botón anterior
                   Positioned(
                     left: 10,
@@ -303,7 +357,7 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
                 ],
                 
                 // Indicadores de carrusel
-                if (images.length > 1)
+                if (images.length > 1 && currentImageUrl != null)
                   Positioned(
                     bottom: 110,
                     left: 0,
@@ -337,7 +391,7 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
                   ),
                 
                 // Contador de fotos
-                if (images.isNotEmpty)
+                if (images.isNotEmpty && currentImageUrl != null)
                   Positioned(
                     top: 16,
                     left: 16,
@@ -564,22 +618,22 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
                   ),
                   child: Row(
                     children: [
-                      // Foto de perfil del dueño
+                      // Foto de perfil del dueño (usando un ícono en lugar de placeholder)
                       Container(
                         width: 30,
                         height: 30,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
+                          color: colorScheme.primaryContainer,
                           border: Border.all(
                             color: colorScheme.primary,
                             width: 2,
                           ),
-                          image: DecorationImage(
-                            image: NetworkImage(
-                              'https://via.placeholder.com/100?text=Usuario',
-                            ),
-                            fit: BoxFit.cover,
-                          ),
+                        ),
+                        child: Icon(
+                          Icons.person,
+                          size: 18,
+                          color: colorScheme.primary,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -599,6 +653,12 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
                             ),
                           ],
                         ),
+                      ),
+                      // Ícono de verificación del dueño
+                      Icon(
+                        Icons.verified_user,
+                        size: 16,
+                        color: colorScheme.primary.withOpacity(0.7),
                       ),
                     ],
                   ),
