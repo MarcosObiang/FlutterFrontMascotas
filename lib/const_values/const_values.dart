@@ -4,6 +4,8 @@ class ConstValues {
   static const String hostName =
       "a0ae-85-61-96-56.ngrok-free.app";
 
+
+
   static const String baseUrl = "https://$hostName";
 
   static const String redirectUrl = "com.example.mascotascitas:/oauth2redirect";

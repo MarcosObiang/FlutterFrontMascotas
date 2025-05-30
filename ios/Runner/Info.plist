@@ -2,8 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to location when open.</string>
+	<!-- Configuración básica de la app -->
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -26,6 +25,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	
+	<!-- UI Configuration -->
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -47,9 +48,254 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- Status Bar -->
+	<key>UIStatusBarHidden</key>
+	<false/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+	
+	<!-- PERMISOS DE LOCALIZACIÓN -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tu ubicación para encontrar veterinarias y servicios cercanos para tus mascotas</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tu ubicación para encontrar veterinarias y servicios cercanos para tus mascotas</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tu ubicación para encontrar veterinarias y servicios cercanos para tus mascotas</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tu ubicación para encontrar veterinarias y servicios cercanos para tus mascotas</string>
+	
+	<!-- PERMISOS DE CÁMARA Y FOTOS -->
 	<key>NSCameraUsageDescription</key>
-<string>Esta aplicación necesita acceso a la cámara para tomar fotos</string>
-<key>NSPhotoLibraryUsageDescription</key>
-<string>Esta aplicación necesita acceso a la galería para seleccionar fotos</string>
+	<string>Esta aplicación necesita acceso a la cámara para tomar fotos de tus mascotas y documentos veterinarios</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Esta aplicación necesita acceso a la galería para seleccionar fotos de tus mascotas y documentos veterinarios</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Esta aplicación necesita permiso para guardar fotos de tus mascotas en tu galería</string>
+	
+	<!-- PERMISOS DE MICRÓFONO -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Esta aplicación necesita acceso al micrófono para grabar notas de voz sobre el cuidado de tus mascotas</string>
+	
+	<!-- PERMISOS DE CONTACTOS -->
+	<key>NSContactsUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tus contactos para compartir información de veterinarios y cuidadores de mascotas</string>
+	
+	<!-- PERMISOS DE CALENDARIO -->
+	<key>NSCalendarsUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tu calendario para programar citas veterinarias y recordatorios de cuidado de mascotas</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tus recordatorios para crear alertas de medicamentos y citas veterinarias</string>
+	
+	<!-- PERMISOS DE NOTIFICACIONES -->
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Esta aplicación necesita enviar notificaciones para recordarte citas veterinarias y horarios de medicamentos</string>
+	
+	<!-- PERMISOS DE SALUD (HealthKit) -->
+	<key>NSHealthShareUsageDescription</key>
+	<string>Esta aplicación puede leer datos de salud relacionados con el bienestar de tus mascotas</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Esta aplicación puede actualizar datos de salud relacionados con el bienestar de tus mascotas</string>
+	
+	<!-- PERMISOS DE MOTION -->
+	<key>NSMotionUsageDescription</key>
+	<string>Esta aplicación puede usar datos de movimiento para rastrear la actividad física de tus mascotas</string>
+	
+	<!-- PERMISOS DE BLUETOOTH -->
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Esta aplicación necesita Bluetooth para conectarse con dispositivos de seguimiento y monitoreo de mascotas</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Esta aplicación necesita Bluetooth para conectarse con dispositivos de seguimiento y monitoreo de mascotas</string>
+	
+	<!-- PERMISOS DE FACE ID / TOUCH ID -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Esta aplicación usa Face ID para autenticación segura y proteger la información de tus mascotas</string>
+	
+	<!-- PERMISOS DE SIRI -->
+	<key>NSSiriUsageDescription</key>
+	<string>Esta aplicación puede usar Siri para crear recordatorios rápidos sobre el cuidado de tus mascotas</string>
+	
+	<!-- PERMISOS DE ARCHIVOS -->
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Esta aplicación necesita acceso a documentos para guardar y leer archivos médicos de tus mascotas</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>Esta aplicación necesita acceso a la carpeta de descargas para guardar documentos veterinarios</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>Esta aplicación necesita acceso al escritorio para organizar documentos de mascotas</string>
+	
+	<!-- PERMISOS DE MÚSICA -->
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Esta aplicación puede reproducir música relajante para tus mascotas durante el tratamiento</string>
+	
+	<!-- SEGURIDAD DE TRANSPORTE DE RED -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+		<key>NSAllowsArbitraryLoadsForMedia</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+			<key>127.0.0.1</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+			</dict>
+			<key>192.168.1.1</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+			</dict>
+		</dict>
+	</dict>
+	
+	<!-- CONFIGURACIÓN DE BACKGROUND MODES -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>background-fetch</string>
+		<string>background-processing</string>
+		<string>remote-notification</string>
+		<string>background-audio</string>
+		<string>location</string>
+		<string>voip</string>
+	</array>
+	
+	<!-- CONFIGURACIÓN DE URL SCHEMES -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>mascotas-citas-url</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>mascotascitas</string>
+				<string>https</string>
+				<string>http</string>
+			</array>
+		</dict>
+	</array>
+	
+	<!-- CONFIGURACIÓN DE EXPORTED UTIS -->
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeIdentifier</key>
+			<string>com.mascotascitas.veterinary-record</string>
+			<key>UTTypeDescription</key>
+			<string>Veterinary Record</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>vetrecord</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	
+	<!-- CONFIGURACIÓN DE SUPPORTED DOCUMENT TYPES -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>PDF Document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.adobe.pdf</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Image</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.image</string>
+				<string>public.jpeg</string>
+				<string>public.png</string>
+			</array>
+		</dict>
+	</array>
+	
+	<!-- CONFIGURACIÓN DE QUERIES SCHEMES -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>mailto</string>
+		<string>tel</string>
+		<string>sms</string>
+		<string>whatsapp</string>
+		<string>instagram</string>
+		<string>facebook</string>
+		<string>twitter</string>
+		<string>maps</string>
+		<string>googlemaps</string>
+		<string>waze</string>
+		<string>uber</string>
+		<string>lyft</string>
+	</array>
+	
+	<!-- CONFIGURACIÓN DE SCENE -->
+	<key>UISceneDelegate</key>
+	<false/>
+	
+	<!-- CONFIGURACIÓN ADICIONAL -->
+	<key>UIRequiresFullScreen</key>
+	<false/>
+	<key>UISupportsDocumentBrowser</key>
+	<true/>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	
+	<!-- CONFIGURACIÓN DE HANDOFF -->
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.mascotascitas.view-pet</string>
+		<string>com.mascotascitas.book-appointment</string>
+	</array>
+	
+	<!-- CONFIGURACIÓN DE SPOTLIGHT -->
+	<key>CSSearchableItemAttributeSet</key>
+	<true/>
+	
+	<!-- CONFIGURACIÓN DE KEYBOARD -->
+	<key>UIKeyboardAppearance</key>
+	<string>UIKeyboardAppearanceDark</string>
+	
+	<!-- CONFIGURACIÓN DE WIDGET -->
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.widgetkit-extension</string>
+	</dict>
 </dict>
 </plist>
