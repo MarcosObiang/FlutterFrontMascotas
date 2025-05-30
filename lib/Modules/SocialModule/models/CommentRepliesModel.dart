@@ -25,7 +25,9 @@ class CommentRepliesModel {
       replyUID: json['replyUID'] as String,
       replyText: json['replyText'] as String,
       createdDate: json['createdDate'] != null ? DateTime.parse(json['createdDate']) : null,
-      updatedDate: json['updatedDate'] != null ? DateTime.parse(json['updatedDate']) : null,
+      updatedDate: json['updatedDate'] != null
+        ? DateTime.tryParse(json['updatedAt'].toString())
+        : null,
     );
   }
 

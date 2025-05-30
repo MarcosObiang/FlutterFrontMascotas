@@ -21,19 +21,27 @@ class CommentsModel {
     this.updatedAt,
   });
 
-  factory CommentsModel.fromJson(Map<String, dynamic> json) {
-    return CommentsModel(
-      id: json['id'] as String,
-      commentUID: json['commentUID'] as String,
-      postUID: json['postUID'] as String,
-      userUID: json['userUID'] as String,
-      commentText: json['commentText'] as String?,
-      likesCount: json['likesCount'] as int? ?? 0,
-      repliesCount: json['repliesCount'] as int? ?? 0,
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
-    );
-  }
+factory CommentsModel.fromJson(Map<String, dynamic> json) {
+  return CommentsModel(
+    id: json['id']?.toString() ?? '',
+    commentUID: json['commentUID']?.toString() ?? '',
+    postUID: json['postUID']?.toString() ?? '',
+    userUID: json['userUID']?.toString() ?? '',
+    commentText: json['commentText']?.toString(),
+    likesCount: json['likesCount'] is int
+        ? json['likesCount'] as int
+        : int.tryParse(json['likesCount']?.toString() ?? '0') ?? 0,
+    repliesCount: json['repliesCount'] is int
+        ? json['repliesCount'] as int
+        : int.tryParse(json['repliesCount']?.toString() ?? '0') ?? 0,
+    createdAt: json['createdAt'] != null
+        ? DateTime.tryParse(json['createdAt'].toString())
+        : null,
+    updatedAt: json['updatedAt'] != null
+        ? DateTime.tryParse(json['updatedAt'].toString())
+        : null,
+  );
+}
 
   Map<String, dynamic> toJson() {
     return {

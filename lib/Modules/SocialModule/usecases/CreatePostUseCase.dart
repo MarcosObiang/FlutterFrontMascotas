@@ -7,9 +7,14 @@ class CreatePostUseCase implements UseCaseInterfacae {
   CreatePostUseCase({required this.socialRepository});
 
   @override
-  Future<bool> execute([Map<String, dynamic>? postData]) async {
+  Future<bool> execute([Map<String, dynamic>? params]) async {
     try {
-      final result = await socialRepository.createPost(postData: postData ?? {});
+      final postData = params?['postData'] ?? {};
+      final postImage1 = params?['postImage1'];
+      final result = await socialRepository.createPost(
+        postData: postData,
+        postImage1: postImage1,
+      );
       return result;
     } catch (e) {
       Logger().e(e.toString());

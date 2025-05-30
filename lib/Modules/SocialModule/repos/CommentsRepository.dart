@@ -18,7 +18,7 @@ class CommentsRepositoryImpl implements CommentsRepository {
   Future<CommentsModel?> createComment({required Map<String, dynamic> commentData}) async {
     try {
       final result = await dioApiService.post(
-        path: "social/comments/create",
+        path: "/social/comments/create",
         data: commentData,
       );
       if (result.statusCode == 200 && result.data != null) {
@@ -35,7 +35,7 @@ class CommentsRepositoryImpl implements CommentsRepository {
   Future<bool> deleteComment({required DeleteCommentDTO deleteCommentDTO}) async {
     try {
       final result = await dioApiService.post(
-        path: "social/comments/delete",
+        path: "/social/comments/delete",
         data: deleteCommentDTO.toJson(),
       );
       return result.statusCode == 200;
@@ -49,7 +49,7 @@ class CommentsRepositoryImpl implements CommentsRepository {
   Future<CommentsModel?> updateComment({required String commentUID, required Map<String, dynamic> updateData}) async {
     try {
       final result = await dioApiService.post(
-        path: "social/comments/update/$commentUID",
+        path: "/social/comments/update/$commentUID",
         data: updateData,
       );
       if (result.statusCode == 200 && result.data != null) {
@@ -66,7 +66,7 @@ class CommentsRepositoryImpl implements CommentsRepository {
   Future<List<CommentsModel>> getCommentsByPost({required String postUID}) async {
     try {
       final result = await dioApiService.get(
-        path: "social/comments/get/$postUID",
+        path: "/social/comments/get/$postUID",
         queryParams: {},
       );
       if (result.statusCode == 200 && result.data is List) {

@@ -152,7 +152,7 @@ Colors.pink
                 InkWell(
                   onTap: () {
                     socialProvider.darLike(
-publicacion.id
+{}
 );
                   },
                   child: Row(

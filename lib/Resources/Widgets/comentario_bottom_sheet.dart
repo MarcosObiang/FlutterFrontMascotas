@@ -179,18 +179,18 @@ class _ComentarioBottomSheetState extends State<ComentarioBottomSheet> {
                     color: _isComposing ? Colors.pink : Colors.grey,
                     onPressed: _isComposing
                         ? () {
-                            widget.socialProvider.agregarComentario(
-                              widget.publicacion.id,
-                              'miUsuario', // En implementación real, obtener del usuario actual
-                              widget.mascotaProvider.miMascota?.nombre ?? 'Mi Mascota',
-                              widget.mascotaProvider.miMascota?.fotoPerfil ?? 'https://via.placeholder.com/150',
-                              _comentarioController.text,
-                            );
-                            _comentarioController.clear();
-                            setState(() {
-                              _isComposing = false;
-                            });
-                            FocusScope.of(context).unfocus();
+                        //  widget.socialProvider.agregarComentario(
+                        //       widget.publicacion.id,
+                        //       'miUsuario', // En implementación real, obtener del usuario actual
+                        //       widget.mascotaProvider.miMascota?.nombre ?? 'Mi Mascota',
+                        //       widget.mascotaProvider.miMascota?.fotoPerfil ?? 'https://via.placeholder.com/150',
+                        //       _comentarioController.text,
+                        //     );
+                        //     _comentarioController.clear();
+                        //     setState(() {
+                        //       _isComposing = false;
+                        //     });
+                        //     FocusScope.of(context).unfocus();
                           }
                         : null,
                   ),

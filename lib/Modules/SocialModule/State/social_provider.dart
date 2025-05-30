@@ -1,146 +1,182 @@
-// Primero, necesitamos actualizar el SocialProvider para manejar publicaciones con imágenes
-// providers/social_provider.dart
-
 import 'package:flutter/material.dart';
-import '../../../Resources/Models/publicacion.dart';
-import '../../../Resources/Models/comentario.dart';
+import 'package:mascotas_citas/Modules/SocialModule/models/CommentRepliesModel.dart';
+
+// Importa tus modelos reales
+import '../models/SocialModel.dart';
+import '../models/CommentsModel.dart';
+
+// Importa todos los casos de uso del módulo social
+import '../usecases/CheckCommentLikedUseCase.dart';
+import '../usecases/CheckLikedUseCase.dart';
+import '../usecases/CreateCommentLikeUseCase.dart';
+import '../usecases/CreateCommentReplyUseCase.dart';
+import '../usecases/CreateCommentUseCase.dart';
+import '../usecases/CreateLikeUseCase.dart';
+import '../usecases/CreatePostUseCase.dart';
+import '../usecases/DeleteCommentLikeUseCase.dart';
+import '../usecases/DeleteCommentReplyUseCase.dart';
+import '../usecases/DeleteCommentUseCase.dart';
+import '../usecases/DeleteLikeUseCase.dart';
+import '../usecases/DeletePostUseCase.dart';
+import '../usecases/GetAllPostUseCase.dart';
+import '../usecases/GetCommentsByPostUseCase.dart';
+import '../usecases/GetRepliesByCommentUseCase.dart';
+import '../usecases/UpdateCommentReplyUseCase.dart';
+import '../usecases/UpdateCommentUseCase.dart';
+import '../usecases/UpdatePostUseCase.dart';
 
 class SocialProvider extends ChangeNotifier {
-  List<Publicacion> _publicaciones = [];
-  
-  List<Publicacion> get publicaciones => _publicaciones;
-  
-  SocialProvider() {
-    _cargarDatosIniciales();
+  // Estado principal
+  List<SocialModel> _publicaciones = [];
+  List<CommentsModel> _comentarios = [];
+  List<CommentRepliesModel> _replies = []; // Aquí puedes almacenar las respuestas a comentarios
+  // Puedes agregar más listas para replies, likes, etc.
+
+  // Getters
+  List<SocialModel> get publicaciones => _publicaciones;
+  List<CommentsModel> get comentarios => _comentarios;
+  List<CommentRepliesModel> get replies => _replies; // Implementa según tu lógica
+
+  // Casos de uso
+  final CheckCommentLikedUseCase checkCommentLikedUseCase;
+  final CheckLikedUseCase checkLikedUseCase;
+  final CreateCommentLikeUseCase createCommentLikeUseCase;
+  final CreateCommentReplyUseCase createCommentReplyUseCase;
+  final CreateCommentUseCase createCommentUseCase;
+  final CreateLikeUseCase createLikeUseCase;
+  final CreatePostUseCase createPostUseCase;
+  final DeleteCommentLikeUseCase deleteCommentLikeUseCase;
+  final DeleteCommentReplyUseCase deleteCommentReplyUseCase;
+  final DeleteCommentUseCase deleteCommentUseCase;
+  final DeleteLikeUseCase deleteLikeUseCase;
+  final DeletePostUseCase deletePostUseCase;
+  final GetAllPostUseCase getAllPostUseCase;
+  final GetCommentsByPostUseCase getCommentsByPostUseCase;
+  final GetRepliesByCommentUseCase getRepliesByCommentUseCase;
+  final UpdateCommentReplyUseCase updateCommentReplyUseCase;
+  final UpdateCommentUseCase updateCommentUseCase;
+  final UpdatePostUseCase updatePostUseCase;
+
+  SocialProvider({
+    required this.checkCommentLikedUseCase,
+    required this.checkLikedUseCase,
+    required this.createCommentLikeUseCase,
+    required this.createCommentReplyUseCase,
+    required this.createCommentUseCase,
+    required this.createLikeUseCase,
+    required this.createPostUseCase,
+    required this.deleteCommentLikeUseCase,
+    required this.deleteCommentReplyUseCase,
+    required this.deleteCommentUseCase,
+    required this.deleteLikeUseCase,
+    required this.deletePostUseCase,
+    required this.getAllPostUseCase,
+    required this.getCommentsByPostUseCase,
+    required this.getRepliesByCommentUseCase,
+    required this.updateCommentReplyUseCase,
+    required this.updateCommentUseCase,
+    required this.updatePostUseCase,
+  });
+
+  // Métodos para interactuar con los casos de uso
+
+  // Publicaciones
+Future<void> cargarPublicaciones() async {
+  final result = await getAllPostUseCase.execute();
+  print('Resultado de getAllPostUseCase: $result'); // <-- Añade esto
+
+  _publicaciones = result.map<SocialModel>((item) {
+    if (item is SocialModel) return item;
+    return SocialModel.fromJson(item as Map<String, dynamic>);
+  }).toList();
+  notifyListeners();
+}
+
+Future<void> crearPublicacion(Map<String, dynamic> data, {dynamic postImage1}) async {
+  await createPostUseCase.execute({'postData': data, 'postImage1': postImage1});
+  await cargarPublicaciones();
+}
+
+  Future<void> actualizarPublicacion(Map<String, dynamic> data) async {
+    await updatePostUseCase.execute(data);
+    await cargarPublicaciones();
   }
-  
-  void _cargarDatosIniciales() {
-    // Datos de ejemplo para el feed
-    _publicaciones = [
-      Publicacion(
-        id: 'p1',
-        usuarioId: 'u1',
-        nombreUsuario: 'Luna',
-        avatarUrl: 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=200',
-        contenido: '¡Hoy fue un día increíble en el parque! Conocí muchos amigos nuevos.',
-        imagenUrl: 'https://images.unsplash.com/photo-1601758124510-52d02ddb7cbd?q=80&w=500',
-        fechaPublicacion: DateTime.now().subtract(Duration(hours: 2)),
-        likes: 12,
-        comentarios: [
-          Comentario(
-            id: 'c1',
-            usuarioId: 'u2',
-            nombreUsuario: 'Michi',
-            avatarUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=200',
-            contenido: '¡Qué divertido! A mi también me encanta el parque.',
-            fechaComentario: DateTime.now().subtract(Duration(hours: 1)),
-          ),
-          Comentario(
-            id: 'c2',
-            usuarioId: 'u3',
-            nombreUsuario: 'Max',
-            avatarUrl: 'https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?q=80&w=200',
-            contenido: '¡La próxima vez vamos juntos!',
-            fechaComentario: DateTime.now().subtract(Duration(minutes: 30)),
-          ),
-        ],
-        usuarioDioLike: false,
-      ),
-      Publicacion(
-        id: 'p2',
-        usuarioId: 'u2',
-        nombreUsuario: 'Michi',
-        avatarUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=200',
-        contenido: 'Mi lugar favorito para tomar el sol... ¿Alguien más ama las ventanas?',
-        imagenUrl: 'https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?q=80&w=500',
-        fechaPublicacion: DateTime.now().subtract(Duration(days: 1)),
-        likes: 8,
-        comentarios: [],
-        usuarioDioLike: true,
-      ),
-    ];
+
+  Future<void> eliminarPublicacion(String postUID) async {
+    await deletePostUseCase.execute({'postUID': postUID});
+    await cargarPublicaciones();
   }
-  
-  void agregarPublicacion(String usuarioId, String nombreUsuario, String avatarUrl, String contenido, String? imagenUrl) {
-    final nuevaPublicacion = Publicacion(
-      id: 'p${_publicaciones.length + 1}',
-      usuarioId: usuarioId,
-      nombreUsuario: nombreUsuario,
-      avatarUrl: avatarUrl,
-      contenido: contenido,
-      imagenUrl: imagenUrl,
-      fechaPublicacion: DateTime.now(),
-      likes: 0,
-      comentarios: [],
-      usuarioDioLike: false,
-    );
-    
-    _publicaciones.insert(0, nuevaPublicacion);
+
+  // Comentarios
+  Future<void> cargarComentarios(String postUID) async {
+    _comentarios = await getCommentsByPostUseCase.execute({'postUID': postUID});
     notifyListeners();
   }
-  
-  void darLike(String publicacionId) {
-    final publicacionIndex = _publicaciones.indexWhere((pub) => pub.id == publicacionId);
-    if (publicacionIndex != -1) {
-      final publicacion = _publicaciones[publicacionIndex];
-      
-      // Actualizar el estado de like y contador
-      final nuevoEstadoLike = !publicacion.usuarioDioLike;
-      final nuevosLikes = nuevoEstadoLike 
-          ? publicacion.likes + 1 
-          : publicacion.likes - 1;
-      
-      // Crear una nueva instancia con los valores actualizados
-      _publicaciones[publicacionIndex] = Publicacion(
-        id: publicacion.id,
-        usuarioId: publicacion.usuarioId,
-        nombreUsuario: publicacion.nombreUsuario,
-        avatarUrl: publicacion.avatarUrl,
-        contenido: publicacion.contenido,
-        imagenUrl: publicacion.imagenUrl,
-        fechaPublicacion: publicacion.fechaPublicacion,
-        likes: nuevosLikes,
-        comentarios: publicacion.comentarios,
-        usuarioDioLike: nuevoEstadoLike,
-      );
-      
-      notifyListeners();
-    }
+
+  Future<void> crearComentario(Map<String, dynamic> data) async {
+    await createCommentUseCase.execute(data);
+    await cargarComentarios(data['postUID']);
   }
-  
-  void agregarComentario(String publicacionId, String usuarioId, String nombreUsuario, String avatarUrl, String contenido) {
-    final publicacionIndex = _publicaciones.indexWhere((pub) => pub.id == publicacionId);
-    if (publicacionIndex != -1) {
-      final publicacion = _publicaciones[publicacionIndex];
-      
-      // Crear un nuevo comentario
-      final nuevoComentario = Comentario(
-        id: 'c${publicacion.comentarios.length + 1}',
-        usuarioId: usuarioId,
-        nombreUsuario: nombreUsuario,
-        avatarUrl: avatarUrl,
-        contenido: contenido,
-        fechaComentario: DateTime.now(),
-      );
-      
-      // Crear una nueva lista de comentarios con el nuevo comentario
-      final nuevosComentarios = List<Comentario>.from(publicacion.comentarios)..add(nuevoComentario);
-      
-      // Crear una nueva instancia de publicación con la lista actualizada
-      _publicaciones[publicacionIndex] = Publicacion(
-        id: publicacion.id,
-        usuarioId: publicacion.usuarioId,
-        nombreUsuario: publicacion.nombreUsuario,
-        avatarUrl: publicacion.avatarUrl,
-        contenido: publicacion.contenido,
-        imagenUrl: publicacion.imagenUrl,
-        fechaPublicacion: publicacion.fechaPublicacion,
-        likes: publicacion.likes,
-        comentarios: nuevosComentarios,
-        usuarioDioLike: publicacion.usuarioDioLike,
-      );
-      
-      notifyListeners();
-    }
+
+  Future<void> actualizarComentario(Map<String, dynamic> data) async {
+    await updateCommentUseCase.execute(data);
+    await cargarComentarios(data['postUID']);
+  }
+
+  Future<void> eliminarComentario(String commentUID, String postUID) async {
+    await deleteCommentUseCase.execute({'commentUID': commentUID, 'postUID': postUID});
+    await cargarComentarios(postUID);
+  }
+
+  // Likes en publicaciones
+  Future<void> darLike(Map<String, dynamic> data) async {
+    await createLikeUseCase.execute(data);
+    await cargarPublicaciones();
+  }
+
+  Future<void> quitarLike(Map<String, dynamic> data) async {
+    await deleteLikeUseCase.execute(data);
+    await cargarPublicaciones();
+  }
+
+  Future<bool> estaLikeado(Map<String, dynamic> data) async {
+    return await checkLikedUseCase.execute(data);
+  }
+
+  // Likes en comentarios
+  Future<void> darLikeComentario(Map<String, dynamic> data) async {
+    await createCommentLikeUseCase.execute(data);
+    await cargarComentarios(data['postUID']);
+  }
+
+  Future<void> quitarLikeComentario(Map<String, dynamic> data) async {
+    await deleteCommentLikeUseCase.execute(data);
+    await cargarComentarios(data['postUID']);
+  }
+
+  Future<bool> estaComentarioLikeado(Map<String, dynamic> data) async {
+    return await checkCommentLikedUseCase.execute(data);
+  }
+
+  // Replies (respuestas a comentarios)
+  Future<void> cargarReplies(String commentUID) async {
+    _replies =  await getRepliesByCommentUseCase.execute({'commentUID': commentUID});
+    notifyListeners();
+
+  }
+
+  Future<void> crearReply(Map<String, dynamic> data) async {
+    await createCommentReplyUseCase.execute(data);
+    // Puedes recargar replies si lo necesitas
+  }
+
+  Future<void> actualizarReply(Map<String, dynamic> data) async {
+    await updateCommentReplyUseCase.execute(data);
+    // Puedes recargar replies si lo necesitas
+  }
+
+  Future<void> eliminarReply(String replyUID, String commentUID) async {
+    await deleteCommentReplyUseCase.execute({'replyUID': replyUID, 'commentUID': commentUID});
+    // Puedes recargar replies si lo necesitas
   }
 }

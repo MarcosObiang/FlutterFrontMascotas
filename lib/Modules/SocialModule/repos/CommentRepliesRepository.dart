@@ -17,7 +17,7 @@ class CommentRepliesRepositoryImpl implements CommentRepliesRepository {
   Future<CommentRepliesModel?> createReply({required Map<String, dynamic> replyData}) async {
     try {
       final result = await dioApiService.post(
-        path: "social/comments/replies/create",
+        path: "/social/comments/replies/create",
         data: replyData,
       );
       if (result.statusCode == 200 && result.data != null) {
@@ -34,7 +34,7 @@ class CommentRepliesRepositoryImpl implements CommentRepliesRepository {
   Future<bool> deleteReply({required String replyUID, required String commentUID}) async {
     try {
       final result = await dioApiService.post(
-        path: "social/comments/replies/delete",
+        path: "/social/comments/replies/delete",
         data: {
           'replyUID': replyUID,
           'commentUID': commentUID,
@@ -51,7 +51,7 @@ class CommentRepliesRepositoryImpl implements CommentRepliesRepository {
   Future<CommentRepliesModel?> updateReply({required String replyUID, required Map<String, dynamic> updateData}) async {
     try {
       final result = await dioApiService.post(
-        path: "social/comments/replies/update",
+        path: "/social/comments/replies/update",
         data: {
           'replyUID': replyUID,
           ...updateData,
@@ -71,7 +71,7 @@ class CommentRepliesRepositoryImpl implements CommentRepliesRepository {
   Future<List<CommentRepliesModel>> getRepliesByComment({required String commentUID}) async {
     try {
       final result = await dioApiService.get(
-        path: "social/comments/replies/get/$commentUID",
+        path: "/social/comments/replies/get/$commentUID",
         queryParams: {},
       );
       if (result.statusCode == 200 && result.data is List) {

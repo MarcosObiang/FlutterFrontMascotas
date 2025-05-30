@@ -4,6 +4,7 @@ import 'package:mascotas_citas/Modules/AuthenticationModule/views/AuthScreen.dar
 import 'package:mascotas_citas/Modules/CreateUserModule/state/CreateUserState.dart';
 import 'package:mascotas_citas/Modules/CreateUserModule/views/CreateUserScreen.dart';
 import 'package:mascotas_citas/Modules/LikesModule/state/LikeModuleState.dart';
+import 'package:mascotas_citas/Modules/SocialModule/dependencies/socialInjector.dart';
 import 'package:mascotas_citas/navigation_controller.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:provider/provider.dart';
@@ -11,13 +12,14 @@ import 'package:mascotas_citas/splash_screen.dart';
 import 'package:mascotas_citas/Modules/HomeModule/State/mascota_provider.dart';
 import 'package:mascotas_citas/Modules/SocialModule/State/social_provider.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/state/AuthState.dart';
-import 'package:mascotas_citas/Resources/providers/theme_provider.dart'; // Importa el ThemeProvider
+import 'package:mascotas_citas/Resources/providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setUpServices();
   setUpStates();
   setUpDependencies();
+  setUpSocialDependencies();
   await initAsyncDependencies();
 
   runApp(const MainApp());
@@ -33,10 +35,9 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => AuthState()),
         ChangeNotifierProvider(create: (context) => MascotaProvider()),
         ChangeNotifierProvider(create: (context) => CreateUserState()),
-        ChangeNotifierProvider(create: (context) => SocialProvider()),
-        ChangeNotifierProvider(create:(context) => LikeModuleState(onErrorData: null),),
-        ChangeNotifierProvider(
-            create: (context) => ThemeProvider()), // Agregar ThemeProvider
+        ChangeNotifierProvider(create: (context) => SocialProvider(checkCommentLikedUseCase: getIt(), checkLikedUseCase: getIt(), createCommentLikeUseCase: getIt(), createCommentReplyUseCase: getIt(), createCommentUseCase: getIt(), createLikeUseCase: getIt(), createPostUseCase: getIt(), deleteCommentLikeUseCase: getIt(), deleteCommentReplyUseCase: getIt(), deleteCommentUseCase: getIt(), deleteLikeUseCase: getIt(), deletePostUseCase: getIt(), getAllPostUseCase: getIt(), getCommentsByPostUseCase: getIt(), getRepliesByCommentUseCase: getIt(), updateCommentReplyUseCase: getIt(), updateCommentUseCase: getIt(), updatePostUseCase: getIt())),
+        ChangeNotifierProvider(create: (context) => LikeModuleState(onErrorData: null)),
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(1080, 1920),
@@ -49,35 +50,29 @@ class MainApp extends StatelessWidget {
                 debugShowCheckedModeBanner: false,
                 title: 'WildLove',
                 theme: themeProvider.isDarkMode
-                    ? themeProvider.themeData // Tema oscuro del provider
+                    ? themeProvider.themeData
                     : ThemeData(
                         primarySwatch: Colors.pink,
                         visualDensity: VisualDensity.adaptivePlatformDensity,
-                        scaffoldBackgroundColor:
-                            Color.fromRGBO(242, 217, 208, 1),
-                        appBarTheme: AppBarTheme(
+                        scaffoldBackgroundColor: const Color.fromRGBO(242, 217, 208, 1),
+                        appBarTheme: const AppBarTheme(
                           backgroundColor: Color.fromRGBO(242, 217, 208, 1),
                           foregroundColor: Colors.black,
                         ),
                       ),
-                // Modificar cómo se definen las rutas para mantener el contexto de los providers
                 home: const SplashScreen(),
                 onGenerateRoute: (settings) {
                   switch (settings.name) {
                     case '/splash':
-                      return MaterialPageRoute(
-                          builder: (_) => const SplashScreen());
+                      return MaterialPageRoute(builder: (_) => const SplashScreen());
                     case '/createUserScreen':
-                      return MaterialPageRoute(
-                          builder: (_) => const Createuserscreen());
+                      return MaterialPageRoute(builder: (_) => const Createuserscreen());
                     case '/authScreen':
                       return MaterialPageRoute(builder: (_) => Authscreen());
                     case '/navigation':
-                      return MaterialPageRoute(
-                          builder: (_) => const NavigationController());
+                      return MaterialPageRoute(builder: (_) => const NavigationController());
                     default:
-                      return MaterialPageRoute(
-                          builder: (_) => const SplashScreen());
+                      return MaterialPageRoute(builder: (_) => const SplashScreen());
                   }
                 },
               );

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:mascotas_citas/Exceptions/ModuleException.dart';
+import 'package:mascotas_citas/Modules/SocialModule/models/CommentsModel.dart';
 import 'package:mascotas_citas/Modules/SocialModule/models/SocialModel.dart';
 import 'package:mascotas_citas/interfaces/state/IState.dart';
 
@@ -14,6 +15,8 @@ class SocialState extends ChangeNotifier implements ModuleState {
   List<SocialModel> posts = [];
   SocialStatus state = SocialStatus.initial;
   ModuleException? error;
+
+
 
   @override
   void dispose() {

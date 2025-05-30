@@ -16,7 +16,7 @@ class LikesRepositoryImpl implements LikesRepository {
   Future<bool> checkLiked({required CheckLikedRequestDTO request}) async {
     try {
       final result = await dioApiService.post(
-        path: "social/posts/likes/check-liked",
+        path: "/social/posts/likes/check-liked",
         data: request.toJson(),
       );
       return result.statusCode == 200 && result.data == true;
@@ -30,7 +30,7 @@ class LikesRepositoryImpl implements LikesRepository {
   Future<bool> createLike({required Map<String, dynamic> likeData}) async {
     try {
       final result = await dioApiService.post(
-        path: "social/posts/likes/create",
+        path: "/social/posts/likes/create",
         data: likeData,
       );
       return result.statusCode == 200;
@@ -44,7 +44,7 @@ class LikesRepositoryImpl implements LikesRepository {
   Future<bool> deleteLike({required CheckLikedRequestDTO request}) async {
     try {
       final result = await dioApiService.post(
-        path: "social/posts/likes/delete",
+        path: "/social/posts/likes/delete",
         data: request.toJson(),
       );
       return result.statusCode == 200;
