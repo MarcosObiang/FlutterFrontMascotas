@@ -52,12 +52,12 @@ class SignUpUseCase {
       final pet = PetModel(
         id: 'mascota',
         petUID: petUID,
-        onwerUID: userUID,
+        ownerUID: userUID,
         name: petName,
         sex: petSex,
         birthDate: petBirthDate,
         petBio: petBio,
-        spicies: petSpecies,
+        species: petSpecies,
         petImage1: '',
       );
 

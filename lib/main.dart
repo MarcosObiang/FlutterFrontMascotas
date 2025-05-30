@@ -15,6 +15,7 @@ import 'package:mascotas_citas/Modules/HomeModule/State/mascota_provider.dart';
 import 'package:mascotas_citas/Modules/SocialModule/State/social_provider.dart';
 import 'package:mascotas_citas/Modules/AuthenticationModule/state/AuthState.dart';
 import 'package:mascotas_citas/Resources/providers/theme_provider.dart'; // Importa el ThemeProvider
+import 'package:mascotas_citas/Modules/ProfileModule/component/configuracion_busqueda_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,7 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => SocialProvider()),
         ChangeNotifierProvider(create: (context) => ChatState()),
         ChangeNotifierProvider(create: (context) => MessagesState()),
+        ChangeNotifierProvider(create: (context) => ConfiguracionBusquedaProvider()),
         ChangeNotifierProvider(create:(context) => LikeModuleState(onErrorData: null),),
         ChangeNotifierProvider(
             create: (context) => ThemeProvider()), // Agregar ThemeProvider
@@ -54,7 +56,7 @@ class MainApp extends StatelessWidget {
                 debugShowCheckedModeBanner: false,
                 title: 'WildLove',
                 theme: themeProvider.isDarkMode
-                    ? themeProvider.themeData // Tema oscuro del provider
+                    ? themeProvider.darkTheme // Tema oscuro del provider
                     : ThemeData(
                         primarySwatch: Colors.pink,
                         visualDensity: VisualDensity.adaptivePlatformDensity,

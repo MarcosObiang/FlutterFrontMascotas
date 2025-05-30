@@ -29,6 +29,10 @@ class DioApiService {
     if (requestToken.isEmpty) {
       setAuthToken();
     }
+    // AGREGAR EL HEADER userUID
+    if (authDataService.userUID != null) {
+      _dio.options.headers['userUID'] = authDataService.userUID;
+    }
   }
 
   /// Establece el token de autenticación.
@@ -73,6 +77,7 @@ Future<Response> post({
       return await _dio.post(path, data: data);
     }
   } on DioException catch (e) {
+    print(e.message);
       rethrow;
   }
 }

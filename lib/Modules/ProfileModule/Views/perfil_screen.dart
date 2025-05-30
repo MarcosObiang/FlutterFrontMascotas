@@ -1,11 +1,16 @@
-// screens/perfil_screen.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import '../../../Resources/Widgets/edit_campo_texto.dart';
-import '../../../Resources/Widgets/selector_fotos.dart';
-import '../../../Resources/Models/mascota_api.dart';
-import '../../../Resources/Services/api_service.dart';
-import '../../AuthenticationModule/views/AuthScreen.dart';
-import 'ajustes_screen.dart'; // Importamos la nueva pantalla de ajustes
+import 'package:mascotas_citas/Modules/ProfileModule/ViewModels/perfil_view_model.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/Views/ajustes_screen.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/component/CreatePetForm.dart';
+import 'package:mascotas_citas/Resources/Widgets/selector_fotos.dart';
+import 'package:mascotas_citas/models/PetModel.dart';
+import 'package:mascotas_citas/services/ApiServiceRD.dart';
+import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
+import 'package:mascotas_citas/services/platform/storage/SecureStorage.dart';
+import 'package:provider/provider.dart';
+import 'package:mascotas_citas/Resources/providers/theme_provider.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -15,654 +20,1003 @@ class PerfilScreen extends StatefulWidget {
 }
 
 class _PerfilScreenState extends State<PerfilScreen> {
-  // ID de usuario estático por ahora
-  final String userId = 'cr7erbisho';
+  // Constantes para layout y espaciado
+  final double _profileImageSize = 100;
+  final double _petAvatarSize = 80;
+  final double _cardPadding = 16.0;
+  final double _sectionSpacing = 24.0;
+  final double _itemSpacing = 16.0;
+  final double _smallSpacing = 8.0;
   
-  // API Service
-  final ApiService _apiService = ApiService();
+  // Estado para control de edición de biografías
+  bool _isEditingUserBio = false;
+  bool _isEditingPetBio = false;
   
-  // Datos del usuario
-  final TextEditingController _userNombreController = TextEditingController();
-  final TextEditingController _userEdadController = TextEditingController();
-  final TextEditingController _userSexoController = TextEditingController();
-  final TextEditingController _userUbicacionController = TextEditingController();
-  final TextEditingController _userBioController = TextEditingController();
-  String fotoUsuario = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000';
-  
-  // Lista de mascotas
-  List<Mascota> mascotas = [];
-  List<String> mascotasOriginalesIds = []; // Para mantener un registro de las mascotas originales
-  
-  int mascotaSeleccionadaIndex = 0;
-  bool isLoading = true;
-  bool isSaving = false; // Flag para indicar cuando se están guardando los datos
-  
-  // Controllers para la mascota actual
-  late TextEditingController _nombreController;
-  late TextEditingController _edadController;
-  late TextEditingController _especieController;
-  late TextEditingController _sexoController;
-  late TextEditingController _descripcionController;
-  late List<String> fotos;
+  late PerfilViewModel _viewModel;
   
   @override
   void initState() {
     super.initState();
     
-    // Inicializar controladores con valores vacíos
-    _nombreController = TextEditingController();
-    _edadController = TextEditingController();
-    _especieController = TextEditingController();
-    _sexoController = TextEditingController();
-    _descripcionController = TextEditingController();
-    fotos = [];
-    
-    // Cargar datos del usuario y sus mascotas
-    _cargarDatosUsuarioYMascotas();
-  }
-  
-  // Método para cargar datos del usuario y sus mascotas desde la API
-  Future<void> _cargarDatosUsuarioYMascotas() async {
-    setState(() {
-      isLoading = true;
-    });
-    
-    try {
-      // Cargar datos del usuario
-      final usuario = await _apiService.getUserById(userId);
-      
-      // Actualizar controladores con datos del usuario
-      setState(() {
-        _userNombreController.text = usuario.nombre;
-        _userEdadController.text = usuario.edad;
-        _userSexoController.text = usuario.sexo;
-        _userUbicacionController.text = usuario.ubicacion;
-        _userBioController.text = usuario.bio;
-        if (usuario.fotoPerfil.isNotEmpty) {
-          fotoUsuario = usuario.fotoPerfil;
-        }
-      });
-      
-      // Cargar todas las mascotas y filtrar las del usuario actual
-      final todasLasMascotas = await _apiService.getAllPets();
-      final mascotasUsuario = todasLasMascotas.where((mascota) => 
-        mascota.propietarioId == userId).toList();
-      
-      setState(() {
-        mascotas = mascotasUsuario;
-        // Guardar los IDs de las mascotas originales para comparar después
-        mascotasOriginalesIds = mascotas.map((m) => m.id).toList();
-        isLoading = false;
-        
-        if (mascotas.isNotEmpty) {
-          _cargarDatosMascota(0);
-        }
-      });
-    } catch (e) {
-      print('Error al cargar datos: $e');
-      setState(() {
-        isLoading = false;
-      });
-      
-      // Mostrar mensaje de error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar datos: $e'))
-      );
-    }
-  }
-  
-  void _cargarDatosMascota(int index) {
-    if (mascotas.isEmpty) return;
-    
-    Mascota mascota = mascotas[index];
-    _nombreController.text = mascota.nombre;
-    _edadController.text = mascota.edad;
-    _especieController.text = mascota.especie;
-    _sexoController.text = mascota.sexo ?? '';
-    _descripcionController.text = mascota.descripcion;
-    fotos = List.from(mascota.fotos);
-  }
-  
-  void _guardarDatosMascotaActual() {
-    if (mascotas.isEmpty) return;
-    
-    // Crear la mascota actualizada
-    Mascota mascotaActualizada = Mascota(
-      id: mascotas[mascotaSeleccionadaIndex].id,
-      ownerUID: userId,
-      name: _nombreController.text,
-      petImage1: fotos.isNotEmpty ? fotos[0] : '',
-      petImage2: fotos.length > 1 ? fotos[1] : '',
-      petImage3: fotos.length > 2 ? fotos[2] : '',
-      sex: _sexoController.text,
-      petBio: _descripcionController.text,
-      species: _especieController.text,
-      birthDate: mascotas[mascotaSeleccionadaIndex].birthDate, // Mantenemos la fecha original
-      enAdopcion: mascotas[mascotaSeleccionadaIndex].enAdopcion,
-      intereses: [], // Eliminamos los intereses
-      propietarioNombre: _userNombreController.text,
-      propietarioFoto: fotoUsuario,
-      ubicacion: _userUbicacionController.text,
+    // Inicializar el ViewModel con los servicios necesarios
+    final apiService = ApiService(
+      authDataService: AuthDataService(secureStorage: SecureStorage()),
     );
     
-    setState(() {
-      // Actualizar la mascota actual
-      mascotas[mascotaSeleccionadaIndex] = mascotaActualizada;
-    });
-  }
-  
-  void _cambiarMascota(int index) {
-    // Guardar datos de la mascota actual antes de cambiar
-    _guardarDatosMascotaActual();
+    final authDataService = AuthDataService(secureStorage: SecureStorage());
     
-    setState(() {
-      mascotaSeleccionadaIndex = index;
-      _cargarDatosMascota(index);
-    });
-  }
-  
-  void _agregarNuevaMascota() {
-    // Guardar datos de la mascota actual si existe
-    if (mascotas.isNotEmpty) {
-      _guardarDatosMascotaActual();
-    }
-    
-    // Crear nueva mascota
-    Mascota nuevaMascota = Mascota.empty(
-      propietarioId: userId,
-      propietarioNombre: _userNombreController.text,
-      propietarioFoto: fotoUsuario,
-      ubicacion: _userUbicacionController.text,
-    );
-    
-    setState(() {
-      mascotas.add(nuevaMascota);
-      mascotaSeleccionadaIndex = mascotas.length - 1;
-      _cargarDatosMascota(mascotaSeleccionadaIndex);
-    });
-  }
-  
-  void _eliminarMascotaActual() {
-    if (mascotas.length <= 1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Debes tener al menos una mascota')),
-      );
-      return;
-    }
-    
-    final mascotaAEliminar = mascotas[mascotaSeleccionadaIndex];
-    
-    setState(() {
-      mascotas.removeAt(mascotaSeleccionadaIndex);
-      mascotaSeleccionadaIndex = 0;
-      _cargarDatosMascota(mascotaSeleccionadaIndex);
-    });
-    
-    // Si la mascota ya existía en la base de datos, la eliminamos
-    if (mascotasOriginalesIds.contains(mascotaAEliminar.id)) {
-      _apiService.deletePet(mascotaAEliminar.id).then((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Mascota eliminada correctamente')),
-        );
-      }).catchError((error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al eliminar mascota: $error')),
-        );
-      });
-    }
-  }
-  
-  void _actualizarFotoUsuario() {
-    // Aquí iría la lógica para seleccionar una nueva foto
-    // Por simplicidad, solo cambiamos a una foto predefinida
-    setState(() {
-      fotoUsuario = 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1000';
-    });
-  }
-  
-  // Método para guardar todos los datos (usuario y mascotas)
-  Future<void> _guardarTodosLosDatos() async {
-    if (isSaving) return; // Evitar múltiples guardados simultáneos
-    
-    setState(() {
-      isSaving = true;
-    });
-    
-    try {
-      // Guardar la mascota actual antes de enviar todo
-      if (mascotas.isNotEmpty) {
-        _guardarDatosMascotaActual();
-      }
-      
-      // 1. Actualizar datos del usuario
-      await _apiService.updateUserProfile(
-        userId,
-        {
-          'bio': _userBioController.text,
-          'userImage1': fotoUsuario,
-          // Solo enviamos los campos editables
-          // Los demás campos los mantiene la API como están
-        }
-      );
-      
-      // 2. Procesar mascostas: actualizar existentes, crear nuevas
-      for (Mascota mascota in mascotas) {
-        if (mascotasOriginalesIds.contains(mascota.id)) {
-          // Es una mascota existente, actualizar
-          await _apiService.updatePet(mascota.id as Map<String, dynamic>);
-        } else {
-          // Es una mascota nueva, crear
-          await _apiService.createPet(mascota as Map<String, dynamic>);
-        }
-      }
-      
-      // 3. Buscar mascotas eliminadas (las que estaban en la lista original pero ya no están)
-      for (String id in mascotasOriginalesIds) {
-        if (!mascotas.any((m) => m.id == id)) {
-          // Esta mascota fue eliminada, eliminarla en el servidor
-          await _apiService.deletePet(id);
-        }
-      }
-      
-      // Actualizar la lista de IDs originales
-      mascotasOriginalesIds = mascotas.map((m) => m.id).toList();
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Perfil actualizado correctamente')),
-      );
-    } catch (e) {
-      print('Error al guardar datos: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar datos: $e')),
-      );
-    } finally {
-      setState(() {
-        isSaving = false;
-      });
-    }
-  }
-  
-  // Método para mostrar la pantalla de ajustes
-  void _mostrarAjustes() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AjustesScreen(
-          userId: userId,
-          // Podemos pasar más datos si es necesario
-        ),
-      ),
+    // Crear el ViewModel
+    _viewModel = PerfilViewModel(
+      apiService: apiService,
+      authDataService: authDataService,
     );
   }
   
   @override
-  Widget build(BuildContext context) {
-    // Determinar si hay mascotas registradas
-    final bool tieneMascota = mascotas.isNotEmpty;
-    
-    return Scaffold(      
-      appBar: AppBar(
-        // backgroundColor: Color.fromRGBO(242, 217, 208, 1),
-        title: Text('Mi Perfil', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        actions: [
-          isSaving 
-            ? Padding(
-                padding: EdgeInsets.all(16.0),
-                child: SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.pink,
-                    strokeWidth: 2.0,
-                  ),
-                ),
-              )
-            : TextButton(
-                onPressed: _guardarTodosLosDatos,
-                child: Text('Guardar', style: TextStyle(color: Colors.pink)),
-              ),
-        ],
-      ),
-      // backgroundColor: Color.fromRGBO(242, 217, 208, 1),
-      body: isLoading 
-        ? Center(child: CircularProgressIndicator(color: Colors.pink))
-        : SingleChildScrollView(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Perfil del usuario con botón de ajustes
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Datos del Usuario',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.more_vert, color: Colors.pink),
-                    onPressed: _mostrarAjustes,
-                    tooltip: 'Ajustes',
-                  ),
-                ],
-              ),
-              SizedBox(height: 16),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Foto del usuario
-                  GestureDetector(
-                    onTap: _actualizarFotoUsuario,
-                    child: Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundImage: NetworkImage(fotoUsuario),
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            padding: EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.pink,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.camera_alt,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  // Datos del usuario (solo Bio es editable)
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Mostrar nombre (no editable)
-                        _mostrarCampoNoEditable('Nombre', _userNombreController.text, Icons.person),
-                        
-                        // Mostrar sexo (no editable)
-                        _mostrarCampoNoEditable('Sexo', _userSexoController.text, Icons.person_outline),
-                        
-                        // Mostrar edad (no editable)
-                        _mostrarCampoNoEditable('Edad', _userEdadController.text, Icons.cake),
-                        
-                        // Mostrar ubicación (no editable)
-                        _mostrarCampoNoEditable('Ubicación', _userUbicacionController.text, Icons.location_on),
-                        
-                        // Bio (editable)
-                        EditCampoTexto(
-                          label: 'Bio',
-                          controller: _userBioController,
-                          icon: Icons.description,
-                          maxLines: 3,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 32),
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
 
-              // Mensaje para usuarios sin mascota
-              if (!tieneMascota)
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 20),
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.pink.shade50,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.pink.shade100),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(Icons.pets, size: 40, color: Colors.pink),
-                      SizedBox(height: 10),
-                      Text(
-                        '¡Agrega tu primera mascota!',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.pink.shade800,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Una vez que registres tu mascota, podrás acceder a todas las funcionalidades como encontrar amigos para tu mascota.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.pink.shade700),
-                      ),
-                      SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: _agregarNuevaMascota,
-                        icon: Icon(Icons.add, color: Colors.white),
-                        label: Text('Agregar mascota', style: TextStyle(color: Colors.white)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pink,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-              // Contenido relacionado con mascotas (solo visible si tiene mascotas)
-              if (tieneMascota) ...[
-                // Selector de mascotas
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Mis Mascotas',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: _agregarNuevaMascota,
-                      icon: Icon(Icons.add, color: Colors.white),
-                      label: Text('Nueva mascota', style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                // Ajuste de tamaño para la lista de mascotas
-                SizedBox(
-                  height: 80, // Reducido de 100 a 80
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: mascotas.length,
-                    itemBuilder: (context, index) {
-                      return GestureDetector(
-                        onTap: () => _cambiarMascota(index),
-                        child: Container(
-                          margin: EdgeInsets.only(right: 12), // Reducido de 16 a 12
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: index == mascotaSeleccionadaIndex ? Colors.pink : Colors.transparent,
-                              width: 2, // Reducido de 3 a 2
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: mascotas[index].fotos.isNotEmpty
-                                  ? Image.network(
-                                      mascotas[index].fotos[0],
-                                      height: 50, // Reducido de 70 a 50
-                                      width: 50,  // Reducido de 70 a 50
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Container(
-                                      height: 50, // Reducido de 70 a 50
-                                      width: 50,  // Reducido de 70 a 50
-                                      color: Colors.grey[300],
-                                      child: Icon(Icons.pets, color: Colors.grey[600], size: 24), // Reducido el tamaño del icono
-                                    ),
-                              ),
-                              SizedBox(height: 2), // Reducido de 4 a 2
-                              Text(
-                                mascotas[index].nombre.isEmpty ? 'Nueva' : mascotas[index].nombre,
-                                style: TextStyle(
-                                  fontSize: 12, // Agregado un tamaño más pequeño
-                                  fontWeight: index == mascotaSeleccionadaIndex ? FontWeight.bold : FontWeight.normal,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                SizedBox(height: 24),
-                
-                // Detalles de la mascota seleccionada
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Detalles de ${_nombreController.text.isEmpty ? "Nueva Mascota" : _nombreController.text}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _eliminarMascotaActual,
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      tooltip: 'Eliminar mascota',
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Fotos de tu mascota (máximo 3)',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16),
-                SelectorFotos(
-                  fotos: fotos,
-                  maxFotos: 3,
-                  onFotoPrincipalChanged: (nuevaPrincipal) {
-                    if (fotos.isNotEmpty && fotos.contains(nuevaPrincipal)) {
-                      setState(() {
-                        // Mover la foto principal al inicio de la lista
-                        fotos.remove(nuevaPrincipal);
-                        fotos.insert(0, nuevaPrincipal);
-                      });
-                    }
-                  },
-                ),
-                SizedBox(height: 24),
-                
-                Text(
-                  'Información básica',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16),
-                EditCampoTexto(
-                  label: 'Nombre',
-                  controller: _nombreController,
-                  icon: Icons.pets,
-                ),
-                EditCampoTexto(
-                  label: 'Sexo',
-                  controller: _sexoController,
-                  icon: Icons.person_outline,
-                ),
-                EditCampoTexto(
-                  label: 'Edad',
-                  controller: _edadController,
-                  icon: Icons.cake,
-                  keyboardType: TextInputType.number,
-                ),
-                EditCampoTexto(
-                  label: 'Especie',
-                  controller: _especieController,
-                  icon: Icons.category,
-                ),
-                SizedBox(height: 24),
-                
-                Text(
-                  'Sobre tu mascota',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16),
-                TextField(
-                  controller: _descripcionController,
-                  maxLines: 5,
-                  decoration: InputDecoration(
-                    hintText: 'Describe a tu mascota...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.pink, width: 2),
-                    ),
-                  ),
-                ),
-              ],
-              
-              SizedBox(height: 36),
-            ],
-          ),
-        ),
+  /// Formatea la fecha de cumpleaños al formato dd-mm-aaaa
+  String _formatBirthday(DateTime? birthday) {
+    if (birthday == null) {
+      return 'No especificado';
+    }
+    
+    // Formatear con ceros a la izquierda para días y meses de un dígito
+    String day = birthday.day.toString().padLeft(2, '0');
+    String month = birthday.month.toString().padLeft(2, '0');
+    String year = birthday.year.toString();
+    
+    return '$day-$month-$year';
+  }
+  
+  /// Calcula la edad exacta en años, meses y días con formato en español
+String _calculateAge(DateTime? birthday) {
+  if (birthday == null) {
+    return 'No disponible';
+  }
+  
+  final DateTime now = DateTime.now();
+  
+  // Calcular diferencia en días para manejar años bisiestos correctamente
+  final int days = now.difference(birthday).inDays;
+  
+  // Calcular años, meses y días
+  int years = 0;
+  int months = 0;
+  int remainingDays = days;
+  
+  // Calcular años
+  DateTime tempDate = birthday;
+  while (tempDate.add(const Duration(days: 365)).isBefore(now)) {
+    final DateTime nextYear = DateTime(tempDate.year + 1, tempDate.month, tempDate.day);
+    final int daysInYear = nextYear.difference(tempDate).inDays;
+    if (remainingDays >= daysInYear) {
+      years++;
+      remainingDays -= daysInYear;
+      tempDate = nextYear;
+    } else {
+      break;
+    }
+  }
+  
+  // Calcular meses
+  while (remainingDays >= 28) {
+    final int daysInMonth = _daysInMonth(tempDate.year, tempDate.month);
+    if (remainingDays >= daysInMonth) {
+      months++;
+      remainingDays -= daysInMonth;
+      
+      // Avanzar al siguiente mes
+      if (tempDate.month == 12) {
+        tempDate = DateTime(tempDate.year + 1, 1, tempDate.day);
+      } else {
+        // Ajustar para meses con menos días que el día actual
+        final int maxDays = _daysInMonth(tempDate.year, tempDate.month + 1);
+        final int newDay = tempDate.day > maxDays ? maxDays : tempDate.day;
+        tempDate = DateTime(tempDate.year, tempDate.month + 1, newDay);
+      }
+    } else {
+      break;
+    }
+  }
+  
+  // Formateo en español con pluralización correcta
+  if (years > 0) {
+    if (months > 0) {
+      return '$years ${years == 1 ? 'año' : 'años'}, $months ${months == 1 ? 'mes' : 'meses'}';
+    } else {
+      return '$years ${years == 1 ? 'año' : 'años'}';
+    }
+  } else if (months > 0) {
+    return '$months ${months == 1 ? 'mes' : 'meses'}';
+  } else {
+    return '$remainingDays ${remainingDays == 1 ? 'día' : 'días'}';
+  }
+}
+  
+  /// Determina los días en un mes específico (considera años bisiestos)
+  int _daysInMonth(int year, int month) {
+    const List<int> daysPerMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    
+    // Ajuste para febrero en años bisiestos
+    if (month == 2 && _isLeapYear(year)) {
+      return 29;
+    }
+    
+    return daysPerMonth[month];
+  }
+  
+  /// Verifica si un año es bisiesto
+  bool _isLeapYear(int year) {
+    return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+  }
+
+  /// Muestra un mensaje de éxito
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// Muestra un mensaje de error
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
   
-  Widget _mostrarCampoNoEditable(String label, String valor, IconData icono) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icono, size: 20, color: Colors.pink),
-          SizedBox(width: 8),
-          Text(
-            '$label: ',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
+  /// Widget para mostrar campos no editables
+  Widget _buildInfoField(
+    String label, 
+    String value, 
+    IconData icon, {
+    bool isEditable = false,
+    TextEditingController? controller,
+  }) {
+    if (isEditable && controller != null) {
+      // Campo editable con TextField
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 16, color: Colors.grey),
+                SizedBox(width: _smallSpacing),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
+            SizedBox(height: _smallSpacing / 2),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(width: 1),
+                ),
+                isDense: true,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Campo no editable (solo muestra información)
+      return Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: Colors.grey),
+            SizedBox(width: _smallSpacing),
+            Text(
+              '$label: ',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+            Expanded(
+              child: Text(
+                value,
+                style: const TextStyle(fontSize: 14),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+  
+  /// Muestra la pantalla de ajustes
+  void _showSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AjustesScreen(
+          userId: _viewModel.userId,
+        ),
+      ),
+    );
+  }
+  
+  /// Muestra diálogo de confirmación para eliminar mascota
+  void _showDeletePetDialog(String petUID, String petName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar mascota'),
+        content: Text('¿Estás seguro que deseas eliminar a $petName?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
           ),
-          Expanded(
-            child: Text(
-              valor,
-              overflow: TextOverflow.ellipsis,
-            ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deletePet(petUID, petName);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar'),
           ),
         ],
       ),
     );
   }
+  
+  /// Ejecuta la eliminación de una mascota
+  void _deletePet(String petUID, String petName) {
+    try {
+      _viewModel.deleteCurrentPet();
+      _showSuccessMessage('$petName ha sido eliminado');
+    } catch (error) {
+      _showErrorMessage('Error: $error');
+    }
+  }
+  
+  /// Construye la sección de información del usuario con biografía integrada
+  Widget _buildUserInfoSection(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Título de sección con botón de ajustes
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Datos del Usuario',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.more_vert, color: theme.colorScheme.primary),
+              onPressed: _showSettings,
+              tooltip: 'Ajustes',
+            ),
+          ],
+        ),
+        SizedBox(height: 0),
+        
+        // Tarjeta con foto e información básica
+        Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: Padding(
+            padding: EdgeInsets.all(_cardPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Selector de foto de perfil usando consumer
+                    Consumer<PerfilViewModel>(
+                      builder: (context, viewModel, _) => SizedBox(
+                        width: _profileImageSize,
+                        height: _profileImageSize,
+                        child: SelectorFotos(
+  imagenes: [viewModel.userImage],
+  maxPhotos: 1,
+  onImagesUpdated: _handleUserPhotoUpdateFromSelector, // Usar el adaptador
+  entidadId: viewModel.userId,
+  apiService: viewModel.apiService,
+  tipo: 'usuario',
+  userUID: viewModel.userId,
+),
+                      ),
+                    ),
+                    SizedBox(width: _itemSpacing),
+                    
+                    // Información básica del usuario usando consumer
+                    Expanded(
+                      child: Consumer<PerfilViewModel>(
+                        builder: (context, viewModel, _) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              viewModel.userNameController.text,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: _smallSpacing),
+                            _buildInfoField(
+                              'Cumpleaños', 
+                              _formatBirthday(viewModel.userBirthDate),
+                              Icons.cake_outlined
+                            ),
+                            _buildInfoField('Edad', viewModel.userAgeController.text, Icons.access_time),
+                            _buildInfoField('Sexo', viewModel.userSexController.text, Icons.person),                            
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                // Biografía del usuario con icono de edición
+                SizedBox(height: 0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.description, size: 16, color: Colors.grey),
+                        SizedBox(width: _smallSpacing),
+                        const Text(
+                          'Biografía',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Botón de editar/guardar biografía
+                    IconButton(
+                      icon: Icon(
+                        _isEditingUserBio ? Icons.save : Icons.edit,
+                        size: 20,
+                        color: theme.colorScheme.primary,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () {
+                        setState(() {
+                          _isEditingUserBio = !_isEditingUserBio;
+                          
+                          // Si estamos guardando (al presionar el botón save)
+                          if (!_isEditingUserBio) {
+                            // Llamar al método para actualizar la biografía del usuario
+                            _viewModel.updateUserBio(_viewModel.userBioController.text).then((_) {
+                              _showSuccessMessage('Biografía usuario actualizada');
+                            }).catchError((error) {
+                              _showErrorMessage('Error al actualizar la biografía: $error');
+                            });
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                SizedBox(height: 0),
+                Consumer<PerfilViewModel>(
+                  builder: (context, viewModel, _) => _isEditingUserBio 
+                    // Modo edición: TextField
+                    ? TextField(
+                        controller: viewModel.userBioController,
+                        decoration: InputDecoration(
+                          hintText: 'Cuéntanos algo sobre ti...',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(width: 1),
+                          ),
+                          isDense: true,
+                        ),
+                        maxLines: 3,
+                      )
+                    // Modo visualización: Container con texto
+                    : Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          viewModel.userBioController.text.isEmpty 
+                              ? 'Cuéntanos algo sobre ti...' 
+                              : viewModel.userBioController.text,
+                          style: TextStyle(
+                            color: viewModel.userBioController.text.isEmpty 
+                                ? Colors.grey 
+                                : theme.textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  
+/// Versión simplificada del adaptador para imágenes de mascota
+void _handlePetImagesUpdate(List<String> updatedImages) async {
+  try {
+    // Actualizar las imágenes en el viewModel
+    setState(() {
+      _viewModel.petImages = updatedImages;
+    });
+    
+    _showSuccessMessage('Imágenes actualizadas correctamente');
+  } catch (e) {
+    _showErrorMessage('Error al actualizar imágenes: $e');
+  }
+}
+
+void _handleUserPhotoUpdateFromSelector(List<String> updatedImages) async {
+  if (updatedImages.isEmpty) return;
+  
+  try {
+    // El SelectorFotos maneja internamente la subida de imágenes
+    // Solo necesitamos actualizar la UI local
+    setState(() {
+      // Actualizar la imagen del usuario en el viewModel
+      _viewModel.userImage = updatedImages.first;
+    });
+    
+    // Refrescar los datos para obtener la imagen actualizada desde el servidor
+    await _viewModel.loadUserData();
+    
+    _showSuccessMessage('Imagen actualizada correctamente');
+  } catch (e) {
+    _showErrorMessage('Error al actualizar la imagen: $e');
+  }
+}
+
+  /// Maneja la actualización de foto de perfil del usuario
+Future<void> _handleUserPhotoUpdate(File imageFile) async {
+  try {
+    await _viewModel.selectAndUpdateProfileImage();
+    _showSuccessMessage('Imagen actualizada correctamente');
+  } catch (e) {
+    _showErrorMessage('Error al actualizar la imagen: $e');
+  }
+}
+
+  /// Construye la sección de lista de mascotas con círculos horizontales
+  Widget _buildPetsListSection(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Mis Mascotas',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        SizedBox(height: _itemSpacing),
+        
+        Consumer<PerfilViewModel>(
+          builder: (context, viewModel, _) {
+            if (viewModel.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else {
+              return _buildPetsCirclesList(viewModel, theme);
+            }
+          },
+        ),
+      ],
+    );
+  }
+  
+ /// Muestra el formulario para añadir una nueva mascota
+void _addNewPet(ThemeData theme) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Container(
+      height: MediaQuery.of(context).size.height * 0.9, // Ocupa el 90% de la pantalla
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: CreatePetForm(
+        viewModel: _viewModel,
+        onSuccess: () {
+          Navigator.pop(context); // Cierra el modal
+          _showSuccessMessage('Mascota creada con éxito');
+          // Recargar datos para ver la nueva mascota
+          _viewModel.loadAllData();
+        },
+        onCancel: () {
+          Navigator.pop(context); // Solo cierra el modal
+        },
+      ),
+    ),
+  );
+}
+  
+
+
+  
+  /// Construye la lista horizontal de círculos de mascotas
+Widget _buildPetsCirclesList(PerfilViewModel viewModel, ThemeData theme) {
+  // Aumentamos la altura para dar más espacio
+  return SizedBox(
+    height: _petAvatarSize + 40, // Aumentado de 30 a 40 para más espacio vertical
+    child: ListView(
+      scrollDirection: Axis.horizontal,
+      children: [
+        // Círculos para cada mascota
+        ...List.generate(viewModel.pets.length, (index) {
+          final pet = viewModel.pets[index];
+          final petImageUrl = pet.petImage1.isNotEmpty 
+              ? pet.petImage1 
+              : 'https://via.placeholder.com/150/cccccc/FFFFFF/?text=Mascota';
+              
+          final bool isSelected = index == viewModel.selectedPetIndex;
+              
+          return GestureDetector(
+            onTap: () => viewModel.changePet(index),
+            onLongPress: () => _showPetOptionsMenu(pet, index),
+            child: Container(
+              width: _petAvatarSize,
+              margin: EdgeInsets.only(right: _itemSpacing),
+              child: Column(
+                children: [
+                  // Avatar circular con indicador de selección
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: _petAvatarSize / 2,
+                        backgroundImage: NetworkImage(petImageUrl),
+                        onBackgroundImageError: (exception, stackTrace) {
+                          print('Error cargando imagen de mascota: $exception');
+                        },
+                      ),
+                      if (isSelected)
+                        Container(
+                          width: _petAvatarSize + 6,
+                          height: _petAvatarSize + 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle, // Corregido de BoxShape.circle a BoxShape.circle
+                            border: Border.all(
+                              color: theme.colorScheme.primary, 
+                              width: 3,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: _smallSpacing),
+                  // Nombre de la mascota - Reducimos el tamaño del texto para evitar overflow
+                  Container(
+                    width: _petAvatarSize,
+                    child: Text(
+                      pet.name,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      maxLines: 1, // Forzamos a una sola línea
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected ? theme.colorScheme.primary : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+        
+        // Círculo de añadir mascota
+        GestureDetector(
+          onTap: () => _addNewPet(theme),
+          child: Container(
+            width: _petAvatarSize,
+            child: Column(
+              children: [
+                Container(
+                  width: _petAvatarSize,
+                  height: _petAvatarSize,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    size: 40,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: _smallSpacing),
+                const Text(
+                  'Añadir',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+  
+  /// Muestra un menú emergente con opciones para una mascota
+  void _showPetOptionsMenu(PetModel pet, int index) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: const Text('Editar'),
+            onTap: () {
+              Navigator.pop(context);
+              _editPet(index, pet.name);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete, color: Colors.pink),
+            title: const Text('Eliminar', style: TextStyle(color: Colors.pink)),
+            onTap: () {
+              Navigator.pop(context);
+              _showDeletePetDialog(pet.petUID, pet.name);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// Cambia a editar una mascota específica
+  void _editPet(int index, String petName) {
+    _viewModel.changePet(index);
+    _showSuccessMessage('Editando información de $petName');
+  }
+  
+  /// Construye la sección de edición de mascota seleccionada
+  Widget _buildPetEditSection(ThemeData theme) {
+  return Consumer<PerfilViewModel>(
+    builder: (context, viewModel, _) {
+      if (!viewModel.hasPets || viewModel.currentPet == null) {
+        return const SizedBox.shrink();
+      }
+      
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header con título y botón de eliminar
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Editar ${viewModel.nameController.text}',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                  size: 28,
+                ),
+                onPressed: () => _showDeletePetDialog(
+                  viewModel.currentPet!.petUID,
+                  viewModel.nameController.text,
+                ),
+                tooltip: 'Eliminar mascota',
+              ),
+            ],
+          ),
+          SizedBox(height: 0),
+          
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            child: Padding(
+              padding: EdgeInsets.all(_cardPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Sección de fotos
+                  const Text(
+                    'Fotos',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  SizedBox(height: _smallSpacing),
+                  
+                  SelectorFotos(
+                    imagenes: viewModel.petImages,
+                    onImagesUpdated: _handlePetImagesUpdate,
+                    maxPhotos: 3,
+                    entidadId: viewModel.currentPet?.petUID ?? '',
+                    apiService: viewModel.apiService,
+                    tipo: 'mascota',
+                    userUID: viewModel.userId,
+                  ),
+                  SizedBox(height: _itemSpacing),
+                  
+                  // SECCIÓN: Información de la mascota
+                  const Text(
+                    'Información de la mascota',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  SizedBox(height: _smallSpacing),
+                  
+                  // Campo no editable del cumpleaños con formato dd-mm-aaaa
+                  _buildInfoField(
+                    'Cumpleaños', 
+                    _formatBirthday(viewModel.currentPet?.birthDate),
+                    Icons.cake,
+                  ),
+                  
+                  // Campo no editable de la edad calculada
+                  _buildInfoField(
+                    'Edad', 
+                    _calculateAge(viewModel.currentPet?.birthDate),
+                    Icons.access_time,
+                  ),
+                  
+                  // Campo no editable de la especie
+                  _buildInfoField(
+                    'Especie', 
+                    viewModel.currentPet?.species ?? 'No especificada',
+                    Icons.category,
+                  ),
+                  
+                  // AÑADIDO: Campo no editable del sexo de la mascota
+                  _buildInfoField(
+                    'Sexo', 
+                    viewModel.currentPet?.sex ?? 'No especificado',
+                    Icons.pets,
+                  ),
+                  
+                  // Sección de biografía con icono de edición
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.description, size: 16, color: Colors.grey),
+                          SizedBox(width: _smallSpacing),
+                          const Text(
+                            'Biografía',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Botón de editar/guardar biografía
+                      IconButton(
+                        icon: Icon(
+                          _isEditingPetBio ? Icons.save : Icons.edit,
+                          size: 20,
+                          color: theme.colorScheme.primary,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          setState(() {
+                            _isEditingPetBio = !_isEditingPetBio;
+                            
+                            // Si estamos guardando (al presionar el botón save)
+                            if (!_isEditingPetBio) {
+                              // Llamar al método para actualizar la biografía de la mascota
+                              _viewModel.updateCurrentPetBio(_viewModel.bioController.text).then((_) {
+                                _showSuccessMessage('Biografía de mascota actualizada');
+                              }).catchError((error) {
+                                _showErrorMessage('Error al actualizar la biografía: $error');
+                              });
+                            }
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 0),
+                  
+                  // Campo de biografía condicional (editable o no)
+                  _isEditingPetBio
+                    // Modo edición: TextField
+                    ? TextField(
+                        controller: viewModel.bioController,
+                        decoration: InputDecoration(
+                          hintText: 'Describe a tu mascota...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        maxLines: 3,
+                      )
+                    // Modo visualización: Container con texto
+                    : Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          viewModel.bioController.text.isEmpty
+                              ? 'Describe a tu mascota...'
+                              : viewModel.bioController.text,
+                          style: TextStyle(
+                            color: viewModel.bioController.text.isEmpty
+                                ? Colors.grey
+                                : theme.textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                      ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+  
+  /// Maneja la actualización de imágenes de mascota
+// Future<void> _handlePetImagesUpdate(List<File> updatedImages) async {
+//   try {
+//     await _viewModel.updateCurrentPetImages(updatedImages);
+//     _showSuccessMessage('Imágenes actualizadas correctamente');
+//   } catch (e) {
+//     _showErrorMessage('Error al actualizar imágenes: $e');
+//   }
+// }
+  
+  /// Guarda todos los cambios
+Future<void> _saveAllChanges() async {
+  try {
+    // Guardar biografía del usuario si ha cambiado
+    await _viewModel.updateUserBio(_viewModel.userBioController.text);
+    
+    // Guardar biografía de la mascota actual si ha cambiado
+    if (_viewModel.hasPets && _viewModel.currentPet != null) {
+      await _viewModel.updateCurrentPetBio(_viewModel.bioController.text);
+    }
+    
+    _showSuccessMessage('Cambios guardados correctamente');
+  } catch (error) {
+    _showErrorMessage('Error al guardar datos: $error');
+  }
+}
+  
+  @override
+Widget build(BuildContext context) {
+  // Obtiene el tema actual y la referencia al ThemeProvider
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final isDarkMode = themeProvider.isDarkMode;
+  final theme = isDarkMode ? themeProvider.darkTheme : themeProvider.lightTheme;
+  
+  
+  // Envolvemos todo en un ChangeNotifierProvider para que el ViewModel esté disponible
+  return ChangeNotifierProvider.value(
+    value: _viewModel,
+    child: Theme(
+      data: theme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Mi Perfil',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),          
+          actions: [
+            // Botón para guardar todos los cambios
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveAllChanges,
+              tooltip: 'Guardar cambios',
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: Consumer<PerfilViewModel>(
+            builder: (context, viewModel, _) {
+              if (viewModel.isInitialLoading) {
+                // Mostrar loading mientras se cargan datos inicialmente
+                return const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Cargando perfil...'),
+                    ],
+                  ),
+                );
+              }
+              
+              // Contenido principal con scroll
+              return RefreshIndicator(
+                onRefresh: viewModel.loadAllData,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Sección de información del usuario
+                      _buildUserInfoSection(theme),
+                      
+                      SizedBox(height: _sectionSpacing),
+                      
+                      // Sección lista de mascotas (círculos)
+                      _buildPetsListSection(theme),
+                      
+                      SizedBox(height: _sectionSpacing),
+                      
+                      // Sección de edición de mascota seleccionada
+                      _buildPetEditSection(theme),
+                      
+                      // Espacio al final para asegurar que todo sea accesible
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    ),
+  );
+}
 }
