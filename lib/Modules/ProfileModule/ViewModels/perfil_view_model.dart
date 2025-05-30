@@ -26,7 +26,7 @@ class PerfilViewModel extends ChangeNotifier {
   final TextEditingController userSexController = TextEditingController();
   final TextEditingController userLocationController = TextEditingController();
   final TextEditingController userBioController = TextEditingController();
-  String userImage = 'https://via.placeholder.com/150'; // URL de imagen por defecto
+  String userImage = 'assets/images/default_user.png'; // URL de imagen por defecto
   
   // NUEVO: Fecha de nacimiento del usuario como String formateado
   String? _userBirthDateStr;
@@ -90,7 +90,7 @@ class PerfilViewModel extends ChangeNotifier {
     const String mediaBaseUrl = 'http://localhost:8091/media/get-media';
     
     if (imageName.isEmpty) {
-      return 'https://via.placeholder.com/150';
+      return 'assets/images/default_user.png';
     }
     
     if (imageName.startsWith('http://') || imageName.startsWith('https://')) {
@@ -103,7 +103,7 @@ class PerfilViewModel extends ChangeNotifier {
   /// Construye URL para imagen de usuario
   String buildUserImageUrl(dynamic userImage) {
     if (userImage == null || userImage.toString().isEmpty) {
-      return 'https://via.placeholder.com/150';
+      return 'assets/images/default_user.png';
     }
     
     String imageStr = userImage.toString();
@@ -113,16 +113,17 @@ class PerfilViewModel extends ChangeNotifier {
     }
     
     if (imageStr == 'profileImage' || imageStr.contains('placeholder')) {
-      return 'https://via.placeholder.com/150';
+      return 'assets/images/default_user.png';
     }
     
     return buildMediaUrl(imageStr);
   }
+  
 
   /// Construye URL para imagen de mascota
   String buildPetImageUrl(dynamic petImage) {
     if (petImage == null || petImage.toString().isEmpty) {
-      return 'https://via.placeholder.com/150/cccccc/FFFFFF/?text=Mascota';
+      return 'assets/images/default_pet.png';
     }
     
     String imageStr = petImage.toString();
@@ -132,7 +133,7 @@ class PerfilViewModel extends ChangeNotifier {
     }
     
     if (imageStr == 'profileImage' || imageStr.contains('placeholder')) {
-      return 'https://via.placeholder.com/150/cccccc/FFFFFF/?text=Mascota';
+      return 'assets/images/default_pet.png';
     }
     
     return buildMediaUrl(imageStr);
@@ -406,7 +407,7 @@ void _init() async {
     
     // Si no hay imágenes válidas, agregar una imagen de placeholder
     if (newPetImages.isEmpty) {
-      newPetImages.add('https://via.placeholder.com/150/cccccc/FFFFFF/?text=Mascota');
+      newPetImages.add('assets/images/default_pet.png');
     }
     
     // Actualizar la lista de imágenes

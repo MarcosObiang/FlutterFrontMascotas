@@ -148,7 +148,7 @@ class _ComentarioBottomSheetState extends State<ComentarioBottomSheet> {
                   CircleAvatar(
                     radius: 16,
                     backgroundImage: NetworkImage(
-                      widget.mascotaProvider.miMascota?.fotoPerfil ?? 'https://via.placeholder.com/150',
+                      widget.mascotaProvider.miMascota?.fotoPerfil ?? 'assets/images/default_pet.png',
                     ),
                   ),
                   SizedBox(width: 10),

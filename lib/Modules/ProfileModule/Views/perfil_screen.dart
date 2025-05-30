@@ -587,7 +587,7 @@ Widget _buildPetsCirclesList(PerfilViewModel viewModel, ThemeData theme) {
           final pet = viewModel.pets[index];
           final petImageUrl = pet.petImage1.isNotEmpty 
               ? pet.petImage1 
-              : 'https://via.placeholder.com/150/cccccc/FFFFFF/?text=Mascota';
+              : 'assets/images/default_pet.png';
               
           final bool isSelected = index == viewModel.selectedPetIndex;
               

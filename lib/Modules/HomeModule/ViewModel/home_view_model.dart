@@ -334,7 +334,7 @@ Future<bool> darLike() async {
          
     // USAR EL MÉTODO POST DEL DioApiService (que ahora incluye el header userUID automáticamente)
     final response = await _apiService.post(
-      path: 'likes-service/likes/add?receiverUID=$receiverUID&likedPetUID=$likedPetUID',
+      path: '/likes-service/likes/add?receiverUID=$receiverUID&likedPetUID=$likedPetUID',
       data: {}
     );
          
