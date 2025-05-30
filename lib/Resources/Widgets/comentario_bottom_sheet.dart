@@ -190,7 +190,7 @@ class _ComentarioBottomSheetState extends State<ComentarioBottomSheet> {
                         //     setState(() {
                         //       _isComposing = false;
                         //     });
-                        //     FocusScope.of(context).unfocus();
+                        //     FocusScope.of(context).unfocus(); 
                           }
                         : null,
                   ),
