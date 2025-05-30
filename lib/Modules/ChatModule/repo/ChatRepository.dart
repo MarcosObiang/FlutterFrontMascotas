@@ -6,7 +6,7 @@ import 'package:mascotas_citas/services/ApiService.dart';
 import 'package:mascotas_citas/services/WebSocketService.dart';
 
 abstract class ChatRepository {
-  Future<void> getChats();
+  Future<List<ChatModel>> getChats();
   Future<void> deleteChat({required String chatUID});
   Stream<WebSocketDataContainer<dynamic>> get onMessageReceived;
 }
@@ -20,9 +20,26 @@ class ChatRepositoryImpl implements ChatRepository {
       {required this.webSocketService, required this.dioApiService});
 
   @override
-  Future<void> getChats() async {
-    // TODO: implement getChats
-  }
+  Future<List<ChatModel>> getChats() async {
+    try {
+      final result = await dioApiService
+          .get(path: "/chat-service/api/chats", queryParams: {});
+      if (result.statusCode == 200) {
+        List<dynamic> data = result.data;
+        List<ChatModel> likes = data.map((e) => ChatModel.fromJson(e)).toList();
+        return likes;
+      }
+      return [];
+    } on Exception catch (e) {
+      if (e is DioException) {
+        throw ModuleException(
+            message: "Error al obtener los chats ",
+            title: "Error - ${e.response?.statusCode}");
+      }
+      throw ModuleException(
+          message: "Error al obtener los chats ",
+          title: "Error - ${e.toString()}");
+    }  }
 
   @override
   Future<void> deleteChat({required String chatUID}) async {

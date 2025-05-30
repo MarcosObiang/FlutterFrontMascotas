@@ -1,6 +1,8 @@
+import 'package:equatable/equatable.dart';
+import 'package:mascotas_citas/Modules/MessagesModule/model/MessageModel.dart';
 import 'package:mascotas_citas/utils/GetUriFromString.dart';
 
-class ChatModel {
+class ChatModel extends Equatable {
   String chatId;
   String chatCreationTimestamp; // Consider using DateTime and parsing
   String user1Id;
@@ -13,6 +15,7 @@ class ChatModel {
   bool user2Blocked;
   String? user1NotificationToken; // Nullable if it can be absent
   String? user2NotificationToken; // Nullable if it can be absent
+  MessageModel? lastMessage; // Nullable if no messages exist
 
   ChatModel({
     required this.chatId,
@@ -64,4 +67,10 @@ class ChatModel {
       'user2NotificationToken': user2NotificationToken,
     };
   }
+
+  @override
+  // TODO: implement props
+  List<Object?> get props => [
+        chatId,
+      ];
 }

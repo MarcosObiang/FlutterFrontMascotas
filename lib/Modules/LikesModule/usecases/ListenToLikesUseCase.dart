@@ -20,7 +20,7 @@ class Listentolikesusecase
       
       likeModuleState.setData(data);
     }, onError: (error) {
-      likeModuleState.setErrorStatus();
+      likeModuleState.setStatus(Status.error);
       Logger().e(error);
     });
     return Future.value(true);

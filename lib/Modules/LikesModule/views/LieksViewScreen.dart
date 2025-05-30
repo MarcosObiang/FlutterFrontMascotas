@@ -1,12 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mascotas_citas/Modules/ChatModule/state/ChatState.dart';
 import 'package:mascotas_citas/Modules/LikesModule/model/LikeModel.dart';
 import 'package:mascotas_citas/Modules/LikesModule/state/LikeModuleState.dart';
 import 'package:mascotas_citas/Modules/LikesModule/usecases/AcceptLikeUseCase.dart';
 import 'package:mascotas_citas/Modules/LikesModule/usecases/RejectLikeUseCase.dart';
 import 'package:mascotas_citas/Modules/LikesModule/usecases/RevealLikesUseCase.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
+import 'package:mascotas_citas/interfaces/data_handler_interface.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 import 'package:provider/provider.dart';
 
@@ -22,10 +24,16 @@ class _LikesViewScreenState extends State<LikesViewScreen> {
   int lastListLength = 0;
 
   void _addItem() {
+    if (_listKey.currentState == null) {
+      return;
+    }
     _listKey.currentState!.insertItem(0, duration: Duration(seconds: 1));
   }
 
   void _removeItem() {
+    if (_listKey.currentState == null) {
+      return;
+    }
     _listKey.currentState!.removeItem(0, (context, animation) {
       return Card();
     });
@@ -37,17 +45,20 @@ class _LikesViewScreenState extends State<LikesViewScreen> {
       value: getIt<LikeModuleState>(),
       child: Consumer<LikeModuleState>(builder:
           (BuildContext context, LikeModuleState state, Widget? child) {
-        if (state.lastListAction == "add") {
+        if (state.lastListAction == LastListAction.add) {
           if (lastListLength < state.likes.length) {
             lastListLength = state.likes.length;
             _addItem();
-            state.lastListActionClear();
+            // Reset the last action to none after adding
+            
+            state.setLastListAction(action: LastListAction.none);
           }
-        } else if (state.lastListAction == "remove") {
+        } else if (state.lastListAction == LastListAction.remove) {
           if (_listKey.currentState != null && state.likes.isEmpty) {
             lastListLength = state.likes.length;
             _removeItem();
-            state.lastListActionClear();
+            // Reset the last action to none after removing
+            state.setLastListAction(action: LastListAction.none);
           }
         }
 
