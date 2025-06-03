@@ -1,4 +1,5 @@
 import 'package:mascotas_citas/Modules/SocialModule/models/CommentsModel.dart';
+import 'package:mascotas_citas/utils/GetUriFromString.dart';
 
 class SocialModel {
   final String id;
@@ -33,7 +34,7 @@ class SocialModel {
     id: json['id']?.toString() ?? '',
     userUID: json['userUID']?.toString() ?? '',
     postUID: json['postUID']?.toString() ?? '',
-    imageURL: json['imageURL']?.toString() ?? '',
+    imageURL: json['imageURL']?.toString()==null ?'':Geturifromstring().getUriFromString(json['imageURL']?.toString() ?? ''),
     description: json['description']?.toString() ?? '',
     likesCount: json['likesCount'] is int
         ? json['likesCount'] as int

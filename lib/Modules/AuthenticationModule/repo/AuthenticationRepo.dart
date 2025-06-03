@@ -43,6 +43,8 @@ class AuthenticationRepoImpl implements AuthenticationRepo {
       if (response.data is bool) {
         return response.data;
       } else {
+        print("Error: El formato de la respuesta no es un booleano");
+        return false;
         throw Exception("Error: El formato de la respuesta no es un booleano");
       }
     } else {

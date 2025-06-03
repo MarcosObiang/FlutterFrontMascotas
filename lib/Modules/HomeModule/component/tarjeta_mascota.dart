@@ -1,5 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:mascotas_citas/models/PetModel.dart';
+import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 import 'package:provider/provider.dart';
 import 'package:mascotas_citas/Resources/providers/theme_provider.dart';
 import 'dart:async';
@@ -15,9 +18,7 @@ class TarjetaMascota extends StatefulWidget {
 
 class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProviderStateMixin {
   int _currentImageIndex = 0;
-  Timer? _imageTimer;
-  late AnimationController _animationController;
-  late Animation<double> _animation;
+
   
   // Traducción de especies en español
   final Map<String, String> _especiesTraducidas = {
@@ -38,39 +39,27 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    // Configurar animación para cambios de imagen
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _animation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    );
-    
-    // Iniciar el temporizador para cambiar imágenes cada 30 segundos
-    _startImageTimer();
+
   }
 
   @override
   void dispose() {
     // Liberar recursos
-    _imageTimer?.cancel();
-    _animationController.dispose();
+ 
     super.dispose();
   }
 
   void _startImageTimer() {
-    _imageTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      _nextImage();
-    });
+    // _imageTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    //   _nextImage();
+    // });
   }
 
   void _nextImage() {
     final List<String?> images = _getValidImages();
     if (images.isEmpty) return;
     
-    _animationController.forward(from: 0.0);
+   // _animationController.forward(from: 0.0);
     
     setState(() {
       _currentImageIndex = (_currentImageIndex + 1) % images.length;
@@ -81,30 +70,20 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
     final List<String?> images = _getValidImages();
     if (images.isEmpty) return;
     
-    _animationController.forward(from: 0.0);
+   // _animationController.forward(from: 0.0);
     
     setState(() {
       _currentImageIndex = (_currentImageIndex - 1 + images.length) % images.length;
     });
   }
 
-  // Función para construir la URL completa de la imagen
-  String _buildImageUrl(String imageSource) {
-    // Si ya es una URL completa (contiene http:// o https://), la devolvemos tal como está
-    if (imageSource.startsWith('http://') || imageSource.startsWith('https://')) {
-      return imageSource;
-    }
-    
-    // Si es solo un nombre de archivo, agregamos el prefijo del servidor local
-    return 'http://localhost:8091/media/get-media?fileName=$imageSource';
-  }
+
 
   // Obtener lista de imágenes válidas
   List<String> _getValidImages() {
     return [
       widget.mascota.petImage1,
-      widget.mascota.petImage2,
-      widget.mascota.petImage3,
+ 
     ].where((img) => img != null && img.isNotEmpty).cast<String>().toList();
   }
 
@@ -115,10 +94,10 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
     if (images.isEmpty) {
       return null; // Retornamos null en lugar de placeholder
     }
-    
-    // Construir la URL completa para la imagen actual
-    return _buildImageUrl(images[_currentImageIndex]);
+
+    return images[_currentImageIndex];
   }
+    // Construir la URL completa para la imagen actual  }
 
   // Traducir la especie al español
   String _getEspecieEnEspanol() {
@@ -210,6 +189,7 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
+    String? token=getIt<AuthDataService>().getToken();
     // Obtener el provider de tema
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
@@ -245,26 +225,10 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
               children: [
                 // Imagen principal con animación o placeholder
                 currentImageUrl != null
-                    ? FadeTransition(
-                        opacity: _animation,
-                        child: Image.network(
-                          currentImageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => 
-                              _buildImageErrorWidget(colorScheme),
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Center(
-                              child: CircularProgressIndicator(
-                                color: theme.colorScheme.primary,
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                    : null,
-                              ),
-                            );
-                          },
-                        ),
-                      )
+                    ? CachedNetworkImage(
+                      fit: BoxFit.cover,
+                      httpHeaders: {"Authorization": "Bearer $token"},
+                      imageUrl: "${currentImageUrl}")
                     : _buildNoImageWidget(colorScheme),
                 
                 // Gradiente para mejor legibilidad del texto
@@ -370,7 +334,6 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
                           onTap: () {
                             setState(() {
                               _currentImageIndex = index;
-                              _animationController.forward(from: 0.0);
                             });
                           },
                           child: Container(
@@ -391,37 +354,7 @@ class _TarjetaMascotaState extends State<TarjetaMascota> with SingleTickerProvid
                   ),
                 
                 // Contador de fotos
-                if (images.isNotEmpty && currentImageUrl != null)
-                  Positioned(
-                    top: 16,
-                    left: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.photo_library,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            "${_currentImageIndex + 1}/${images.length}",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+
                 
                 // Información básica de la mascota
                 Positioned(
