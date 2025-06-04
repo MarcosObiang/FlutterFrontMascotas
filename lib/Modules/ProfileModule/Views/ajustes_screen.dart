@@ -1,5 +1,7 @@
 // screens/ajustes_screen.dart
 import 'package:flutter/material.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/usecases/LogOutUseCase.dart';
+import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:provider/provider.dart';
 import '../../AuthenticationModule/views/AuthScreen.dart';
 import 'package:mascotas_citas/Resources/providers/theme_provider.dart';
@@ -23,7 +25,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
   double _distanciaMaxima = 20.0;
   bool _notificacionesActivas = true;
   TipoBusqueda _tipoBusquedaSeleccionado = TipoBusqueda.todas;
-  
+
   // Lista de opciones de tipo de búsqueda para mostrar en el dropdown
   final List<String> _opcionesTipoBusqueda = [
     'Todas las mascotas',
@@ -36,13 +38,14 @@ class _AjustesScreenState extends State<AjustesScreen> {
     super.initState();
     _cargarPreferenciasDesdeProvider();
   }
-  
+
   // Cargar preferencias desde el Provider
   void _cargarPreferenciasDesdeProvider() {
     // Esperamos al primer frame para asegurarnos que el Provider esté disponible
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final configProvider = Provider.of<ConfiguracionBusquedaProvider>(context, listen: false);
-      
+      final configProvider =
+          Provider.of<ConfiguracionBusquedaProvider>(context, listen: false);
+
       setState(() {
         _especieSeleccionada = configProvider.especieSeleccionada;
         _distanciaMaxima = configProvider.distanciaMaxima;
@@ -58,10 +61,11 @@ class _AjustesScreenState extends State<AjustesScreen> {
     // Obtenemos la instancia del ThemeProvider
     final themeProvider = Provider.of<ThemeProvider>(context);
     final configProvider = Provider.of<ConfiguracionBusquedaProvider>(context);
-    
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ajustes', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Ajustes',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
           TextButton(
@@ -69,7 +73,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
               // Guardar todos los ajustes usando el provider
               await configProvider.guardarPreferencias();
               if (!mounted) return;
-              
+
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Configuración guardada')),
               );
@@ -97,21 +101,23 @@ class _AjustesScreenState extends State<AjustesScreen> {
               },
             ),
             const Divider(),
-            
+
             _construirSeccion('Apariencia'),
             SwitchListTile(
               title: const Text('Modo oscuro'),
               subtitle: const Text('Cambia el tema de la aplicación'),
-              value: themeProvider.isDarkMode, // Usamos el valor del ThemeProvider
+              value:
+                  themeProvider.isDarkMode, // Usamos el valor del ThemeProvider
               activeColor: Colors.pink,
               onChanged: (bool value) {
-                themeProvider.toggleTheme(); // Cambiamos el tema usando el ThemeProvider
+                themeProvider
+                    .toggleTheme(); // Cambiamos el tema usando el ThemeProvider
               },
             ),
             const Divider(),
-            
+
             _construirSeccion('Criterios de Búsqueda'),
-            
+
             // Tipo de búsqueda
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,9 +135,11 @@ class _AjustesScreenState extends State<AjustesScreen> {
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.pink.withOpacity(0.2)),
+                      borderSide:
+                          BorderSide(color: Colors.pink.withOpacity(0.2)),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     filled: true,
                     fillColor: Colors.pink.withOpacity(0.05),
                   ),
@@ -152,7 +160,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // COMENTADO: Distancia máxima (no se muestra ya que la búsqueda por proximidad está deshabilitada)
             /*
             // Distancia máxima (visible solo si el tipo de búsqueda es por proximidad)
@@ -201,9 +209,11 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 ],
               ),
             */
-            
+
             // Selector de especie (visible solo si el tipo de búsqueda es por especie)
-            if (_deberiaOcultarEspecie(configProvider.tipoBusquedaSeleccionado) == false)
+            if (_deberiaOcultarEspecie(
+                    configProvider.tipoBusquedaSeleccionado) ==
+                false)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -225,8 +235,12 @@ class _AjustesScreenState extends State<AjustesScreen> {
                         selectedColor: Colors.pink.withOpacity(0.6),
                         backgroundColor: Colors.pink.withOpacity(0.1),
                         labelStyle: TextStyle(
-                          color: _especieSeleccionada == especie ? Colors.white : null,
-                          fontWeight: _especieSeleccionada == especie ? FontWeight.bold : FontWeight.normal,
+                          color: _especieSeleccionada == especie
+                              ? Colors.white
+                              : null,
+                          fontWeight: _especieSeleccionada == especie
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                         onSelected: (selected) {
                           if (selected) {
@@ -244,8 +258,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
               ),
 
             const Divider(),
-            
-            _construirSeccion('Cuenta'),                       
+
+            _construirSeccion('Cuenta'),
             ListTile(
               title: const Text('Cerrar Sesión'),
               leading: const Icon(Icons.logout, color: Colors.pink),
@@ -257,9 +271,10 @@ class _AjustesScreenState extends State<AjustesScreen> {
               tileColor: Theme.of(context).cardColor,
             ),
             const SizedBox(height: 16),
-            
+
             ListTile(
-              title: const Text('Eliminar cuenta', style: TextStyle(color: Colors.red)),
+              title: const Text('Eliminar cuenta',
+                  style: TextStyle(color: Colors.red)),
               leading: const Icon(Icons.delete_forever, color: Colors.red),
               onTap: () {
                 _mostrarDialogoEliminarCuenta();
@@ -268,11 +283,11 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 borderRadius: BorderRadius.circular(10),
                 side: BorderSide(color: Colors.red.withOpacity(0.2)),
               ),
-              tileColor: Theme.of(context).cardColor, 
+              tileColor: Theme.of(context).cardColor,
             ),
-            
+
             const SizedBox(height: 30),
-            
+
             // Información adicional
             Center(
               child: Column(
@@ -289,26 +304,29 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 30),
             Center(
               child: ElevatedButton(
                 onPressed: () async {
                   await configProvider.aplicarCambiosBusqueda();
                   if (!mounted) return;
-                  
+
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Configuración guardada y aplicada')),
+                    const SnackBar(
+                        content: Text('Configuración guardada y aplicada')),
                   );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.pink,
-                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                child: const Text('Guardar cambios', style: TextStyle(color: Colors.white)),
+                child: const Text('Guardar cambios',
+                    style: TextStyle(color: Colors.white)),
               ),
             ),
             const SizedBox(height: 20),
@@ -326,7 +344,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
     return tipoBusqueda != TipoBusqueda.porProximidad;
   }
   */
-  
+
   // Método para determinar si se debe ocultar la opción de especie
   bool _deberiaOcultarEspecie(TipoBusqueda tipoBusqueda) {
     // Solo mostrar si es específicamente por especie
@@ -369,7 +387,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 // Aquí sí necesitarías un servicio para eliminar la cuenta
                 // pero puedes inyectarlo solo cuando sea necesario
                 Navigator.pop(context);
-                
+
                 // Volver al login
                 Navigator.pushAndRemoveUntil(
                   context,
@@ -380,14 +398,15 @@ class _AjustesScreenState extends State<AjustesScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
               ),
-              child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+              child:
+                  const Text('Eliminar', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
       },
     );
   }
-  
+
   // Método para cerrar sesión
   void _cerrarSesion() {
     showDialog(
@@ -404,11 +423,11 @@ class _AjustesScreenState extends State<AjustesScreen> {
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
-              onPressed: () {
-                // Aquí podrías llamar a un servicio de autenticación
-                // para realizar el logout en el backend si es necesario
+              onPressed: () async {
+                await getIt<LogOutUseCase>().execute();
+
                 Navigator.pop(context);
-                
+
                 // Navegar a la pantalla de login y eliminar todas las rutas anteriores
                 Navigator.pushAndRemoveUntil(
                   context,
@@ -419,7 +438,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pink,
               ),
-              child: const Text('Cerrar Sesión', style: TextStyle(color: Colors.white)),
+              child: const Text('Cerrar Sesión',
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         );

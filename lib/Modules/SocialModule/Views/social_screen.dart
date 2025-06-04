@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:mascotas_citas/Modules/SocialModule/models/CommentRepliesModel.dart';
 import 'package:mascotas_citas/Modules/SocialModule/models/PostLikesModel.dart';
+import 'package:mascotas_citas/dependencies/injector.dart';
+import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 import 'dart:io';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:provider/provider.dart';
@@ -454,6 +456,8 @@ class _SocialScreenState extends State<SocialScreen> {
   Widget build(BuildContext context) {
     final socialProvider = Provider.of<SocialProvider>(context);
     final publicaciones = socialProvider.publicaciones;
+    String token=getIt<AuthDataService>().getToken()!;
+
 
     return Scaffold(
       appBar: AppBar(
@@ -608,7 +612,7 @@ class _SocialScreenState extends State<SocialScreen> {
   Widget _buildPublicacionCard(SocialModel publicacion, LikesModel likes) {
     final fechaRelativa = timeago.format(publicacion.createdAt, locale: 'es');
     final String imageFileName = publicacion.imageURL;
-    final String imageUrl = 'http://192.168.1.23:8091/media/get-media?fileName=$imageFileName';
+    final String imageUrl = imageFileName;
 
     return Card(
       margin: EdgeInsets.only(bottom: 12),
@@ -770,6 +774,7 @@ class _SocialScreenState extends State<SocialScreen> {
 Widget _buildImageWidget(String imagePath) {
   if (imagePath.startsWith('http')) {
     return Image.network(
+      headers: {'Authorization': 'Bearer ${getIt<AuthDataService>().getToken()}'},
       imagePath,
       height: 250,
       width: double.infinity,

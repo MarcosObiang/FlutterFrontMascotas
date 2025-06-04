@@ -39,204 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Método para mostrar el modal de configuración de búsqueda
-  void _mostrarConfiguracionBusqueda() {
-    final configProvider = Provider.of<ConfiguracionBusquedaProvider>(context, listen: false);
-    
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            top: 20,
-            left: 20,
-            right: 20,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Opciones de búsqueda',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                
-                // Selector del tipo de búsqueda
-                const Text('Tipo de búsqueda:', style: TextStyle(fontWeight: FontWeight.bold)),
-                DropdownButton<TipoBusqueda>(
-                  value: configProvider.tipoBusquedaSeleccionado,
-                  isExpanded: true,
-                  icon: const Icon(Icons.arrow_downward),
-                  onChanged: (TipoBusqueda? newValue) {
-                    if (newValue != null) {
-                      setModalState(() {
-                        configProvider.setTipoBusqueda(newValue);
-                      });
-                    }
-                  },
-                  items: TipoBusqueda.values.map<DropdownMenuItem<TipoBusqueda>>((TipoBusqueda value) {
-                    String label;
-                    switch (value) {
-                      case TipoBusqueda.todas:
-                        label = 'Todas las mascotas';
-                        break;
-                      // case TipoBusqueda.porProximidad:
-                      //   label = 'Por proximidad';
-                      //   break;
-                      case TipoBusqueda.porEspecie:
-                        label = 'Por especie';
-                        break;
-                    }
-                    return DropdownMenuItem<TipoBusqueda>(
-                      value: value,
-                      child: Text(label),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 20),
-                
-                // Configuración específica según el tipo de búsqueda
-                // Solo mostramos las opciones de especie cuando se ha seleccionado específicamente "Por especie"
-                if (configProvider.tipoBusquedaSeleccionado == TipoBusqueda.porEspecie) ...[
-                  const Text('Especie:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: configProvider.getEspeciesDisponibles().map((especie) {
-                      // Corrección del color del chip seleccionado
-                      final bool isSelected = configProvider.especieSeleccionada == especie;
-                      return ChoiceChip(
-                        label: Text(especie),
-                        selected: isSelected,
-                        selectedColor: Colors.pink,  // Color sólido para el seleccionado
-                        backgroundColor: Colors.pink.withOpacity(0.1),
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                        onSelected: (selected) {
-                          if (selected) {
-                            setModalState(() {
-                              configProvider.setEspecieSeleccionada(especie);
-                            });
-                          }
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ],
-                
-                // Solo mostramos el radio de búsqueda cuando se ha seleccionado específicamente "Por proximidad"
-                // if (configProvider.tipoBusquedaSeleccionado == TipoBusqueda.porProximidad) ...[
-                //   const SizedBox(height: 20),
-                //   Text(
-                //     'Radio de búsqueda (${configProvider.distanciaMaxima.round()} km):',
-                //     style: TextStyle(fontWeight: FontWeight.bold),
-                //   ),
-                //   Slider(
-                //     value: configProvider.distanciaMaxima,
-                //     min: 1,
-                //     max: 100,
-                //     divisions: 99,
-                //     label: configProvider.distanciaMaxima.round().toString(),
-                //     activeColor: Colors.pink,
-                //     inactiveColor: Colors.pink.withOpacity(0.2),
-                //     onChanged: (double value) {
-                //       setModalState(() {
-                //         configProvider.setDistanciaMaxima(value);
-                //       });
-                //     },
-                //   ),
-                //   Row(
-                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //     children: [
-                //       Text('1 km', style: TextStyle(color: Colors.grey)),
-                //       Text('100 km', style: TextStyle(color: Colors.grey)),
-                //     ],
-                //   ),
-                // ],
-                
-                const SizedBox(height: 20),
-                
-                // Botones de acción
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancelar'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        
-                        // Aplicamos la configuración y guardamos
-                        await configProvider.aplicarCambiosBusqueda();
-                        
-                        // Recargamos mascotas con la nueva configuración
-                        _viewModel.cargarMascotas(configProvider);
-                        
-                        // Mostramos confirmación
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Configuración aplicada')),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink,
-                      ),
-                      child: const Text('Aplicar', style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  // Método para mostrar notificación de match
-  void _showMatchNotification(BuildContext context, PetModel mascota) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('¡Tienes un nuevo match!'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundImage: NetworkImage(mascota.petImage1 ?? ''),
-            ),
-            SizedBox(height: 16),
-            Text('Has hecho match con ${mascota.name}'),
-            Text('¡Ve a la sección de matches para chatear!'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cerrar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Aquí podrías navegar a la página de matches
-            },
-            child: Text('Ver match'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showSnackBar(BuildContext context, String message, Color color) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -260,8 +63,11 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, viewModel, _) {
           return Scaffold(
             appBar: AppBar(
+              leading:  null,
+              automaticallyImplyLeading: false,
               title: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+
                 children: [
                   Icon(Icons.pets, color: Colors.pink),
                   SizedBox(width: 8),
@@ -270,16 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               centerTitle: true,
               actions: [
-                // Botón para abrir la configuración de búsqueda
-                IconButton(
-                  icon: const Icon(Icons.filter_list),
-                  onPressed: _mostrarConfiguracionBusqueda,
-                  tooltip: 'Opciones de búsqueda',                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () => viewModel.cargarMascotas(configProvider),
-                  tooltip: 'Recargar mascotas',
-                ),
+             
               ],
             ),
             body: _buildBody(viewModel, configProvider),
@@ -318,20 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Mostrar contenido principal
     return Column(
       children: [
-        // Indicador del tipo de búsqueda actual
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),          
-          child: Row(
-            children: [
-              const Icon(Icons.search, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                viewModel.getTipoBusquedaTexto(configProvider),
-                style: const TextStyle(fontSize: 14),
-              ),
-            ],
-          ),
-        ),
+
         if (viewModel.mascotaActual == null)
           const Expanded(
             child: Center(
@@ -345,33 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: _buildSwipeableCard(context, viewModel, viewModel.mascotaActual!),
             ),
           ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              BotonAccion(
-                icon: Icons.close,
-                color: Colors.red,
-                onPressed: () {
-                  viewModel.darDislike();
-                  _showSnackBar(context, 'Descartaste esta mascota', Colors.red);
-                },
-              ),
-              BotonAccion(
-                icon: Icons.favorite,
-                color: Colors.pink,
-                onPressed: () async {
-                  bool isMatch = await viewModel.darLike();
-                  if (isMatch) {
-                    _showMatchNotification(context, viewModel.mascotaActual!);
-                  }
-                  _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
-                },
-              ),
-            ],
-          ),
-        ),
+
       ],
     );
   }
@@ -405,7 +163,6 @@ class _HomeScreenState extends State<HomeScreen> {
             // Swipe derecha (like)
             bool isMatch = await viewModel.darLike();
             if (isMatch) {
-              _showMatchNotification(context, mascota);
             }
             _showSnackBar(context, '¡Te gusta esta mascota!', Colors.pink);
           } else {
