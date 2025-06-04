@@ -159,11 +159,12 @@ Future<void> crearPublicacion(Map<String, dynamic> data, {dynamic postImage1}) a
   }
 
   // Replies (respuestas a comentarios)
-  Future<void> cargarReplies(String commentUID) async {
-    _replies =  await getRepliesByCommentUseCase.execute({'commentUID': commentUID});
-    notifyListeners();
+Future<List<CommentRepliesModel>> cargarReplies(String commentUID) async {
+  _replies = await getRepliesByCommentUseCase.execute({'commentUID': commentUID});
+  notifyListeners();
+  return _replies; // ✅ Retorna las nuevas replies
+}
 
-  }
 
   Future<void> crearReply(Map<String, dynamic> data) async {
     await createCommentReplyUseCase.execute(data);

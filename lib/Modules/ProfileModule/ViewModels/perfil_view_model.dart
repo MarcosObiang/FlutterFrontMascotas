@@ -1094,4 +1094,25 @@ Map<String, dynamic> getUserSummary() {
     'birthDate': _userBirthDateStr,
   };
 }
+Future<dynamic> getUserDataById(miUsuarioid) async {
+  try {
+    // Verificar que el ID del usuario es válido antes de usarlo
+    if (miUsuarioid.isEmpty) {
+      throw Exception('ID de usuario no válido');
+    }
+
+    // Realizar la solicitud GET al endpoint local
+    final userResponse = await _apiService.get(
+      path: 'http://localhost:8082/users/get/$miUsuarioid',
+
+    );
+
+    // Devolver los datos recibidos
+    return userResponse.data;
+  } catch (e) {
+    print('Error al obtener datos del usuario: $e');
+    return null;
+  }
+}
+
 }

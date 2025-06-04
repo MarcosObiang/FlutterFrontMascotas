@@ -2,11 +2,15 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart' as _apiService;
 import 'package:image_picker/image_picker.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/ViewModels/perfil_view_model.dart';
 import 'package:mascotas_citas/Modules/SocialModule/models/CommentRepliesModel.dart';
 import 'package:mascotas_citas/Modules/SocialModule/models/PostLikesModel.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
+import 'package:mascotas_citas/services/ApiServiceRD.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
+import 'package:mascotas_citas/services/platform/storage/SecureStorage.dart';
 import 'dart:io';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:provider/provider.dart';
@@ -26,31 +30,15 @@ class _SocialScreenState extends State<SocialScreen> {
   bool _isComposing = false;
   File? _selectedImage;
   bool _isUploading = false;
-
-  // Datos simulados del usuario actual
-  
+  late PerfilViewModel _viewModel;
 
 
 
-  String miUsuarioId = 'miUsuario';
-  String nombreUsuario = 'Luna';
-  String avatarUrl = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1';
 
-  Future<void> obtenerDatos() async {
-  final response = await http.get(Uri.parse('http://192.168.1.23:8089/user-service/users/get'));
 
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> data = json.decode(response.body);
-    setState(() {
-      miUsuarioId = data['userUID'] ?? 'miUsuario';
-      nombreUsuario = data['name'] ?? 'Luna';
-      avatarUrl = data['userImage1'] ?? 'https://images.unsplash.com/photo-1543466835-00a7907e9de1';
-    });
-  }
-  else {
-    throw Exception('Error al obtener los datos del usuario');
-  }
-}
+
+
+
 
   final ImagePicker _picker = ImagePicker();
 
@@ -59,14 +47,29 @@ class _SocialScreenState extends State<SocialScreen> {
     super.initState();
     timeago.setLocaleMessages('es', timeago.EsMessages());
     Provider.of<SocialProvider>(context, listen: false).cargarPublicaciones();
-    obtenerDatos();
+    
+        // Inicializar el ViewModel con los servicios necesarios
+    final apiService = ApiService(
+      authDataService: AuthDataService(secureStorage: SecureStorage()),
+    );
+    
+    final authDataService = AuthDataService(secureStorage: SecureStorage());
+    
+    // Crear el ViewModel
+    _viewModel = PerfilViewModel(
+      apiService: apiService,
+      authDataService: authDataService,
+    );  
+    
   }
 
   @override
   void dispose() {
     _postController.dispose();
+    _viewModel.dispose();
     super.dispose();
   }
+  
 
   Future<void> _seleccionarImagen(ImageSource source) async {
     try {
@@ -120,6 +123,9 @@ class _SocialScreenState extends State<SocialScreen> {
   }
 
   Future<void> _publicar() async {
+    final viewModel = Provider.of<PerfilViewModel>(context, listen: false);
+                
+      String miUsuarioId = viewModel.userId;
     if (_postController.text.isEmpty && _selectedImage == null) return;
     setState(() => _isUploading = true);
 
@@ -154,6 +160,9 @@ class _SocialScreenState extends State<SocialScreen> {
   }
 
   void _darLike(SocialModel publicacion) async {
+    final viewModel = Provider.of<PerfilViewModel>(context, listen: false);
+                
+      String miUsuarioId = viewModel.userId;
     final likeado = await Provider.of<SocialProvider>(context, listen: false)
         .estaLikeado({'postUID': publicacion.postUID, 'userUID': miUsuarioId});
     if (likeado) {
@@ -167,6 +176,11 @@ class _SocialScreenState extends State<SocialScreen> {
   }
 
   void _mostrarComentarios(SocialModel publicacion) async {
+    final viewModel = Provider.of<PerfilViewModel>(context, listen: false);
+                
+      String miUsuarioId = viewModel.userId;
+      String nombreUsuario = viewModel.userNameController.text;
+      String avatarUrl = viewModel.userImage;
     await Provider.of<SocialProvider>(context, listen: false).cargarComentarios(publicacion.postUID);
     showModalBottomSheet(
       context: context,
@@ -345,105 +359,123 @@ class _SocialScreenState extends State<SocialScreen> {
     );
   }
 
-  void _mostrarReplies(List<CommentRepliesModel> replies, String commentUID, String postUID) {
-    final TextEditingController _replyController = TextEditingController();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return AnimatedPadding(
-          duration: const Duration(milliseconds: 150),
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          curve: Curves.easeOut,
-          child: Container(
-            height: MediaQuery.of(context).size.height * 0.75,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
+void _mostrarReplies(List<CommentRepliesModel> initialReplies, String commentUID, String postUID) {
+  final viewModel = Provider.of<PerfilViewModel>(context, listen: false);
+  String miUsuarioId = viewModel.userId;
+  final TextEditingController _replyController = TextEditingController();
+
+  // Lista local para manejar replies dentro del modal
+  List<CommentRepliesModel> localReplies = List.from(initialReplies);
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setStateModal) {
+          return AnimatedPadding(
+            duration: const Duration(milliseconds: 150),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Respuestas (${replies.length})',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
+            curve: Curves.easeOut,
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
                 ),
-                const Divider(),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: replies.length,
-                    itemBuilder: (context, index) {
-                      final reply = replies[index];
-                      return ListTile(
-                        leading: const CircleAvatar(child: Icon(Icons.person)),
-                        title: Text(reply.userUID ?? ''),
-                        subtitle: Text(reply.replyText ?? ''),
-                      );
-                    },
-                  ),
-                ),
-                const Divider(),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _replyController,
-                          decoration: const InputDecoration(
-                            hintText: 'Escribe una respuesta...',
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Respuestas (${localReplies.length})',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
                           ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.send, color: Colors.pink),
-                        onPressed: () async {
-                          await Provider.of<SocialProvider>(context, listen: false)
-                              .crearReply({
-                            'commentUID': commentUID,
-                            'userUID': miUsuarioId,
-                            'replyText': _replyController.text,
-                          });
-                          _replyController.clear();
-
-                          // Recargar las replies
-                          await Provider.of<SocialProvider>(context, listen: false)
-                              .cargarReplies(commentUID);
-
-                          // Recargar comentarios de la publicación
-                          await Provider.of<SocialProvider>(context, listen: false)
-                              .cargarComentarios(postUID);
-                        },
-                      ),
-                    ],
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const Divider(),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: localReplies.length,
+                      itemBuilder: (context, index) {
+                        final reply = localReplies[index];
+                        return ListTile(
+                          leading: const CircleAvatar(child: Icon(Icons.person)),
+                          title: Text(reply.userUID ?? ''),
+                          subtitle: Text(reply.replyText ?? ''),
+                        );
+                      },
+                    ),
+                  ),
+                  const Divider(),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _replyController,
+                            decoration: const InputDecoration(
+                              hintText: 'Escribe una respuesta...',
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.send, color: Colors.pink),
+                          onPressed: () async {
+                            if (_replyController.text.trim().isEmpty) return;
+
+                            await Provider.of<SocialProvider>(context, listen: false)
+                                .crearReply({
+                              'commentUID': commentUID,
+                              'userUID': miUsuarioId,
+                              'replyText': _replyController.text.trim(),
+                            });
+
+                            _replyController.clear();
+
+                            // Recargar replies desde el provider y actualizar la lista local
+                            final nuevasReplies = await Provider.of<SocialProvider>(context, listen: false)
+                                .cargarReplies(commentUID);
+
+                            setStateModal(() {
+                              localReplies = nuevasReplies;
+                            });
+
+                            // Recargar comentarios de la publicación (si quieres actualizar también)
+                            await Provider.of<SocialProvider>(context, listen: false)
+                                .cargarComentarios(postUID);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
-  }
+          );
+        },
+      );
+    },
+  );
+}
+
 
   void _mostrarRepliesModal(BuildContext context, String commentUID, String postUID) {
     Provider.of<SocialProvider>(context, listen: false).cargarReplies(commentUID).then((_) {
@@ -456,6 +488,9 @@ class _SocialScreenState extends State<SocialScreen> {
   Widget build(BuildContext context) {
     final socialProvider = Provider.of<SocialProvider>(context);
     final publicaciones = socialProvider.publicaciones;
+    final viewModel = Provider.of<PerfilViewModel>(context, listen: false);
+      String miUsuarioId = viewModel.userId;
+      String avatarUrl = viewModel.userImage;
     String token=getIt<AuthDataService>().getToken()!;
 
 
@@ -613,6 +648,16 @@ class _SocialScreenState extends State<SocialScreen> {
     final fechaRelativa = timeago.format(publicacion.createdAt, locale: 'es');
     final String imageFileName = publicacion.imageURL;
     final String imageUrl = imageFileName;
+    final viewModel = Provider.of<PerfilViewModel>(context, listen: false);
+    String nombreUsuario = viewModel.userId;
+      String miUsuarioId = viewModel.userId;
+      String avatarUrl = viewModel.userImage;
+    viewModel.getUserDataById(miUsuarioId).then((userData) {
+      if (userData != null) {
+        nombreUsuario = userData.userName;
+        avatarUrl = userData.avatarUrl;
+      }
+    });
 
     return Card(
       margin: EdgeInsets.only(bottom: 12),
@@ -635,7 +680,7 @@ class _SocialScreenState extends State<SocialScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        publicacion.userUID,
+                        nombreUsuario,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
