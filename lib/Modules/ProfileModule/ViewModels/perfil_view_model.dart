@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mascotas_citas/models/PetModel.dart';
+import 'package:mascotas_citas/services/ApiService.dart';
 import 'package:mascotas_citas/services/ApiServiceRD.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 
@@ -17,7 +18,7 @@ class PerfilViewModel extends ChangeNotifier {
   
   
   // Servicios
-  final ApiService _apiService;
+  final DioApiService _apiService;
   final AuthDataService _authDataService;
   
   // Datos del usuario
@@ -191,7 +192,7 @@ void _init() async {
   }
 }
   
-  /// NUEVO: Método para cargar todos los datos (usuario y mascotas)
+  /// Método para cargar todos los datos (usuario y mascotas)
   Future<void> loadAllData() async {
     _isInitialLoading = true; // Indicar que se está realizando la carga inicial
     isLoading = true;
@@ -241,10 +242,11 @@ void _init() async {
         throw Exception('ID de usuario no válido');
       }
       
+      
       // Usar el endpoint local especificado
       final userResponse = await _apiService.get(
-        path: 'http://localhost:8082/users/get',
-        headers: {'userUID': userId}, // Usar ID del usuario actual
+        path: '/user-service/users/get',
+        queryParams: {},
       );
       
       if (userResponse.statusCode == 200) {
@@ -309,7 +311,7 @@ void _init() async {
       
       // Llamada a la API para obtener las mascotas del usuario
       final petsResponse = await _apiService.get(
-        path: 'http://localhost:8083/pets/get-pet-data-by-owner',
+        path: 'pet-service/pets/get-pet-data-by-owner',
         queryParams: {'ownerUID': userId},
       );
       
@@ -532,7 +534,7 @@ Future<bool> addNewPet({
     formData.fields.add(MapEntry('petJson', petJsonString));
     
     // Establecer el encabezado userUID para autenticación
-    _apiService.dioClient.options.headers['userUID'] = userId;
+    // _apiService.dioClient.options.headers['userUID'] = userId;
     
     print('🚀 Enviando solicitud al servidor...');
     
@@ -667,7 +669,7 @@ Future<void> deleteCurrentPet() async {
     }
     
     // Establecer el userUID en los headers para autenticación
-    _apiService.dioClient.options.headers['userUID'] = userId;
+    // _apiService.dioClient.options.headers['userUID'] = userId;
     
     // Construir la URL del endpoint según lo mostrado en Postman
     // {{base_url}}/pets/delete?petUID=dKqmCfBId8
@@ -679,6 +681,8 @@ Future<void> deleteCurrentPet() async {
       path: path,
       queryParams: {'petUID': currentPet.petUID},
     );
+
+    //$$$ HAY QUE TOCAR AQUÍ $$$
     
     if (response.statusCode == 200) {
       // Eliminar la mascota de la lista local
@@ -861,10 +865,10 @@ Future<void> updateUserImage(File imageFile) async {
     ));
     
     // Establecer el encabezado userUID para autenticación
-    _apiService.dioClient.options.headers['userUID'] = userId;
-    
+    //_apiService.dioClient.options.headers['userUID'] = userId;
+    //$$$$$$$$$$ revisar
     // URL exacta del endpoint como se muestra en el backend
-    final String url = 'http://localhost:8093/api/users/update-image';
+    final String url = '/orquestador/api/users/update-image';
     
     // Realizar la solicitud PUT usando el método put del ApiService
     final response = await _apiService.put(
@@ -1103,7 +1107,8 @@ Future<dynamic> getUserDataById(miUsuarioid) async {
 
     // Realizar la solicitud GET al endpoint local
     final userResponse = await _apiService.get(
-      path: 'http://localhost:8082/users/get/$miUsuarioid',
+      path: '/user-service/users/get',
+      queryParams: {'userUID': miUsuarioid},
 
     );
 
