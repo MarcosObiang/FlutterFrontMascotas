@@ -46,10 +46,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final authDataService = AuthDataService(secureStorage: SecureStorage());
     
     // Crear el ViewModel
-    _viewModel = PerfilViewModel(
-      apiService: apiService,
-      authDataService: authDataService,
-    );
+    // _viewModel = PerfilViewModel(
+    //   apiService: apiService,
+    //   authDataService: authDataService,
+    // );
   }
   
   @override

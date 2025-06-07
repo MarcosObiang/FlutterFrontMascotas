@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mascotas_citas/services/ApiService.dart';
 import 'package:mascotas_citas/services/ApiServiceRD.dart';
 import 'package:dio/dio.dart';
 
@@ -12,7 +13,7 @@ class SelectorFotos extends StatefulWidget {
   final String entidadId;
   final String? userUID;
   final String tipo;
-  final ApiService apiService;
+  final DioApiService apiService;
 
   const SelectorFotos({
     super.key,
@@ -347,9 +348,9 @@ class _SelectorFotosState extends State<SelectorFotos> {
           ),
         ));
         
-        widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
+       // widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
         
-        final String url = 'http://localhost:8093/api/pets/update/${widget.entidadId}';
+        final String url = '/orquestador/api/pets/update/${widget.entidadId}';
         
         final response = await widget.apiService.put(
           path: url,
@@ -424,9 +425,9 @@ class _SelectorFotosState extends State<SelectorFotos> {
       ),
     ));
     
-    widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
+    //widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
     
-    const String url = 'http://localhost:8093/api/users/update-image';
+    const String url = '/orquestador/api/users/update-image';
     
     final response = await widget.apiService.put(
       path: url,
@@ -473,9 +474,9 @@ class _SelectorFotosState extends State<SelectorFotos> {
       formData.fields.add(MapEntry('mainPhotoUrl', _imagenes[0]));
     }
     
-    widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
+   // widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
     
-    final String url = 'http://localhost:8093/api/pets/update/${widget.entidadId}';
+    final String url = '/orquestador/api/pets/update/${widget.entidadId}';
     
     final response = await widget.apiService.put(
       path: url,
@@ -588,9 +589,9 @@ class _SelectorFotosState extends State<SelectorFotos> {
       formData.fields.add(MapEntry('currentImageOrder', _imagenes.join(',')));
       formData.fields.add(MapEntry('newImageOrder', reorderedImages.join(',')));
 
-      widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
+     // widget.apiService.dioClient.options.headers['userUID'] = widget.userUID!;
       
-      final String url = 'http://localhost:8093/api/pets/update/${widget.entidadId}';
+      final String url = '/orquestador/api/pets/update/${widget.entidadId}';
       
       final response = await widget.apiService.put(
         path: url,

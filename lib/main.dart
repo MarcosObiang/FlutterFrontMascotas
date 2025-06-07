@@ -89,8 +89,8 @@ class MainApp extends StatelessWidget {
 
         ChangeNotifierProvider<PerfilViewModel>(
           create: (context) => PerfilViewModel(
-            apiService: Provider.of<ApiService>(context, listen: false),
-            authDataService: Provider.of<AuthDataService>(context, listen: false),
+            // apiService: Provider.of<ApiService>(context, listen: false),
+            // authDataService: Provider.of<AuthDataService>(context, listen: false),
           ),
         ),
       ],

@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:mascotas_citas/models/PetModel.dart';
 import 'package:mascotas_citas/services/ApiService.dart';
 import 'package:mascotas_citas/services/ApiServiceRD.dart';
 import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
+import 'package:mascotas_citas/utils/GetUriFromString.dart';
 
 /// ViewModel para la pantalla de perfil
 /// 
@@ -18,8 +20,8 @@ class PerfilViewModel extends ChangeNotifier {
   
   
   // Servicios
-  final DioApiService _apiService;
-  final AuthDataService _authDataService;
+  late DioApiService apiService;
+  late AuthDataService _authDataService;
   
   // Datos del usuario
   final TextEditingController userNameController = TextEditingController();
@@ -59,16 +61,17 @@ class PerfilViewModel extends ChangeNotifier {
   final ImagePicker _picker = ImagePicker();
   
   // Constructor
-  PerfilViewModel({
-    required ApiService apiService,
-    required AuthDataService authDataService,
-  }) : _apiService = apiService,
-       _authDataService = authDataService {
+  PerfilViewModel(
+    // required ApiService apiService,
+    // required AuthDataService authDataService,
+  )   {
+    apiService = getIt<DioApiService>();
+    _authDataService = getIt<AuthDataService>();
     _init();
   }
   
   /// Getter para acceder al servicio API desde fuera de esta clase
-  ApiService get apiService => _apiService;
+  // ApiService get apiService => _apiService;
   
   /// NUEVO: Getter para el estado de carga inicial
   bool get isInitialLoading => _isInitialLoading;
@@ -97,8 +100,8 @@ class PerfilViewModel extends ChangeNotifier {
     if (imageName.startsWith('http://') || imageName.startsWith('https://')) {
       return imageName;
     }
-    
-    return '$mediaBaseUrl?fileName=$imageName';
+    return Geturifromstring().getUriFromString(imageName);
+    // return '$mediaBaseUrl?fileName=$imageName';
   }
 
   /// Construye URL para imagen de usuario
@@ -145,10 +148,10 @@ class PerfilViewModel extends ChangeNotifier {
 void _init() async {
   try {
     // Cargar datos de autenticación
-    await _authDataService.loadAll();
+    
     
     // CORRECCIÓN: Obtenemos el userId del AuthDataService
-    userId = _authDataService.getUserUID() ?? '';
+     userId = _authDataService.getUserUID() ?? '';
     
     // Verificar que tenemos un userId válido
     if (userId.isEmpty) {
@@ -244,7 +247,7 @@ void _init() async {
       
       
       // Usar el endpoint local especificado
-      final userResponse = await _apiService.get(
+      final userResponse = await apiService.get(
         path: '/user-service/users/get',
         queryParams: {},
       );
@@ -310,7 +313,7 @@ void _init() async {
       }
       
       // Llamada a la API para obtener las mascotas del usuario
-      final petsResponse = await _apiService.get(
+      final petsResponse = await apiService.get(
         path: 'pet-service/pets/get-pet-data-by-owner',
         queryParams: {'ownerUID': userId},
       );
@@ -539,7 +542,7 @@ Future<bool> addNewPet({
     print('🚀 Enviando solicitud al servidor...');
     
     // Enviar la solicitud POST
-    final response = await _apiService.post(
+    final response = await apiService.post(
       path: 'http://localhost:8093/api/pets/create', // URL del orquestador
       data: formData,
     );
@@ -673,13 +676,12 @@ Future<void> deleteCurrentPet() async {
     
     // Construir la URL del endpoint según lo mostrado en Postman
     // {{base_url}}/pets/delete?petUID=dKqmCfBId8
-    const String baseUrl = 'http://localhost:8083'; // El microservicio de mascotas
-    final String path = '$baseUrl/pets/delete';
+    
     
     // Realizar la solicitud POST al endpoint (según la captura muestra POST, no DELETE)
-    final response = await _apiService.post(
-      path: path,
-      queryParams: {'petUID': currentPet.petUID},
+    final response = await apiService.post(
+      path: "/orquestador/api/pets/delete/${currentPet.petUID}",
+      data :{}      
     );
 
     //$$$ HAY QUE TOCAR AQUÍ $$$
@@ -742,10 +744,10 @@ Future<void> updateUserBio(String newBio) async {
     };
     
     // URL exacta del endpoint como se muestra en la imagen
-    final String url = 'http://localhost:8082/users/update-bio';
+    final String url = '/user-service/users/update-bio';
     
     // Realizar la solicitud PUT como se muestra en Postman
-    final response = await _apiService.put(
+    final response = await apiService.put(
       path: url,
       data: {
         'userUID': userId,
@@ -810,10 +812,10 @@ Future<void> updateCurrentPetBio(String newBio) async {
     pets[selectedPetIndex] = updatedPet;
     
     // URL exacta del endpoint como se muestra en la imagen
-    final String url = 'http://localhost:8083/pets/update-pet-bio';
+    final String url = '/pet-service/pets/update-pet-bio';
     
     // Realizar la solicitud PUT como se muestra en Postman
-    final response = await _apiService.put(
+    final response = await apiService.put(
       path: url,
       data: {
         'petUID': currentPet.petUID,
@@ -871,7 +873,7 @@ Future<void> updateUserImage(File imageFile) async {
     final String url = '/orquestador/api/users/update-image';
     
     // Realizar la solicitud PUT usando el método put del ApiService
-    final response = await _apiService.put(
+    final response = await apiService.put(
       path: url,
       data: formData,
     );
@@ -942,7 +944,7 @@ Future<void> updateUserBirthDate(DateTime newBirthDate) async {
     final String url = 'http://localhost:8082/users/update-birth-date';
     
     // Realizar la solicitud PUT
-    final response = await _apiService.put(
+    final response = await apiService.put(
       path: url,
       data: {
         'userUID': userId,
@@ -1106,7 +1108,7 @@ Future<dynamic> getUserDataById(miUsuarioid) async {
     }
 
     // Realizar la solicitud GET al endpoint local
-    final userResponse = await _apiService.get(
+    final userResponse = await apiService.get(
       path: '/user-service/users/get',
       queryParams: {'userUID': miUsuarioid},
 
