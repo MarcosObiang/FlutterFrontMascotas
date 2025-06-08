@@ -4,6 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/model/PetSettingsModel.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/state/settingsState.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/usecases/AddPetUseCase.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/usecases/GetPetsDataUseCase.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/usecases/GetProfileDataUseCase.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/usecases/LogOutUseCase.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/usecases/UpdateUserBioUseCase.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/usecases/UpdateUserImageUseCase.dart';
 import 'package:mascotas_citas/dependencies/injector.dart';
@@ -26,11 +29,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    // Es más seguro acceder a 'data' después de que el widget se haya construido y 'Consumer' lo proporcione.
-    // O asegurar que 'data' no sea null aquí, por ejemplo, esperando a que se cargue.
-    // Por ahora, lo inicializaremos vacío o lo moveremos a un punto donde 'data' esté disponible.
-    // userBioTextEditingController.text = getIt<SettingsState>().data?.userBio ?? "";
+
+    getIt<Getprofiledatausecase>().execute();
+    getIt<Getpetsdatausecase>().execute();
   }
+
+
+
+
+  
 
   Future<void> _showEditBioDialog(
       BuildContext context, String currentBio) async {
@@ -399,7 +406,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _showEditBioDialog(context, userBioTextEditingController.text);
               },
               icon: Icon(Icons.edit),
-              label: Text("Editar biografía"))
+              label: Text("Editar biografía")),
+
+
+              ElevatedButton.icon(
+              onPressed: () {
+                getIt<LogOutUseCase>().execute();
+                Navigator.pop(context);
+              },
+              icon: Icon(Icons.person),
+              label: Text("Cerrar sesion")),
+
+
         ],
       ),
     );
