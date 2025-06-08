@@ -7,7 +7,7 @@ import 'package:mascotas_citas/services/auth/AuthSesionDataService.dart';
 import 'package:dio/dio.dart';
 import 'package:mascotas_citas/services/platform/storage/SecureStorage.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:mascotas_citas/Modules/ProfileModule/component/configuracion_busqueda_provider.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/Views/component/configuracion_busqueda_provider.dart';
 import 'package:mascotas_citas/utils/GetUriFromString.dart';
 
 // Enum para estados de carga

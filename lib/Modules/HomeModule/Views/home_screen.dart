@@ -3,7 +3,7 @@ import 'package:mascotas_citas/models/PetModel.dart';
 import '../component/boton_accion.dart';
 import '../component/tarjeta_mascota.dart';
 import 'package:provider/provider.dart';
-import 'package:mascotas_citas/Modules/ProfileModule/component/configuracion_busqueda_provider.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/Views/component/configuracion_busqueda_provider.dart';
 import '../ViewModel/home_view_model.dart';
 
 class HomeScreen extends StatefulWidget {

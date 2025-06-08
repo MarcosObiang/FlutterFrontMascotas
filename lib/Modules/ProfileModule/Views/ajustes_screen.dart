@@ -5,7 +5,7 @@ import 'package:mascotas_citas/dependencies/injector.dart';
 import 'package:provider/provider.dart';
 import '../../AuthenticationModule/views/AuthScreen.dart';
 import 'package:mascotas_citas/Resources/providers/theme_provider.dart';
-import '../component/configuracion_busqueda_provider.dart';
+import 'component/configuracion_busqueda_provider.dart';
 
 class AjustesScreen extends StatefulWidget {
   final String userId;

@@ -73,6 +73,7 @@ class RealTimeUpdateChatDataHandler
     // Actualiza el chat en la lista
     state.chatList[index] = data.body!;
     state.setLastListAction(action: LastListAction.update);
+    state.setStatus(Status.success);
   }
 }
 
