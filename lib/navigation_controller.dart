@@ -22,7 +22,6 @@ class _NavigationControllerState extends State<NavigationController> {
         LikesViewScreen(),
         ChatView(),
         SocialScreen(),
-        PerfilScreen(),
         SettingsScreen()
       ];
 
@@ -60,13 +59,10 @@ class _NavigationControllerState extends State<NavigationController> {
             icon: Icon(Icons.photo_library),
             label: 'Social',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
+     
              BottomNavigationBarItem(
-            icon: Icon(Icons.abc),
-            label: '???',
+            icon: Icon(Icons.person),
+            label: "Perfil"
           ),
         ],
       ),
