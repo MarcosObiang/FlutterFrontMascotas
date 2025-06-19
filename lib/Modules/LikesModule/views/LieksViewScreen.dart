@@ -50,7 +50,7 @@ class _LikesViewScreenState extends State<LikesViewScreen> {
             lastListLength = state.likes.length;
             _addItem();
             // Reset the last action to none after adding
-            
+
             state.setLastListAction(action: LastListAction.none);
           }
         } else if (state.lastListAction == LastListAction.remove) {
@@ -62,28 +62,41 @@ class _LikesViewScreenState extends State<LikesViewScreen> {
           }
         }
 
-        return SizedBox.expand(
-          child: Column(
-            children: [
-              Flexible(
-                  fit: FlexFit.tight,
-                  flex: 2,
-                  child: Text("Se han interesado en ti")),
-              Flexible(
-                  fit: FlexFit.tight,
-                  flex: 9,
-                  child: LayoutBuilder(builder:
-                      (BuildContext context, BoxConstraints constraints) {
-                    return AnimatedList(
-                        physics: NeverScrollableScrollPhysics(),
-                        key: _listKey,
-                        initialItemCount: state.likes.length,
-                        scrollDirection: Axis.vertical,
-                        itemBuilder: (context, index, animation) {
-                          return LikeCard(constraints, state.likes[index]);
-                        });
-                  }))
-            ],
+        return SafeArea(
+          child: SizedBox.expand(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Flexible(
+                      fit: FlexFit.tight,
+                      flex: 2,
+                      child:
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text("Quieren conoceros", style: Theme.of(context).textTheme.headlineMedium,))),
+                  Flexible(
+                      fit: FlexFit.tight,
+                      flex: 9,
+                      child: LayoutBuilder(builder:
+                          (BuildContext context, BoxConstraints constraints) {
+                        return state.likes.isEmpty
+                            ? Center(
+                                child: Text("No tienes likes nuevos"),
+                              )
+                            : AnimatedList(
+                                physics: NeverScrollableScrollPhysics(),
+                                key: _listKey,
+                                initialItemCount: state.likes.length,
+                                scrollDirection: Axis.vertical,
+                                itemBuilder: (context, index, animation) {
+                                  return LikeCard(
+                                      constraints, state.likes[index]);
+                                });
+                      }))
+                ],
+              ),
+            ),
           ),
         );
       }),

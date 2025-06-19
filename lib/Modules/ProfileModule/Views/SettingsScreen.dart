@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/Views/ajustes_screen.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/model/PetSettingsModel.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/state/settingsState.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/usecases/AddPetUseCase.dart';
@@ -33,11 +34,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     getIt<Getprofiledatausecase>().execute();
     getIt<Getpetsdatausecase>().execute();
   }
-
-
-
-
-  
 
   Future<void> _showEditBioDialog(
       BuildContext context, String currentBio) async {
@@ -288,7 +284,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     SizedBox(height: 24),
                     ElevatedButton(
                       child: Text('Guardar Mascota'),
-                      onPressed: () {
+                      onPressed: () async {
                         PetSettingsModel pet = PetSettingsModel(
                             name: nameController.text,
                             petUID: "asdffffff",
@@ -301,12 +297,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             petImageUID: "")
                           ..image = _dialogPetImage1?.readAsBytesSync();
 
-                        getIt<Addpetusecase>().execute(pet);
+                        await getIt<Addpetusecase>().execute(pet);
+                        getIt<Getpetsdatausecase>().execute();
 
-                      //  Navigator.pop(bc); // Cierra el diálogo
+                        Navigator.pop(bc); // Cierra el diálogo
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(
-                                'Funcionalidad "Guardar Mascota" pendiente de implementación completa.')));
+                            content: Text('Mascota añadida con éxito.')));
                       },
                     ),
                     SizedBox(height: 16),
@@ -407,17 +403,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
               icon: Icon(Icons.edit),
               label: Text("Editar biografía")),
-
-
-              ElevatedButton.icon(
+          ElevatedButton.icon(
               onPressed: () {
                 getIt<LogOutUseCase>().execute();
                 Navigator.pop(context);
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            AjustesScreen(userId: "userUID")));
               },
-              icon: Icon(Icons.person),
-              label: Text("Cerrar sesion")),
-
-
+              icon: Icon(Icons.settings),
+              label: Text("Ajustes")),
         ],
       ),
     );
@@ -487,6 +484,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         subtitle: Text('${pet.species} - ${pet.age} años',
                             style: TextStyle(fontSize: 30.sp)),
                         // Puedes añadir más detalles o acciones por mascota aquí
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    PetDetailScreen(pet: pet)),
+                          );
+                        },
                       ),
                     );
                   },
@@ -616,5 +621,96 @@ class _SettingsScreenState extends State<SettingsScreen> {
             .setUpdateProfileBioStatusUpdating(UpdateProfileBioStatus.initial);
       });
     }
+  }
+}
+
+class PetDetailScreen extends StatelessWidget {
+  final PetSettingsModel pet;
+
+  const PetDetailScreen({Key? key, required this.pet}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final String? token = getIt<AuthDataService>().token;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(pet.name),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16.0.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Center(
+              child: CachedNetworkImage(
+                imageUrl: pet.petImageUID ??
+                    "https://via.placeholder.com/250", // Asegúrate de tener una URL de imagen válida o un placeholder
+                httpHeaders: {'Authorization': 'Bearer $token'},
+                imageBuilder: (context, imageProvider) => Container(
+                  width: 250.w,
+                  height: 250.h,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                      image: imageProvider,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                placeholder: (context, url) => SizedBox(
+                  width: 250.w,
+                  height: 250.h,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                errorWidget: (context, url, error) =>
+                    Icon(Icons.pets, size: 100.sp, color: Colors.grey),
+              ),
+            ),
+            SizedBox(height: 20.h),
+            Text(
+              'Nombre: ${pet.name}',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            SizedBox(height: 10.h),
+            Text(
+              'Especie: ${pet.species}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: 10.h),
+            Text(
+              'Sexo: ${pet.sex}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: 10.h),
+            Text(
+              'Edad: ${pet.age} años', // Asumiendo que 'age' ya está calculado y disponible
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: 10.h),
+            Text(
+              'Fecha de Nacimiento: ${pet.birthDate.toLocal().toString().split(' ')[0]}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: 10.h),
+            Divider(),
+            SizedBox(height: 10.h),
+            Text(
+              'Biografía:',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            SizedBox(height: 5.h),
+            Text(
+              pet.petBio ?? 'No se ha proporcionado una biografía.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            // Aquí puedes añadir más detalles de la mascota si los tienes
+          ],
+        ),
+      ),
+    );
   }
 }

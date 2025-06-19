@@ -23,20 +23,17 @@ class WebSocketService {
 
       this.token = token;
       this.userUID = userUID;
-
-
     });
 
-    this.token=authDataService.getToken();
-    this.userUID=authDataService.getUserUID();
+    this.token = authDataService.getToken();
+    this.userUID = authDataService.getUserUID();
 
-
-          if (this.token != null) {
-        _connectWebSocket();
-      } else {
-        _webSocket?.close();
-        _reconnectTimer?.cancel();
-      }
+    if (this.token != null) {
+      _connectWebSocket();
+    } else {
+      _webSocket?.close();
+      _reconnectTimer?.cancel();
+    }
 
     onMessageReceived = StreamController.broadcast();
   }
@@ -88,7 +85,11 @@ class WebSocketService {
 
   void _scheduleReconnect() {
     _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(Duration(seconds: 5), _connectWebSocket);
+    _reconnectTimer = Timer(Duration(seconds: 5), () {
+      this.userUID = authDataService.getUserUID();
+      this.token = authDataService.getToken();
+      _connectWebSocket();
+    });
   }
 
   void sendMessage(String message) {

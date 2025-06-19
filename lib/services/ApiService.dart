@@ -56,10 +56,13 @@ class DioApiService {
 
     try {
       return await _dio.get(path, queryParameters: queryParams);
-    } on DioException {
+    } on DioException catch (e) {
+      print(e.message);
+ 
       rethrow;
     }
   }
+
 
 /// Realiza una petición POST a [path] con el cuerpo [data] y opcionalmente archivos en un mapa [files].
 Future<Response> post({

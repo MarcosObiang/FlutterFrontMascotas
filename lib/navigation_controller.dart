@@ -3,7 +3,7 @@ import 'package:mascotas_citas/Modules/ChatModule/views/ChatView.dart';
 import 'package:mascotas_citas/Modules/HomeModule/Views/home_screen.dart';
 import 'package:mascotas_citas/Modules/LikesModule/views/LieksViewScreen.dart';
 import 'package:mascotas_citas/Modules/ProfileModule/Views/SettingsScreen.dart';
-import 'package:mascotas_citas/Modules/ProfileModule/Views/perfil_screen.dart';
+import 'package:mascotas_citas/Modules/ProfileModule/Views/ajustes_screen.dart';
 import 'package:mascotas_citas/Modules/SocialModule/Views/social_screen.dart';
 
 class NavigationController extends StatefulWidget {

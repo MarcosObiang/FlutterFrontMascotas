@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'package:dio/dio.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:mascotas_citas/Exceptions/ModuleException.dart';
 import 'package:mascotas_citas/Exceptions/TimeOutException.dart';
@@ -84,7 +85,7 @@ class WebLoginService implements IAuthServices {
 
       return result;
 
-    } on Exception catch (e) {
+    } on DioException catch (e) {
       throw Exception(e);
     }
   }
